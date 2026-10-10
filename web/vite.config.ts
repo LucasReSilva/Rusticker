@@ -2,16 +2,22 @@ import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { defineConfig } from 'vitest/config';
 import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { buildUrlPatterns } from './src/lib/i18n/routes.js';
 
 export default defineConfig({
 	plugins: [
 		tailwindcss(),
 		sveltekit(),
+		// paraglide: locale comes from the URL (translated slugs, see
+		// src/lib/i18n/routes.js), then the saved preference, then pt-BR.
 		paraglideVitePlugin({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide',
-			emitTsDeclarations: true
+			emitTsDeclarations: true,
+			strategy: ['url', 'localStorage', 'baseLocale'],
+			urlPatterns: buildUrlPatterns(process.env.BASE_PATH ?? '')
 		})
+		// /paraglide
 	],
 	test: {
 		expect: { requireAssertions: true },

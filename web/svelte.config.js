@@ -1,5 +1,6 @@
 import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import { prerenderEntries } from './src/lib/i18n/routes.js';
 
 /**
  * Reads the deploy sub-path from `BASE_PATH`. It must be empty (served from
@@ -36,6 +37,8 @@ const config = {
 			base: readBasePath()
 		},
 		prerender: {
+			// The 9 localized paths; SvelteKit prepends the base path.
+			entries: /** @type {Array<`/${string}`>} */ (prerenderEntries()),
 			handleHttpError: 'fail',
 			handleMissingId: 'fail'
 		}

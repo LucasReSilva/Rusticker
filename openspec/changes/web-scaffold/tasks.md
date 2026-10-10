@@ -27,19 +27,19 @@
 
 ## 3. Localization core
 
-- [ ] 3.1 Finalize `web/project.inlang/settings.json`:
+- [x] 3.1 Finalize `web/project.inlang/settings.json`:
   - `baseLocale: "pt-BR"`;
   - `locales: ["pt-BR","en","es"]`;
   - `pathPattern: "./messages/{locale}.json"`.
 
   Add the `i18n:compile` script and wire it into `prepare` and `check` (design D3, D8). Verify that `bun run i18n:compile` generates `src/lib/paraglide/` and that `bun run check` passes on a clean clone after `bun install`.
-- [ ] 3.2 Create `src/lib/i18n/routes.js` with the contract slug table, `internalPath`, `buildUrlPatterns(base)` (page patterns, then catch-alls in the order `/en/*`, `/es/*`, `/*`), and `prerenderEntries()` (design D4). Add `routes.test.ts` with these checks:
+- [x] 3.2 Create `src/lib/i18n/routes.js` with the contract slug table, `internalPath`, `buildUrlPatterns(base)` (page patterns, then catch-alls in the order `/en/*`, `/es/*`, `/*`), and `prerenderEntries()` (design D4). Add `routes.test.ts` with these checks:
   - the table equals the contract table, with `/en/` and `/es/` for the tool;
   - every page has a slug for every locale in `settings.json`;
   - each of the 9 URLs, plus `/en/sobre` and `/es/unknown`, resolves to the expected internal path and locale, with base `''` and with `/Rusticker`.
 
   Verify with `bun run test`.
-- [ ] 3.3 Wire Paraglide into the app:
+- [x] 3.3 Wire Paraglide into the app:
   - in `vite.config.ts`, pass the strategy `['url','localStorage','baseLocale']` and `urlPatterns: buildUrlPatterns(process.env.BASE_PATH ?? '')` to the Paraglide plugin, inside a clearly delimited `// paraglide` block;
   - in `src/hooks.ts`, add `reroute` using `deLocalizeUrl`;
   - in `src/hooks.server.ts`, export `handle = sequence(paraglideHandle, /* @pwa-seo:handle */)`, where `paraglideHandle` is the middleware plus the `%paraglide.lang%` replacement (design D3, addendum R3);
@@ -47,7 +47,7 @@
   - in `svelte.config.js`, set `prerender.entries` from `prerenderEntries()`.
 
   Verify with `bun run dev`: `/en/about` and `/es/acerca-de` reach the about route, and the page source shows `lang="en"` and `lang="es"`.
-- [ ] 3.4 Create the helpers, each with unit tests, and verify with `bun run test`:
+- [x] 3.4 Create the helpers, each with unit tests, and verify with `bun run test`:
   - `src/lib/i18n/links.ts` (`localizedPath`);
   - `src/lib/i18n/preference.ts` (`readSavedLocale` and `saveLocalePreference`, guarded with try/catch, using Paraglide's localStorage key);
   - `src/lib/i18n/negotiate.ts` (`matchBrowserLocale`);
@@ -107,7 +107,7 @@
 ## 7. CI and deployment
 
 - [ ] 7.1 Add `.github/workflows/web.yml` (design D9, addendum R1):
-  - triggers on push to `develop` or `develop` and on PRs targeting either, for `web/**`, `core/**`, `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, and the workflow file;
+  - triggers on push to `main` or `develop` and on PRs targeting either, for `web/**`, `core/**`, `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, and the workflow file;
   - steps in this exact order: checkout; Bun pinned from `web/package.json`; Rust setup, wasm-pack install, and "Build wasm" (`wasm-pack build core --target web`), all guarded by `if: hashFiles('core/Cargo.toml') != ''`; `bun install --frozen-lockfile`; `i18n:compile`; `check`; `lint`; `bun run --if-present lint:design`; `test`; `i18n:check`; build with `BASE_PATH=/Rusticker`; `bun run --if-present seo:check`; `verify:build`.
 
   Verify:

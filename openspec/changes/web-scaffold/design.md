@@ -233,7 +233,7 @@ On this change's branch `core/` does not exist yet, so all three are skipped. Th
 
 **`.github/workflows/web.yml`**
 
-- Triggers: `push` to `develop` and `develop`, and `pull_request` targeting either. Path filters: `web/**`, `core/**`, `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, and `.github/workflows/web.yml`.
+- Triggers: `push` to `main` and `develop`, and `pull_request` targeting either. Path filters: `web/**`, `core/**`, `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, and `.github/workflows/web.yml`.
 - One job on `ubuntu-latest`. Steps, in this exact order:
   1. checkout;
   2. `oven-sh/setup-bun` with `bun-version-file: web/package.json`;
