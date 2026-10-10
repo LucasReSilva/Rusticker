@@ -34,7 +34,7 @@
 ## 6. CI and hooks
 
 - [ ] 6.1 Add `.github/workflows/rust.yml` per design D10 (path filters, `contents: read`, concurrency, toolchain from `rust-toolchain.toml`, rust-cache, fmt check, clippy host + wasm32, test, wasm-pack via `taiki-e/install-action`, `wasm-pack build core --target web`, `.d.ts` export check; never sets `RUSTICKER_SAMPLE_IMAGE`); verify the YAML parses (`bunx --bun yaml-lint .github/workflows/rust.yml` or an equivalent YAML parser) and, once pushed, the workflow run is green
-- [ ] 6.2 Add `stages: [pre-commit]` to the `cargo-fmt`, `cargo-clippy`, and `cargo-check` hooks in `.pre-commit-config.yaml`, changing nothing else; verify `prek run --all-files` runs the three cargo hooks successfully and `prek run --hook-stage commit-msg --all-files` (or a test commit) no longer runs them
+- [x] 6.2 Add `stages: [pre-commit]` to the `cargo-fmt`, `cargo-clippy`, and `cargo-check` hooks in `.pre-commit-config.yaml`, changing nothing else; verify `prek run --all-files` runs the three cargo hooks successfully and `prek run --hook-stage commit-msg --all-files` (or a test commit) no longer runs them
 
 ## 7. Documentation
 
