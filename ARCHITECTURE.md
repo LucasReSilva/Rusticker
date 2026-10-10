@@ -28,7 +28,7 @@ Rusticker/
 |   +-- messages/         Paraglide catalogs (<locale>.json)
 |   +-- src/lib/          worker, state store, components
 |   +-- src/routes/       tool, how-to-use, about
-|   +-- static/           example.jpg, PWA icons
+|   +-- static/           PWA icons
 +-- openspec/             specs (source of truth) and changes
 ```
 
@@ -116,7 +116,10 @@ localized message and shows it as a toast. Provisional variants:
 |-------------------|----------------------------------------------------------|
 | `NoStickers`      | No component survived detection.                         |
 | `ImageTooLarge`   | Input dimensions exceed the supported limit.             |
-| `TooManyStickers` | More than 30 stickers; output is split into several packs (warning). |
+| `InvalidInput`    | Buffer length does not match `width * height * 4`, or a dimension is 0. |
+
+Splitting more than 30 stickers into several packs is **not** a core error:
+it is handled by the frontend export as an informational notice.
 
 ## 6. Worker
 
@@ -135,7 +138,8 @@ localized message and shows it as a toast. Provisional variants:
   - `/` - the tool. `export const ssr = false`, with an SPA fallback page that
     respects the locale prefix.
   - how-to-use and about pages - prerendered for every locale (listed in
-    `prerender.entries`). Base-locale slugs are finalized in `web-scaffold`.
+    `prerender.entries`). Slugs are translated: `/como-usar` and `/sobre` (pt-BR),
+    `/en/how-to-use` and `/en/about`, `/es/como-usar` and `/es/acerca-de`.
 - **State:** a runes store in `src/lib/state.svelte.ts` holding the source
   image, the detected stickers, the tolerance, the background color, and the
   chosen tray icon.
@@ -165,16 +169,19 @@ localized message and shows it as a toast. Provisional variants:
 - `@vite-pwa/sveltekit` makes the app installable and fully usable offline
   (the wasm and all assets are precached).
 - Output of `bun run build` is a static directory deployable to any static
-  host. The target (GitHub Pages, Vercel, or Netlify) is **undecided**;
-  GitHub Pages would require setting `paths.base`.
+  host. The target is **GitHub Pages**: `paths.base` comes from the
+  `BASE_PATH` environment variable (set by the deploy workflow, empty in dev)
+  and `404.html` is the SPA fallback.
 
 ## 10. Testing strategy (planned)
 
 - **Rust unit tests** with a synthetic image: green background with three
   rectangles of different colors must yield exactly 3 components, in the
   correct row-then-column order.
-- **Integration check:** `web/static/example.jpg` is expected to yield
-  **17 stickers** through the worker.
+- **Integration check (local only):** a private sample image (never
+  committed; kept in the git-ignored `image/` folder) is expected to yield
+  **17 stickers**. Tests read its absolute path from `RUSTICKER_SAMPLE_IMAGE`
+  and are skipped when the variable is unset, so CI never runs them.
 - **i18n check** (`i18n:check`): fails when any locale is missing a key that
   exists in the base locale `pt-BR`.
 

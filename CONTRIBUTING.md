@@ -154,10 +154,27 @@ Mark breaking changes with `!` after the type or scope (for example
 `feat(core)!: return stickers as bounding boxes only`) and explain them in a
 `BREAKING CHANGE:` footer.
 
-### Branches and pull requests
+### Branches and pull requests (Gitflow)
 
-- Name branches `<type>/<short-name>` in English, for example
-  `feat/tray-icon-picker`, `fix/zip-file-names`, or `docs/contributing`.
+The repository follows [Gitflow](https://nvie.com/posts/a-successful-git-branching-model/):
+
+| Branch | Purpose | Created from | Merged into |
+|---|---|---|---|
+| `main` | Released code only; every push deploys to GitHub Pages | — | — |
+| `develop` | Integration branch; all feature work lands here | `main` | — |
+| `feature/<name>` | One OpenSpec change or one focused piece of work | `develop` | `develop` (PR) |
+| `release/<x.y.z>` | Stabilize a release: version bump, CHANGELOG, fixes only | `develop` | `main` (tagged `vX.Y.Z`) and back into `develop` |
+| `hotfix/<x.y.z>` | Urgent fix to a released version | `main` | `main` (tagged) and `develop` |
+
+- Name feature branches after the OpenSpec change they implement, e.g.
+  `feature/core-detection`. Other work uses a short English name, e.g.
+  `feature/zip-file-names`.
+- Never commit directly to `main` or `develop`; open a pull request.
+- Parallel work uses one git worktree per feature branch, e.g.
+  `git worktree add ../Rusticker-wt/core-detection -b feature/core-detection develop`.
+  Git-ignored files (such as the local `image/` samples) are not present in a
+  worktree; tests that need the sample image read its path from
+  `RUSTICKER_SAMPLE_IMAGE`.
 - Keep pull requests **small and focused**: one change, one purpose. Split
   unrelated refactors into their own PRs.
 - Describe what changed and why, and link the related OpenSpec change if

@@ -51,6 +51,17 @@ feat(core): detect stickers with 8-connected components
 fix(web): keep locale prefix when switching theme
 ```
 
+## Branching: Gitflow
+
+- `main` holds released code only (each push deploys); `develop` is the
+  integration branch. Never commit directly to either.
+- Implement each OpenSpec change on `feature/<change-name>`, created from
+  `develop` (one git worktree per feature when working in parallel), and merge
+  back into `develop` through a pull request.
+- Releases go through `release/<x.y.z>` (from `develop`, merged into `main`
+  with a `vX.Y.Z` tag and back into `develop`); urgent fixes through
+  `hotfix/<x.y.z>` from `main`. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Workflow: OpenSpec
 
 Non-trivial work goes through [OpenSpec](https://github.com/Fission-AI/OpenSpec):

@@ -12,6 +12,9 @@ web/.svelte-kit/
 web/build/
 vite.config.*.timestamp-*
 
+# Local-only sample images (private; never commit)
+image/
+
 # Environment
 .env
 .env.*

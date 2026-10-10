@@ -107,22 +107,31 @@ Add an existing shadcn-svelte component with
 
 ## Roadmap
 
-Work is organized as [OpenSpec](openspec/) changes, in this order. Changes 2
-and 3 are independent of each other.
+Work is organized as [OpenSpec](openspec/) changes, implemented in parallel
+waves (each change on its own `feature/<change>` branch and git worktree, merged into `develop`): **A** = 2 and 3; **B** = 4, 5
+and 8; **C** = 6 and 7. See each change's proposal under
+[openspec/changes/](openspec/changes/) for its dependencies and file ownership.
 
 | #  | Change              | Scope                                                                                         | Status      |
 |----|---------------------|-----------------------------------------------------------------------------------------------|-------------|
-| 1  | `project-bootstrap` | Docs, config, repository hygiene, toolchain pin                                               | In progress |
+| 1  | `project-bootstrap` | Docs, config, repository hygiene, toolchain pin                                               | Done        |
 | 2  | `core-detection`    | Rust crate with synthetic-image tests, Cargo workspace, CI Rust job                           | Planned     |
-| 3  | `web-scaffold`      | SvelteKit app, Tailwind, Paraglide, shadcn-svelte, adapter-static, theme, icons, route slugs, hosting | Planned |
-| 4  | `design-tokens`     | Theme tokens, transparency checkerboard, `/_design` living documentation route                | Planned     |
-| 5  | `wasm-worker`       | Comlink worker; `web/static/example.jpg` yields 17 stickers                                   | Planned     |
-| 6  | `tool-ui`           | DropZone, Preview, Controls, Grid, LanguageSwitcher, ThemeToggle                              | Planned     |
+| 3  | `web-scaffold`      | SvelteKit app, Tailwind, Paraglide, adapter-static, localized routes, `i18n:check`, CI, GitHub Pages deploy | Planned |
+| 4  | `design-tokens`     | shadcn-svelte, theme tokens, checkerboard, ThemeToggle, LanguageSwitcher, `/_design` route    | Planned     |
+| 5  | `wasm-worker`       | Comlink worker, detector API + mock; local sample image yields 17 stickers                    | Planned     |
+| 6  | `tool-ui`           | DropZone, Preview, Controls, Grid, editor state                                               | Planned     |
 | 7  | `whatsapp-export`   | WEBP up to about 100 KB, packs of 3 to 30 stickers, 96×96 tray icon, `.zip`                   | Planned     |
-| 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, `i18n:check` in CI                     | Planned     |
+| 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Planned     |
 
-The app will also have how-to-use and about pages (slugs to be finalized in
-`web-scaffold`). Component and type names in the docs are provisional until the
+The site is hosted on GitHub Pages. Routes use translated slugs:
+
+| Page       | pt-BR (base, no prefix) | en               | es              |
+|------------|-------------------------|------------------|-----------------|
+| Tool       | `/`                     | `/en`            | `/es`           |
+| How to use | `/como-usar`            | `/en/how-to-use` | `/es/como-usar` |
+| About      | `/sobre`                | `/en/about`      | `/es/acerca-de` |
+
+ Component and type names in the docs are provisional until the
 change that introduces them.
 
 **Later (not planned yet):**

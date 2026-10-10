@@ -195,8 +195,8 @@ the Paraglide/inlang project settings. Nothing else should need to change.
 ### Routing and detection
 
 - Non-base locales get a URL prefix (`/en/...`, `/es/...`); the base locale is
-  unprefixed. Translated slugs are optional; the base slugs for the how-to-use
-  and about pages are finalized in `web-scaffold`.
+  unprefixed. Slugs are translated: `/como-usar`, `/en/how-to-use`,
+  `/es/como-usar`; `/sobre`, `/en/about`, `/es/acerca-de`.
 - **Detection order:** URL → saved preference (localStorage/cookie) → browser
   language → `pt-BR`.
 
@@ -240,7 +240,7 @@ Never format numbers by hand.
 ### Errors from the Rust core
 
 The wasm core returns **codes only**, never text (`NoStickers`,
-`ImageTooLarge`, `TooManyStickers` — *provisional*). The frontend maps each
+`ImageTooLarge`, `InvalidInput`; the frontend adds `WorkerFailed`). The frontend maps each
 code to a message (e.g. `NoStickers` → `m.error_no_stickers()`) and shows it
 with a Sonner toast. An unmapped code falls back to a generic error message.
 
@@ -252,5 +252,5 @@ They never depend on the active language.
 ### Missing-key check
 
 `bun run i18n:check` fails if any locale lacks a key present in `pt-BR` (the
-base). It runs in CI (wired in `pwa-seo`) and should be run before committing
+base). It runs in CI (wired in `web-scaffold`) and should be run before committing
 new messages.
