@@ -1,0 +1,33 @@
+schema: spec-driven
+
+context: |
+  Rusticker: a fully client-side web app that detects stickers on a uniform-color
+  background in a single image, removes the background, and exports
+  WhatsApp-ready sticker packs (512x512 WEBP, <=100 KB, 3-30 per pack, 96x96 PNG tray icon).
+  Privacy constraint: user images never leave the browser; no server, no uploads.
+
+  Monorepo: `core/` is a Rust crate (`rusticker-core`) compiled to WebAssembly with
+  wasm-pack (--target web) + wasm-bindgen, using the `image` and `imageproc` crates (no OpenCV).
+  `web/` is SvelteKit 2 + Svelte 5 runes + TypeScript + Vite, built with adapter-static.
+  The wasm runs in a Web Worker via Comlink. UI is built on shadcn-svelte
+  (Bits UI + Tailwind CSS v4); i18n uses Paraglide JS with locales pt-BR (base), en, es.
+  Package manager and runtime: Bun only (bun / bunx; never npm / npx).
+
+  Conventions: all repository content (code, docs, commits, specs) is English; end-user
+  text exists only in Paraglide message catalogs. Conventional Commits. Rust never returns
+  user-facing text, only error/warning codes. See AGENTS.md, ARCHITECTURE.md, DESIGN.md.
+
+rules:
+  proposal:
+    - State explicitly whether the change touches `core/`, `web/`, or both.
+    - List out-of-scope items under What Changes when the brief could be read as including them.
+  specs:
+    - Describe behavior, never libraries or frameworks.
+    - Describe Rust-core failures as error codes, never as user-facing messages.
+    - For user-facing text, require it to exist in every supported locale rather than quoting it.
+  design:
+    - Respect the design-system and i18n rules in DESIGN.md; justify any new UI primitive.
+    - Keep the client-side-only privacy constraint; call out anything that could send user data off-device.
+  tasks:
+    - Every task states how to verify it, using `cargo` or `bun run` commands where applicable.
+    - After any task that changes `core/`, include rebuilding the wasm package and reinstalling it in `web/`.

@@ -1,0 +1,85 @@
+# AGENTS.md
+
+Instructions for AI coding agents (and humans) working in this repository.
+Read this file before making any change.
+
+## Project in one paragraph
+
+Rusticker is a fully client-side web app that takes one image containing many
+stickers on a uniform background (e.g. chroma-key green), detects each sticker,
+removes the background, and exports a WhatsApp-ready sticker pack. Image
+processing runs in Rust compiled to WebAssembly inside a Web Worker; the UI is
+SvelteKit (static, no server). **User images never leave the browser.**
+
+## Language policy
+
+- **Everything in the repository is English**: identifiers, file and directory
+  names, code comments, documentation, commit messages, branch names, and
+  OpenSpec artifacts (proposals, specs, designs, tasks).
+  - Use `Sticker`, `detect`, `Grid.svelte` — never `Figurinha`, `detectar`,
+    `Grade.svelte`.
+- **End-user text is the only exception**, and it lives exclusively in the
+  localized message catalogs (`web/messages/<locale>.json`, Paraglide). Never
+  hardcode user-visible strings in components — including design-system
+  components, `aria-label`s, `alt` text, page titles, and meta descriptions.
+- **Talk to the developer in their language.** Reply in whatever language the
+  developer writes to you (e.g. Portuguese in, Portuguese out), while every
+  file, commit, or spec you produce stays in English.
+
+## Tooling rules
+
+- **Bun only** for JavaScript: `bun install`, `bun run <script>`, `bunx <bin>`.
+  Never use `npm`, `npx`, `pnpm`, or `yarn`. Commit `bun.lock`.
+- **Rust**: the toolchain is pinned in `rust-toolchain.toml`. Code must pass
+  `cargo fmt` and `cargo clippy -- -D warnings`.
+- **WebAssembly**: after any change in `core/`, rebuild and reinstall —
+  `wasm-pack build core --target web`, then `bun install` in `web/` (the local
+  `file:../core/pkg` dependency is copied, not linked). The `build:wasm` script
+  does both.
+- **Git hooks** are managed with [prek](https://github.com/j178/prek) (a
+  drop-in for pre-commit; same `.pre-commit-config.yaml`).
+
+## Commits
+
+[Conventional Commits](https://www.conventionalcommits.org/) are enforced by a
+commit-msg hook. Use types such as `feat`, `fix`, `docs`, `chore`, `refactor`,
+`test`, `ci`, `build`, `perf`, with an optional scope (`core`, `web`, `i18n`,
+`ui`, `openspec`):
+
+```text
+feat(core): detect stickers with 8-connected components
+fix(web): keep locale prefix when switching theme
+```
+
+## Workflow: OpenSpec
+
+Non-trivial work goes through [OpenSpec](https://github.com/Fission-AI/OpenSpec):
+
+1. Explore (`/opsx:explore`) → propose a change (`/opsx:propose`), which
+   creates `openspec/changes/<name>/` with proposal, specs, design, and tasks.
+2. Implement it (`/opsx:apply <name>`), checking off tasks as they are verified.
+3. Archive it (`/opsx:archive <name>`), merging its specs into `openspec/specs/`.
+
+`openspec/specs/` is the source of truth for current behavior. Do not
+implement behavior that contradicts a spec without changing the spec first.
+
+## Hard rules (architecture)
+
+- The Rust core **never returns user-facing text**. Errors and warnings are
+  codes/enums (`NoStickers`, `ImageTooLarge`, …); the frontend translates them.
+- The UI uses **only design-system components and theme tokens** — no raw hex
+  colors, magic pixel values, or ad-hoc radii. Use Tailwind logical utilities
+  (`ms-*`, `me-*`, `ps-*`, `pe-*`, `start-*`, `end-*`), never `ml/mr/pl/pr/left/right`.
+- Output file names are locale-neutral (`rusticker-pack-1.zip`, `sticker_01.webp`).
+- No network calls with user data. Ever.
+
+## Where to find things
+
+| Topic                                              | Document                               |
+|----------------------------------------------------|----------------------------------------|
+| What the product is, commands, roadmap             | [README.md](README.md)                 |
+| Layout, data flow, detection algorithm, Rust ↔ JS  | [ARCHITECTURE.md](ARCHITECTURE.md)     |
+| Design system, tokens, accessibility, i18n         | [DESIGN.md](DESIGN.md)                 |
+| Setup, hooks, adding a locale or a UI component    | [CONTRIBUTING.md](CONTRIBUTING.md)     |
+| Privacy guarantees and vulnerability reporting     | [SECURITY.md](SECURITY.md)             |
+| Current behavior contracts                         | [openspec/specs/](openspec/specs/)     |

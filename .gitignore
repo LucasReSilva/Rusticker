@@ -1,0 +1,33 @@
+# Rust
+target/
+
+# Generated WebAssembly package (built by wasm-pack)
+core/pkg/
+
+# JavaScript dependencies (bun.lock IS versioned)
+node_modules/
+
+# SvelteKit / Vite
+web/.svelte-kit/
+web/build/
+vite.config.*.timestamp-*
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.idea/
+*.swp
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Claude Code local settings
+.claude/settings.local.json
