@@ -25,4 +25,4 @@
 - [x] 4.1 Install hooks with `prek install -t pre-commit -t commit-msg`; verify `.git/hooks/pre-commit` and `.git/hooks/commit-msg` exist
 - [x] 4.2 Stage everything (`git add -A`) and run `git add --renormalize .`; verify `git ls-files --eol` shows `i/lf` for every text file and `git status` lists no build artifacts
 - [x] 4.3 Verify the Conventional Commits hook rejects a bad message: `git commit -m "initial files"` must fail and `git log` must still report no commits
-- [ ] 4.4 Commit with `chore: initial project setup`; verify the commit-msg hook passes and `git log --oneline` shows exactly one commit
+- [x] 4.4 Commit with `chore: initial project setup`; verify the commit-msg hook passes and `git log --oneline` shows exactly one commit
