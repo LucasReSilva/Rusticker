@@ -28,9 +28,13 @@ Later changes edit some of the files created here (`+layout.svelte`, `vite.confi
 
 ## Decisions
 
+### D0. SvelteKit 2 pinned
+
+SvelteKit 2 is pinned; the SvelteKit 3 migration is deferred because `@vite-pwa/sveltekit` (needed by `pwa-seo`) only supports kit `^1`/`^2`. `sv@1.x` scaffolds SvelteKit 3, so the scaffold uses `sv@0.17.1`, the last release that targets SvelteKit 2. Installed at scaffold time: `@sveltejs/kit` 2.70.3 (range `^2.63.0`), `svelte` 5.57.2, `vite` 8.3.4, `@sveltejs/vite-plugin-svelte` 7.3.1, `svelte-check` 4.7.6, and `typescript` 6.0.3. These are all within kit 2's declared peer ranges (`vite ^8`, `typescript ^6`, `vite-plugin-svelte ^7`), and `vite-plugin-pwa` 1.2 (the dependency of `@vite-pwa/sveltekit`) supports Vite 8. The kit config lives in the standard `svelte.config.js`, not in the `sveltekit()` Vite plugin options.
+
 ### D1. Scaffold with the official CLI, then normalize to Bun
 
-From the repo root:
+From the repo root (with `sv@0.17.1`, see D0):
 
 ```sh
 bunx sv create web --template minimal --types ts --install bun --no-add-ons
