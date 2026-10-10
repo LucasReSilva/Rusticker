@@ -17,13 +17,13 @@
 
 ## 2. Static output and base path
 
-- [ ] 2.1 Switch to the static adapter in `svelte.config.js`:
+- [x] 2.1 Switch to the static adapter in `svelte.config.js`:
   - `fallback: '404.html'`, `strict: true`;
   - `paths.base` from `BASE_PATH`, validated so an invalid value throws;
   - `prerender.handleHttpError: 'fail'` and `handleMissingId: 'fail'` (design D2).
 
   Verify that `BASE_PATH=Rusticker bun run build` fails with a clear error and that `BASE_PATH=/Rusticker bun run build` succeeds.
-- [ ] 2.2 Add `src/routes/+layout.ts` (`prerender = true`, `trailingSlash = 'never'`) and the tool `src/routes/+page.ts` (`ssr = false`, `prerender = true`, `trailingSlash = 'always'`). Verify that `bun run build` emits `build/index.html` and `build/404.html`.
+- [x] 2.2 Add `src/routes/+layout.ts` (`prerender = true`, `trailingSlash = 'never'`) and the tool `src/routes/+page.ts` (`ssr = false`, `prerender = true`, `trailingSlash = 'always'`). Verify that `bun run build` emits `build/index.html` and `build/404.html`.
 
 ## 3. Localization core
 
