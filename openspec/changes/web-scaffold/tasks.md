@@ -1,15 +1,15 @@
 ## 1. Branch and scaffold
 
-- [ ] 1.1 Confirm wave and branch. This change is Wave A, on branch `feature/web-scaffold`, created from `develop`. No other change needs to be merged first; it runs in parallel with `core-detection` and must not touch `core/`, `Cargo.toml`, `.github/workflows/rust.yml`, or the root `.gitignore`. Verify with `git branch --show-current`, which prints `feature/web-scaffold`.
-- [ ] 1.2 From the repo root, run `bunx sv create web --template minimal --types ts --install bun --no-add-ons` and record the `sv` version in the PR description. Verify with `cd web && bun run dev`: the default page is served at `http://localhost:5173/`.
-- [ ] 1.3 In `web/`, run `bunx sv add tailwindcss paraglide eslint prettier vitest`. Choose Paraglide languages `pt-BR,en,es` with no demo page, and do not choose a Vitest real-browser component project (design D1). Verify that `bun install` succeeds and that `web/project.inlang/settings.json` and `web/messages/{pt-BR,en,es}.json` exist.
-- [ ] 1.4 Normalize to Bun:
+- [x] 1.1 Confirm wave and branch. This change is Wave A, on branch `feature/web-scaffold`, created from `develop`. No other change needs to be merged first; it runs in parallel with `core-detection` and must not touch `core/`, `Cargo.toml`, `.github/workflows/rust.yml`, or the root `.gitignore`. Verify with `git branch --show-current`, which prints `feature/web-scaffold`.
+- [x] 1.2 From the repo root, run `bunx sv create web --template minimal --types ts --install bun --no-add-ons` and record the `sv` version in the PR description. Verify with `cd web && bun run dev`: the default page is served at `http://localhost:5173/`.
+- [x] 1.3 In `web/`, run `bunx sv add tailwindcss paraglide eslint prettier vitest`. Choose Paraglide languages `pt-BR,en,es` with no demo page, and do not choose a Vitest real-browser component project (design D1). Verify that `bun install` succeeds and that `web/project.inlang/settings.json` and `web/messages/{pt-BR,en,es}.json` exist.
+- [x] 1.4 Normalize to Bun:
   - replace any `npm`/`npx` in the generated scripts with `bun run`/`bunx`;
   - add `"packageManager": "bun@<version>"`;
   - add `src/lib/paraglide/` to `web/.gitignore`, `.prettierignore`, and the ESLint ignores.
 
   Verify that `grep -rn "npm \|npx " web/package.json` prints nothing and that `git status` lists no `src/lib/paraglide` files.
-- [ ] 1.5 Configure the Vitest projects in `vite.config.ts` (design D12, addendum R4):
+- [x] 1.5 Configure the Vitest projects in `vite.config.ts` (design D12, addendum R4):
   - `server`: Node; includes `src/**/*.{test,spec}.{js,ts}` and `scripts/**/*.{test,spec}.ts`; excludes `*.svelte.{test,spec}.*`;
   - `client`: jsdom; includes `src/**/*.svelte.{test,spec}.{js,ts}`; uses the `browser` resolve condition and `vitest-setup-client.ts`.
 
