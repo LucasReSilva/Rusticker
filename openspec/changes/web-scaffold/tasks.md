@@ -106,7 +106,7 @@
 
 ## 7. CI and deployment
 
-- [ ] 7.1 Add `.github/workflows/web.yml` (design D9, addendum R1):
+- [x] 7.1 Add `.github/workflows/web.yml` (design D9, addendum R1):
   - triggers on push to `main` or `develop` and on PRs targeting either, for `web/**`, `core/**`, `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, and the workflow file;
   - steps in this exact order: checkout; Bun pinned from `web/package.json`; Rust setup, wasm-pack install, and "Build wasm" (`wasm-pack build core --target web`), all guarded by `if: hashFiles('core/Cargo.toml') != ''`; `bun install --frozen-lockfile`; `i18n:compile`; `check`; `lint`; `bun run --if-present lint:design`; `test`; `i18n:check`; build with `BASE_PATH=/Rusticker`; `bun run --if-present seo:check`; `verify:build`.
 
