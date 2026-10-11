@@ -98,6 +98,10 @@ Use `bun run dev:all` for day-to-day development to rebuild the core and refresh
 Bun's copied local package before starting Vite. Use `bun run dev` when the
 installed wasm package is already current.
 
+`web/bunfig.toml` selects Bun's isolated dependency store, avoiding the Windows
+hoisted-linker `EPERM` error for local `file:` packages. Keep this configuration
+when creating a new worktree; rebuild and reinstall after core changes.
+
 | Command | What it does |
 |---------|--------------|
 | `bun run dev` | Starts the Vite dev server |

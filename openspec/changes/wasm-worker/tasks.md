@@ -2,8 +2,8 @@
 
 - [x] 1.1 Work on branch `feature/wasm-worker` (Wave B, own worktree) created from `develop` only after both `core-detection` and `web-scaffold` are merged; runs in parallel with `design-tokens` and `pwa-seo`. Verify `git log develop --oneline` shows both merges and `core/` and `web/` exist in the worktree
 - [x] 1.2 Build the core once: `wasm-pack build core --target web` from the repo root; verify `core/pkg/` contains `rusticker_core.js`, `rusticker_core.d.ts` and `rusticker_core_bg.wasm`, and the `.d.ts` exports `detect`, `Detection` and default `init` as in contract section 2
-- [ ] 1.3 In `web/package.json` add `"rusticker-core": "file:../core/pkg"` and `comlink` to dependencies, `jpeg-js` to devDependencies, and scripts `build:wasm` (`wasm-pack build ../core --target web && bun install`) and `dev:all` (`bun run build:wasm && bun run dev`) without touching other entries; verify `bun run build:wasm` succeeds and `web/node_modules/rusticker-core/rusticker_core_bg.wasm` exists
-- [ ] 1.4 Check lockfile stability: rebuild the wasm (`bun run build:wasm`), then run `bun install --frozen-lockfile` in `web/`; verify it passes (if it fails, record the fallback from design.md Risks and use it in task 6.1)
+- [x] 1.3 In `web/package.json` add `"rusticker-core": "file:../core/pkg"` and `comlink` to dependencies, `jpeg-js` to devDependencies, and scripts `build:wasm` (`wasm-pack build ../core --target web && bun install`) and `dev:all` (`bun run build:wasm && bun run dev`) without touching other entries; verify `bun run build:wasm` succeeds and `web/node_modules/rusticker-core/rusticker_core_bg.wasm` exists
+- [x] 1.4 Check lockfile stability: rebuild the wasm (`bun run build:wasm`), then run `bun install --frozen-lockfile` in `web/`; verify it passes (if it fails, record the fallback from design.md Risks and use it in task 6.1)
 - [x] 1.5 Add the separated `wasm-worker` block to `web/vite.config.ts` (`worker.format: 'es'`, `optimizeDeps.exclude: ['rusticker-core']`) per design.md D1 without reformatting other lines; verify `git diff web/vite.config.ts` shows only the marked block and `bun run dev` starts
 
 ## 2. Detection module (web/src/lib/detection/)
@@ -32,14 +32,25 @@
 
 ## 6. CI, deploy, and base path
 
-- [ ] 6.1 Verify the CI wiring pre-wired by `web-scaffold` (design D10; do NOT edit `.github/workflows/*`): on the pushed branch the `web` workflow's "Build wasm" step runs (not skipped) before `bun install --frozen-lockfile`, `rusticker-core` resolves, and check, lint, test (integration suite reported as skipped), i18n:check and build all pass; also confirm `git diff develop --stat -- .github/` is empty and that `deploy.yml` has the same guarded wasm steps (report any defect to the `web-scaffold` owner instead of patching)
+- [x] 6.1 Verify the CI wiring pre-wired by `web-scaffold` (design D10; do NOT edit `.github/workflows/*`): on the pushed branch the `web` workflow's "Build wasm" step runs (not skipped) before `bun install --frozen-lockfile`, `rusticker-core` resolves, and check, lint, test (integration suite reported as skipped), i18n:check and build all pass; also confirm `git diff develop --stat -- .github/` is empty and that `deploy.yml` has the same guarded wasm steps (report any defect to the `web-scaffold` owner instead of patching)
 - [x] 6.2 Verify the base path: `BASE_PATH=/Rusticker bun run build` then serve `web/build` under `/Rusticker` (e.g. `bun run preview`), confirm `web/build` holds the wasm as a hashed file (so `pwa-seo` can precache it), and that no same-origin request leaves the base path (automated in task 6.4, `base-path.spec.ts`).
 - [x] 6.3 Run the full web pipeline locally: `bun run check`, `bun run lint`, `bun run test`, `bun run build`, `bun run i18n:check` in `web/`; verify all pass
 
-- [ ] 6.4 Add Playwright specs under `web/e2e/wasm-worker/`, using the `dev` project that web-scaffold pre-wires (no config change): `detection.dev.spec.ts` (dev project: a synthetic image drawn in the test gives the expected count, no main-thread gap over 200 ms during detection, `NoStickers` and cancelled-result logs, one wasm request across three runs); `sample-image.dev.spec.ts` (dev project: 17 stickers from `RUSTICKER_SAMPLE_IMAGE`, skipped when unset); `production.spec.ts` (default project: `/_detection` is 404); `base-path.spec.ts` (default project, `BASE_PATH=/Rusticker`: same-origin requests stay under the base path). Verify `bun run test:e2e` passes locally and in the pre-wired CI step.
+- [x] 6.4 Add Playwright specs under `web/e2e/wasm-worker/`, using the `dev` project that web-scaffold pre-wires (no config change): `detection.dev.spec.ts` (dev project: a synthetic image drawn in the test gives the expected count, no main-thread gap over 200 ms during detection, `NoStickers` and cancelled-result logs, one wasm request across three runs); `sample-image.dev.spec.ts` (dev project: 17 stickers from `RUSTICKER_SAMPLE_IMAGE`, skipped when unset); `production.spec.ts` (default project: `/_detection` is 404); `base-path.spec.ts` (default project, `BASE_PATH=/Rusticker`: same-origin requests stay under the base path). Verify `bun run test:e2e` passes locally and in the pre-wired CI step.
 
 ## 7. Documentation
 
 - [x] 7.1 Update `ARCHITECTURE.md` section 3 (data flow: worker path `src/lib/detection/worker.ts`, input copy + transfer, latest-wins, `WorkerFailed`) and section 6 (worker: `?url` + `init`, init once, recycle on failure, build `core/pkg` before `bun install`), touching no other section; verify the sections describe the implemented module
 - [ ] 7.2 Update the `CONTRIBUTING.md` setup section and the `README.md` quick start: in any fresh clone or worktree, run `bun run build:wasm` in `web/` (wasm-pack first, then `bun install`) before anything else; `dev:all` for day-to-day work; verify by following the steps in a fresh worktree (`bun run build:wasm`, then `bun run dev` starts)
 - [x] 7.3 Add one bullet under `## [Unreleased]` in `CHANGELOG.md` for the detection runtime; verify `git diff develop --stat` lists only ARCHITECTURE.md, CONTRIBUTING.md, README.md, CHANGELOG.md among docs, plus this change's own files
+
+## Verification evidence
+
+- Windows: the normal `bun run build:wasm` and subsequent
+  `bun install --frozen-lockfile` pass with `web/bunfig.toml` selecting the
+  isolated linker. The compiled and installed wasm SHA-256 values match;
+  `bun.lock` is unchanged.
+- [Web CI run 38115665270](https://github.com/lucasresilva/Rusticker/actions/runs/38115665270)
+  passed the guarded wasm build before frozen installation, 153 unit tests
+  (two sample tests skipped), and 23 E2E tests (one private sample skipped).
+  Local E2E also passed all 24 tests with the private sample configured.
