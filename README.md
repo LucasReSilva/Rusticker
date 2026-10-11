@@ -180,27 +180,16 @@ and 8; **C** = 6 and 7. See each change's proposal under
 
 | #  | Change              | Scope                                                                                         | Status      |
 |----|---------------------|-----------------------------------------------------------------------------------------------|-------------|
-| 1  | `project-bootstrap` | Docs, config, repository hygiene, toolchain pin                                               | Done        |
-| 2  | `core-detection`    | Rust crate with synthetic-image tests, Cargo workspace, CI Rust job                           | Done        |
-| 3  | `web-scaffold`      | SvelteKit app, Tailwind, Paraglide, adapter-static, localized routes, `i18n:check`, CI, GitHub Pages deploy | Done        |
-| 4  | `design-tokens`     | shadcn-svelte, theme tokens, `@lucide/svelte` icons, checkerboard, ThemeToggle, LanguageSwitcher, `/_design` route | Integrated in develop; CI verified |
-| 5  | `wasm-worker`       | Comlink worker, detector API + mock; local sample image yields 17 stickers                    | Integrated in develop; CI and fresh setup verified |
-| 6  | `tool-ui`           | DropZone, Preview, Controls, Grid, editor state                                               | Integrated in develop; CI verified |
-| 7  | `whatsapp-export`   | WEBP up to about 100 KB, packs of 3 to 30 stickers, 96×96 tray icon, `.zip`                   | Integrated in develop; end-to-end CI verified |
-| 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Integrated in develop; release verification pending |
+| 1  | `project-bootstrap` | Docs, config, repository hygiene, toolchain pin                                               | Archived    |
+| 2  | `core-detection`    | Rust crate with synthetic-image tests, Cargo workspace, CI Rust job                           | Archived    |
+| 3  | `web-scaffold`      | SvelteKit app, Tailwind, Paraglide, adapter-static, localized routes, `i18n:check`, CI, GitHub Pages deploy | Archived    |
+| 4  | `design-tokens`     | shadcn-svelte, theme tokens, `@lucide/svelte` icons, checkerboard, ThemeToggle, LanguageSwitcher, `/_design` route | Archived    |
+| 5  | `wasm-worker`       | Comlink worker, detector API + mock; local sample image yields 17 stickers                    | Archived    |
+| 6  | `tool-ui`           | DropZone, Preview, Controls, Grid, editor state                                               | Archived    |
+| 7  | `whatsapp-export`   | WEBP up to about 100 KB, packs of 3 to 30 stickers, 96×96 tray icon, `.zip`                   | Archived    |
+| 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Archived    |
 
-Wave B (changes 4, 5 and 8) is integrated into `develop` through
-[PR #9](https://github.com/LucasReSilva/Rusticker/pull/9), with 233 unit
-tests and 63 browser tests passing in the combined CI. Wave C (`tool-ui` and
-`whatsapp-export`) is integrated into `develop` through
-[PR #11](https://github.com/LucasReSilva/Rusticker/pull/11) and
-[PR #10](https://github.com/LucasReSilva/Rusticker/pull/10). The final
-[CI run](https://github.com/LucasReSilva/Rusticker/actions/runs/38152281333)
-passed 321 unit tests and 73 browser tests, verifying loading, detection,
-curation and valid ZIP downloads, offline export and language persistence.
-No release was created. `web-scaffold` and `pwa-seo` retain their live deployment
-verification tasks for the eventual release; optional manual visual checks
-remain unchecked in the design and tool UI changes.
+All roadmap changes (1 through 8) are fully implemented, verified, and archived under `openspec/changes/archive/`. Their specifications are active as authoritative contracts under `openspec/specs/`. Wave B (`design-tokens`, `wasm-worker`, `pwa-seo`) and Wave C (`tool-ui`, `whatsapp-export`) are merged into `develop` with all unit, lint, design, build and e2e checks passing. The end-to-end user flow (load image, detect stickers, curate, export WhatsApp sticker pack) is functionally verified and ready for release.
 
 The Windows local-package install failure is resolved by the isolated Bun
 linker configured in `web/bunfig.toml` on the worker branch. A fresh worktree
