@@ -21,6 +21,13 @@ export default defineConfig({
 		})
 		// /paraglide
 	],
+	// --- wasm-worker: detection worker + wasm (owned by change wasm-worker) ---
+	// Module worker, matching `new Worker(..., { type: 'module' })`.
+	worker: { format: 'es' },
+	// Keep the wasm-bindgen glue un-prebundled in dev; the binary itself is
+	// loaded through a `?url` import (see src/lib/detection/worker.ts).
+	optimizeDeps: { exclude: ['rusticker-core'] },
+	// --- end wasm-worker ---
 	test: {
 		expect: { requireAssertions: true },
 		// Two fixed projects. Later changes only add test files that follow
