@@ -5,6 +5,7 @@
 	"tool_dropzone_hint": "Arraste uma imagem, clique para escolher ou cole com Ctrl+V ou Cmd+V.",
 	"tool_dropzone_replace": "Substituir imagem",
 	"tool_dropzone_dragging": "Solte a imagem aqui",
+	"dropzone_try_sample": "Testar com exemplo",
 	"tool_preview_alt": "Folha original de figurinhas",
 	"tool_preview_heading": "Prévia da imagem",
 	"tool_eyedropper_label": "Escolher cor de fundo",

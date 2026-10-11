@@ -7,13 +7,6 @@ name: Deploy
 on:
   push:
     branches: [main]
-    paths:
-      - 'web/**'
-      - 'core/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'rust-toolchain.toml'
-      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 permissions:
