@@ -17,8 +17,8 @@
 
 ## 3. Localized error messages
 
-- [ ] 3.1 Add `error_no_stickers`, `error_image_too_large`, `error_invalid_input`, `error_worker_failed` to `web/messages/pt-BR.json`, `en.json` and `es.json` with the translations in design D5 (only `error_*` keys added); verify `bun run i18n:check` passes
-- [ ] 3.2 Write `messages.ts` with `detectionErrorMessage(code)` covering every `DetectionErrorCode` (exhaustive `switch` so a new code fails type-check) and a unit test asserting a non-empty message for each code; verify `bun run check` and `bun run test` pass
+- [x] 3.1 Add `error_no_stickers`, `error_image_too_large`, `error_invalid_input`, `error_worker_failed` to `web/messages/pt-BR.json`, `en.json` and `es.json` with the translations in design D5 (only `error_*` keys added); verify `bun run i18n:check` passes
+- [x] 3.2 Write `messages.ts` with `detectionErrorMessage(code)` covering every `DetectionErrorCode` (exhaustive `switch` so a new code fails type-check) and a unit test asserting a non-empty message for each code; verify `bun run check` and `bun run test` pass
 
 ## 4. Local integration test (sample image, never committed)
 
