@@ -62,7 +62,7 @@ Rusticker/
                                                      |
        main thread                                   | Comlink call,
   - - - - - - - - - - - - - - - - - - - - - - - - - -|- ArrayBuffer transferred
-       Web Worker (src/lib/worker.ts)                v  as Transferable
+       Web Worker (src/lib/detection/worker.ts)      v  as Transferable
                                      +-------------------------------------+
                                      | wasm (initialized once)             |
                                      | detect(rgba, width, height,         |
@@ -85,10 +85,14 @@ Rusticker/
 
 - Lossy WEBP encoding is done by the **browser**, because the `image` crate
   only encodes lossless WEBP.
-- On error, `detect` returns an `ErrorCode`; the UI shows a translated toast.
-- **Allowed simplification:** `detect` may return only the bounding box plus a
-  mask per sticker, and JavaScript performs the crop, alpha, and resize on a
-  canvas. The worker/Comlink boundary stays the same either way.
+- The detector makes one defensive copy of the input before transferring it,
+  keeping the caller's image available for subsequent detections. Sticker
+  buffers are transferred back without copying.
+- Latest-wins scheduling keeps one in-flight request and one pending request.
+  Superseded callers receive `AbortError`; stale results are discarded and
+  superseded pending requests are never computed.
+- Core failures pass through as codes; unexpected failures become
+  `WorkerFailed`. The UI translates codes through the message catalogs.
 
 ## 4. Detection algorithm
 
@@ -149,13 +153,19 @@ never by Rust.
 
 ## 6. Worker
 
-- Created with
-  `new Worker(new URL('$lib/worker.ts', import.meta.url), { type: 'module' })`.
-- Initializes the wasm module **once** and exposes `detect` through Comlink.
-- Pixel buffers cross the boundary as `Transferable` (no copies) in both
-  directions.
-- The wasm, the worker, and canvas APIs exist only in the browser, which is why
-  the tool route disables SSR.
+- `createDetector()` eagerly creates a module worker from
+  `src/lib/detection/worker.ts`; importing the module never accesses `Worker`.
+- The worker imports the wasm binary with `?url` and initializes it **once**
+  with `init({ module_or_path: wasmUrl })`. Vite emits a hashed asset under
+  the configured base path, suitable for offline precaching.
+- Comlink exposes detection as a tagged success/error result. Every native
+  detection result is freed in `finally`, and sticker buffers are transferred
+  back. The main thread copies the input once before transferring it.
+- Any `WorkerFailed` poisons and terminates the worker. The next detection
+  creates a fresh worker; disposal cancels pending work and releases resources.
+- Build `core/pkg` before installing web dependencies in a fresh clone or
+  worktree: `bun run build:wasm` in `web/` runs wasm-pack before `bun install`.
+  Bun copies the local package, so rebuild and reinstall after core changes.
 
 ## 7. Frontend structure
 

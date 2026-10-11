@@ -97,5 +97,9 @@
 	"design_sample_specimen": "Aa",
 	"pwa_name": "Rusticker: WhatsApp stickers",
 	"pwa_short_name": "Rusticker",
-	"pwa_description": "Cut a whole sticker sheet into a WhatsApp-ready pack. Works offline, and your images never leave your device."
+	"pwa_description": "Cut a whole sticker sheet into a WhatsApp-ready pack. Works offline, and your images never leave your device.",
+	"error_no_stickers": "No stickers found. Pick the background color with the eyedropper or adjust the tolerance.",
+	"error_image_too_large": "Image too large. Reduce its resolution and try again.",
+	"error_invalid_input": "This image could not be read. Try another file.",
+	"error_worker_failed": "Processing failed. Reload the page and try again."
 }
