@@ -10,8 +10,8 @@
 
 ## 3. URL and site helpers (`web/src/lib/seo/`)
 
-- [ ] 3.1 Create `site.ts`: `SITE_URL` from the `__SITE_URL__` define (trailing slash stripped) and add the define in a separated `// --- pwa-seo ---` block of `web/vite.config.ts`, reading `process.env.PUBLIC_SITE_URL` with fallback `http://localhost:4173${BASE_PATH}` and a build warning when unset. Verify: `bun run build` prints the warning without the env var and not with `PUBLIC_SITE_URL=https://example.github.io/Rusticker`.
-- [ ] 3.2 Create `urls.ts` (`PUBLIC_PAGES`, `localizedPath`, `pageFromUrl`, `absoluteUrl`, `alternates`) on top of Paraglide's runtime. Add `urls.test.ts` asserting the full 9-URL contract table (tool URLs `/`, `/en/`, `/es/` with trailing slash, content pages without), single base path in absolute URLs, `x-default` = `pt-BR` URL, and that alternates are identical across a page's variants. Verify: `bun run test` passes.
+- [x] 3.1 Create `site.ts`: `SITE_URL` from the `__SITE_URL__` define (trailing slash stripped) and add the define in a separated `// --- pwa-seo ---` block of `web/vite.config.ts`, reading `process.env.PUBLIC_SITE_URL` with fallback `http://localhost:4173${BASE_PATH}` and a build warning when unset. Verify: `bun run build` prints the warning without the env var and not with `PUBLIC_SITE_URL=https://example.github.io/Rusticker`.
+- [x] 3.2 Create `urls.ts` (`PUBLIC_PAGES`, `localizedPath`, `pageFromUrl`, `absoluteUrl`, `alternates`) on top of Paraglide's runtime. Add `urls.test.ts` asserting the full 9-URL contract table (tool URLs `/`, `/en/`, `/es/` with trailing slash, content pages without), single base path in absolute URLs, `x-default` = `pt-BR` URL, and that alternates are identical across a page's variants. Verify: `bun run test` passes.
 
 ## 4. Manifests and icons
 
