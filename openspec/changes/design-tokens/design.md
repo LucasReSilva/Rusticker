@@ -161,7 +161,7 @@ The exact `design_section_*` / `design_sample_*` set is finalized while building
 
 ### D12. E2E tests (Playwright) for browser behavior
 
-Playwright specs live in `web/e2e/design-tokens/` and cover what only a real browser proves: theme persistence and system follow (`colorScheme` emulation), language switching without reload, focus rings, reduced motion, the header on all 9 URLs, the 320px overflow check, and `/_design` returning 404 in production. Specs run in the default project (build plus preview under `BASE_PATH=/Rusticker`), except the `/_design` specs, which run in the `dev` project (`bun run dev`) that `wasm-worker` adds. Vitest keeps the contrast math, the token parser and the lint rules. Only synthetic data; no fixtures are committed.
+Playwright specs live in `web/e2e/design-tokens/` and cover what only a real browser proves: theme persistence and system follow (`colorScheme` emulation), language switching without reload, focus rings, reduced motion, the header on all 9 URLs, the 320px overflow check, and `/_design` returning 404 in production. Specs run in the default project (build plus preview under `BASE_PATH=/Rusticker`), except the `/_design` specs, which run in the `dev` project (`bun run dev`) that `wasm-worker` adds. Locale switching in e2e goes through the real LanguageSwitcher: the locale-switch specs that web-scaffold wrote against the build-time hook `window.__rusticker_e2e.switchLocale` (enabled by `VITE_E2E_HOOKS`) are moved to clicking the switcher, and the hook and the flag are removed from `web/src/hooks.client.ts` and `web/playwright.config.ts`. Vitest keeps the contrast math, the token parser and the lint rules. Only synthetic data; no fixtures are committed.
 
 ## Risks / Trade-offs
 
