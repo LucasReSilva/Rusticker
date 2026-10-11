@@ -15,9 +15,9 @@
 
 ## 4. Manifests and icons
 
-- [ ] 4.1 Create `web/static/icons/icon.svg` (placeholder mark, padded for the maskable safe zone) and a `pwa:icons` script running `pwa-assets-generator` (preset `minimal-2023`) into `web/static/icons/`; commit the generated `pwa-192x192.png`, `pwa-512x512.png`, `maskable-icon-512x512.png`, `apple-touch-icon-180x180.png`. Verify: `bun run pwa:icons` regenerates identical files and the maskable icon keeps the mark inside the safe zone (optional manual visual check).
-- [ ] 4.2 Create `manifest.ts` (pure builder: shared `id`/`scope`/`display`/icons/colors under the base path; per-locale `name`/`short_name`/`description`/`lang`/`dir`/`start_url`) with `manifest.test.ts` (identity and scope equal across locales, start URLs `/`, `/en/`, `/es/` under base, `theme_color` `#822DDA`, `background_color` `#FFFFFF`, texts equal to catalog values). Verify: `bun run test` passes.
-- [ ] 4.3 Add prerendered endpoint `src/routes/manifest-[locale].webmanifest/+server.ts` (`prerender = true`, `entries()` from Paraglide `locales`, `Content-Type: application/manifest+json`). Verify: after `bun run build`, `build/manifest-pt-BR.webmanifest`, `build/manifest-en.webmanifest`, `build/manifest-es.webmanifest` exist and parse as JSON.
+- [x] 4.1 Create `web/static/icons/icon.svg` (placeholder mark, padded for the maskable safe zone) and a `pwa:icons` script running `pwa-assets-generator` (preset `minimal-2023`) into `web/static/icons/`; commit the generated `pwa-192x192.png`, `pwa-512x512.png`, `maskable-icon-512x512.png`, `apple-touch-icon-180x180.png`. Verify: `bun run pwa:icons` regenerates identical files and the maskable icon keeps the mark inside the safe zone (optional manual visual check).
+- [x] 4.2 Create `manifest.ts` (pure builder: shared `id`/`scope`/`display`/icons/colors under the base path; per-locale `name`/`short_name`/`description`/`lang`/`dir`/`start_url`) with `manifest.test.ts` (identity and scope equal across locales, start URLs `/`, `/en/`, `/es/` under base, `theme_color` `#822DDA`, `background_color` `#FFFFFF`, texts equal to catalog values). Verify: `bun run test` passes.
+- [x] 4.3 Add prerendered endpoint `src/routes/manifest-[locale].webmanifest/+server.ts` (`prerender = true`, `entries()` from Paraglide `locales`, `Content-Type: application/manifest+json`). Verify: after `bun run build`, `build/manifest-pt-BR.webmanifest`, `build/manifest-en.webmanifest`, `build/manifest-es.webmanifest` exist and parse as JSON.
 
 ## 5. Service worker
 
