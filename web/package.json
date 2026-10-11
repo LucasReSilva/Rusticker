@@ -24,6 +24,7 @@
 		"changelog:preview": "git-cliff --workdir .. --unreleased",
 		"version:sync": "bun scripts/sync-version.ts",
 		"version:check": "bun scripts/sync-version.ts --check",
+		"demo:record": "node scripts/record-demo.mjs",
 		"dev:all": "bun run build:wasm && bun run dev",
 		"build:wasm": "wasm-pack build ../core --target web && bun install"
 	},

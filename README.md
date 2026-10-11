@@ -1,10 +1,14 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Rusticker Logo" width="160" />
+  <img src="assets/logo.png" alt="Rusticker Logo" width="128" />
 </p>
 
 # Rusticker
 
 Cut a whole sheet of stickers into a WhatsApp sticker pack, right in your browser.
+
+<p align="center">
+  <img src="assets/demo.gif" alt="Rusticker Demo" width="800" />
+</p>
 
 ## What it does
 
@@ -135,6 +139,7 @@ Scripts in `web/package.json`:
 | `bun run changelog:preview` | Previews the next changelog section using `git-cliff` across the workspace | `release-automation` |
 | `bun run version:sync`  | Synchronizes `web/package.json` version from `core/Cargo.toml` | `release-automation` |
 | `bun run version:check` | Verifies that `web/package.json` and `core/Cargo.toml` have matching versions | `release-automation` |
+| `bun run demo:record`   | Records automated demo of the app with Playwright and generates `assets/demo.gif` | `developer-tooling` |
 
 > **Note:** the web app depends on the core through `"rusticker-core": "file:../core/pkg"`,
 > which Bun **copies** rather than links. Re-run `bun install` in `web/` after
