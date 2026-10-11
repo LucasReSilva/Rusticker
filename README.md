@@ -129,10 +129,10 @@ and 8; **C** = 6 and 7. See each change's proposal under
 | 2  | `core-detection`    | Rust crate with synthetic-image tests, Cargo workspace, CI Rust job                           | Done        |
 | 3  | `web-scaffold`      | SvelteKit app, Tailwind, Paraglide, adapter-static, localized routes, `i18n:check`, CI, GitHub Pages deploy | Done        |
 | 4  | `design-tokens`     | shadcn-svelte, theme tokens, `@lucide/svelte` icons, checkerboard, ThemeToggle, LanguageSwitcher, `/_design` route | Implemented and CI verified; integration pending |
-| 5  | `wasm-worker`       | Comlink worker, detector API + mock; local sample image yields 17 stickers                    | Implemented; fresh setup verified; integration pending |
+| 5  | `wasm-worker`       | Comlink worker, detector API + mock; local sample image yields 17 stickers                    | Implemented and CI verified; fresh setup verified; integration pending |
 | 6  | `tool-ui`           | DropZone, Preview, Controls, Grid, editor state                                               | Planned     |
 | 7  | `whatsapp-export`   | WEBP up to about 100 KB, packs of 3 to 30 stickers, 96×96 tray icon, `.zip`                   | Planned     |
-| 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Implemented; integration and release verification pending |
+| 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Implemented and CI verified; integration and release verification pending |
 
 Roadmap status distinguishes feature-branch work from integration: changes 4,
 5, and 8 live in separate worktrees and have not yet been merged into
@@ -146,9 +146,11 @@ The Windows local-package install failure is resolved by the isolated Bun
 linker configured in `web/bunfig.toml` on the worker branch. A fresh worktree
 successfully builds and installs wasm without a manual copy; the generated
 and installed wasm hashes match. The private sample yields 17 stickers.
-Combined validation also passes 231 unit tests and the production build,
-including one wasm asset in the offline precache. Browser integration checks
-and final feature-branch CI are being completed before integration.
+Combined validation passes the unit tests and production build, including
+one wasm asset in the offline precache. Browser checks cover all localized
+pages, accessible controls, worker detection, and a fresh worker initialized
+offline. The combined implementation and CI evidence are available in
+[integration PR #9](https://github.com/LucasReSilva/Rusticker/pull/9).
 
 The site is hosted on GitHub Pages at
 <https://lucasresilva.github.io/Rusticker/>. The deploy workflow builds it with
