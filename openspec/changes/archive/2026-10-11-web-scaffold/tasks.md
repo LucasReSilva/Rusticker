@@ -114,7 +114,7 @@
   - the YAML parses (`bunx yaml-lint .github/workflows/web.yml`);
   - `bun run --if-present lint:design` exits 0 locally;
   - on the PR, the job passes and the three wasm steps show as skipped.
-- [ ] 7.2 Add `.github/workflows/deploy.yml` (design D9):
+- [x] 7.2 Add `.github/workflows/deploy.yml` (design D9):
   - triggers on push to `main` (same path filters) and on `workflow_dispatch`;
   - Pages permissions and concurrency;
   - the same three guarded wasm steps before `bun install --frozen-lockfile`;
