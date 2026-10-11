@@ -198,12 +198,12 @@ The core SHALL perform detection purely on the in-memory buffer it receives, wit
 - **THEN** it produces the same result as when the network is available
 
 ### Requirement: Reference sample verification
-The project SHALL provide a local-only check that runs detection on the private reference sample image (2752x1536, green background, 17 stickers in rows of 5, 6, and 6) with the background color sampled from the image and tolerance 50, and expects 17 stickers in reading order. The sample image SHALL NOT be stored in the repository; the check SHALL locate it through the `RUSTICKER_SAMPLE_IMAGE` environment variable and SHALL be skipped, not failed, when the variable is unset.
+The project SHALL provide a verification check that runs detection on the reference sample image with the background color sampled from the image and tolerance 50, and expects the detected stickers in reading order. The reference sample image SHALL be bundled in the repository at `samples/rust-stickers.png` and `web/static/samples/rust-stickers.png` (31 stickers in rows of 8, 8, 7, and 8). When `RUSTICKER_SAMPLE_IMAGE` is provided, the test SHALL use that path (supporting the private reference sample of 17 stickers in rows of 5, 6, and 6); otherwise, it SHALL fall back to the bundled sample image.
 
 #### Scenario: Sample available locally
 - **WHEN** a developer sets `RUSTICKER_SAMPLE_IMAGE` to the absolute path of the sample image and runs the test suite
-- **THEN** the check passes only if 17 stickers are detected, forming rows of 5, 6, and 6 in reading order
+- **THEN** the check passes only if the expected stickers are detected in reading order
 
 #### Scenario: Sample not available
 - **WHEN** the test suite runs without `RUSTICKER_SAMPLE_IMAGE`, as in continuous integration
-- **THEN** the check is reported as skipped and the suite still passes
+- **THEN** the check runs against the repository bundled sample image and passes with 31 detected stickers
