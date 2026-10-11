@@ -70,6 +70,7 @@
 	"dependencies": {
 		"@vite-pwa/sveltekit": "^1.1.0",
 		"comlink": "^4.4.2",
+		"jszip": "^3.10.2",
 		"rusticker-core": "file:../core/pkg",
 		"workbox-window": "^7.4.1"
 	}
