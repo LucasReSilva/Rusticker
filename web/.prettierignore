@@ -12,3 +12,8 @@ bun.lockb
 /src/lib/paraglide/
 /project.inlang/*
 !/project.inlang/settings.json
+
+# Playwright output
+/test-results/
+/playwright-report/
+/blob-report/

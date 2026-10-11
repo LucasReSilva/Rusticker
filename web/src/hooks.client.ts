@@ -14,9 +14,16 @@ export const init: ClientInit = async () => {
 		readSavedLocale(),
 		navigator.languages ?? []
 	);
-	if (target === undefined) return;
+	if (target !== undefined) {
+		location.replace(target);
+		// The document is being replaced: do not hydrate the old one.
+		await new Promise<never>(() => {});
+	}
 
-	location.replace(target);
-	// The document is being replaced: do not hydrate the old one.
-	await new Promise<never>(() => {});
+	// Test-only hook for the e2e suite (there is no language switcher UI yet).
+	// Vite replaces the flag at build time, so normal builds drop this block.
+	if (import.meta.env.VITE_E2E_HOOKS === 'true') {
+		const { switchLocale } = await import('$lib/i18n/switch');
+		Object.assign(window, { __rusticker_e2e: { switchLocale } });
+	}
 };
