@@ -9,6 +9,7 @@
 		createExportController,
 		downloadBlob,
 		ExportError,
+		exportSession,
 		MIN_STICKERS_PER_PACK,
 		stickerSizes
 	} from '$lib/export';
@@ -26,7 +27,8 @@
 		isDetecting: () => detecting,
 		sizes: stickerSizes,
 		encoder: canvasEncoder,
-		download: downloadBlob
+		download: downloadBlob,
+		session: exportSession
 	});
 	const number = (value: number) => new Intl.NumberFormat(getLocale()).format(value);
 	const progressLabel = $derived(

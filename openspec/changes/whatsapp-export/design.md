@@ -156,6 +156,8 @@ Progress = `{ done, total }` with `total = stickers.length + packs.length` (PNG/
 
 `createExportController({ getStickers, getTrayIconId, isDetecting, sizes, encoder, download })` exposes runes state: `phase: 'idle' | 'exporting' | 'done' | 'error'`, `progress`, `plan` (`{ stickerCount, packSizes }` derived from `splitIntoPacks`), `canExport`, `blockedReason: 'TooFewStickers' | 'Detecting' | 'Exporting' | null`, `archives`, and actions `exportAll()` / `downloadPack(i)`. Archives are cleared when the sticker list changes. Everything is injectable, so the controller is tested with `createMockDetector()` stickers and a fake encoder/downloader.
 
+Ready archives are retained in a shared browser export session (`session.ts`), injected into each controller. Changing locale remounts the tool view but preserves these blobs and allows per-pack downloads without re-encoding. The session is invalidated by a change in sticker ids, order, pixel identity, or tray selection. Phase and progress belong to the mounted controller; destroying its effect scope cancels any remaining automatic downloads and prevents an in-flight export from publishing stale results, while preserving archives that were already prepared.
+
 ### 8. `Export.svelte` and messages
 
 Props (keeps the component independent of `state.svelte.ts`; the tool page wires them):
