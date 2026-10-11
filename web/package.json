@@ -55,6 +55,7 @@
 		"vitest": "^4.1.8"
 	},
 	"dependencies": {
-		"@vite-pwa/sveltekit": "^1.1.0"
+		"@vite-pwa/sveltekit": "^1.1.0",
+		"workbox-window": "^7.4.1"
 	}
 }
