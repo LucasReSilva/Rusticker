@@ -1,0 +1,3 @@
+[install]
+# The isolated store avoids Bun's Windows hoisted-linker failure for file: packages.
+linker = "isolated"

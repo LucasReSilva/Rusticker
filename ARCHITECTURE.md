@@ -28,15 +28,21 @@ Rusticker/
 |   +-- messages/         Paraglide catalogs (<locale>.json)
 |   +-- src/lib/          worker, state store, components
 |   +-- src/routes/       tool, how-to-use, about
-|   +-- static/           example.jpg, PWA icons
+|   +-- static/           PWA icons
 +-- openspec/             specs (source of truth) and changes
 ```
 
-- **`core/`** - crate `rusticker-core`, built with
+- **`core/`** - crate `rusticker-core` (implemented by `core-detection`),
+  the only member of the root Cargo workspace, built with
   `wasm-pack build core --target web` and `wasm-bindgen`.
-  - `image`: decoding and resizing (Lanczos3).
+  - `image`: pixel buffers and resizing (Lanczos3); no codecs in the library.
   - `imageproc`: connected components and morphology.
   - No OpenCV.
+  - Modules: `color` (HSV thresholds), `mask` (foreground + opening),
+    `components` (labelling, size filter), `alpha` (crop + alpha), `order`
+    (reading order), `frame` (512x512 framing), `wasm` (bindings), `error`.
+  - Tests: `core/tests/synthetic.rs` (images painted in code) and
+    `core/tests/sample_image.rs` (local only, see section 10).
   - Output goes to `core/pkg/`, which is git-ignored.
 - **`web/`** - SvelteKit 2, Svelte 5 (runes), TypeScript, Vite, managed with Bun.
   - Depends on the wasm package as `"rusticker-core": "file:../core/pkg"`.
@@ -56,7 +62,7 @@ Rusticker/
                                                      |
        main thread                                   | Comlink call,
   - - - - - - - - - - - - - - - - - - - - - - - - - -|- ArrayBuffer transferred
-       Web Worker (src/lib/worker.ts)                v  as Transferable
+       Web Worker (src/lib/detection/worker.ts)      v  as Transferable
                                      +-------------------------------------+
                                      | wasm (initialized once)             |
                                      | detect(rgba, width, height,         |
@@ -79,21 +85,35 @@ Rusticker/
 
 - Lossy WEBP encoding is done by the **browser**, because the `image` crate
   only encodes lossless WEBP.
-- On error, `detect` returns an `ErrorCode`; the UI shows a translated toast.
-- **Allowed simplification:** `detect` may return only the bounding box plus a
-  mask per sticker, and JavaScript performs the crop, alpha, and resize on a
-  canvas. The worker/Comlink boundary stays the same either way.
+- The detector makes one defensive copy of the input before transferring it,
+  keeping the caller's image available for subsequent detections. Sticker
+  buffers are transferred back without copying.
+- Latest-wins scheduling keeps one in-flight request and one pending request.
+  Superseded callers receive `AbortError`; stale results are discarded and
+  superseded pending requests are never computed.
+- Core failures pass through as codes; unexpected failures become
+  `WorkerFailed`. The UI translates codes through the message catalogs.
 
 ## 4. Detection algorithm
 
 The pipeline was validated in a Python/OpenCV prototype and is ported to Rust
 with `image` + `imageproc`.
 
+The exact rules live in the
+[`sticker-detection` spec](openspec/specs/sticker-detection/spec.md)
+(moved to `openspec/specs/sticker-detection/` when the change is archived).
+
 1. **Background mask (HSV).** Convert to HSV; a pixel is background if it is
    close to the background color. For chroma-key green the working range is
    **hue 70°-170°, saturation >= 47%, value >= 24%**. The background color is
    configurable: the user picks it with an eyedropper on the preview and
-   adjusts a tolerance slider.
+   adjusts a tolerance slider (0-100, default 50). With tolerance `t` and the
+   picked color's hue `h_bg`, saturation `s_bg`, and value `v_bg`, a pixel is
+   background iff its circular hue distance to `h_bg` is at most `t` degrees,
+   its saturation is at least `min(0.94 * (1 - t/100), s_bg)`, and its value
+   is at least `min(0.48 * (1 - t/100), v_bg)`. Tolerance 50 on `0x00FF00`
+   reproduces the green range above; the picked color is always background,
+   and raising the tolerance never brings background back.
 2. **Mask cleanup.** Morphological **opening with a 3x3** kernel on the
    foreground mask, to remove JPEG noise.
 3. **Components.** Connected components with **8-connectivity** on the
@@ -102,31 +122,50 @@ with `image` + `imageproc`.
    where the pixel is **inside the component and not background-colored**, so
    interior gaps of background (e.g. between an arm and a weapon) also become
    transparent. Apply a light **3x3 blur to the alpha** channel to smooth edges.
-5. **Ordering.** Sort into rows (grouping components by vertical center), then
-   left to right within each row.
+5. **Ordering.** Sort into rows, then left to right within each row. Rows:
+   sort by vertical center; the first sticker opens a row, and each next
+   sticker joins it iff its vertical center is strictly above the
+   lowest point (largest `y + height`) of the stickers already in the row, otherwise it opens a new
+   row. Within a row, order by horizontal center (ties by top). This keeps a
+   short sticker in the row of taller neighbors whose extent covers its center,
+   with no pixel threshold.
 6. **Framing.** Resize preserving aspect ratio to fit **480 px** (Lanczos3) and
    center in a transparent **512x512** frame (16 px margin on the long side).
 
 ## 5. Errors and warnings
 
 The core exposes an `ErrorCode` enum; the frontend maps each code to a
-localized message and shows it as a toast. Provisional variants:
+localized message and shows it as a toast. In the browser, `detect` throws
+the code name as a string. The codes are:
 
 | Code              | Meaning                                                  |
 |-------------------|----------------------------------------------------------|
-| `NoStickers`      | No component survived detection.                         |
-| `ImageTooLarge`   | Input dimensions exceed the supported limit.             |
-| `TooManyStickers` | More than 30 stickers; output is split into several packs (warning). |
+| `NoStickers`      | No component survived noise removal and the 0.4% size filter. |
+| `ImageTooLarge`   | Width or height above 8192, or more than 40,000,000 pixels. |
+| `InvalidInput`    | A dimension is 0, the buffer length is not `width * height * 4`, the tolerance is above 100, the background is above `0xFFFFFF`, or `bbox(i)`/`rgba(i)` got `i >= count`. |
+
+Checks run in that order (zero dimension, size limits, buffer length,
+parameters); the first failure decides the code.
+
+Splitting more than 30 stickers into several packs is **not** a core error:
+`TooManyStickers` is an informational notice produced by the frontend export,
+never by Rust.
 
 ## 6. Worker
 
-- Created with
-  `new Worker(new URL('$lib/worker.ts', import.meta.url), { type: 'module' })`.
-- Initializes the wasm module **once** and exposes `detect` through Comlink.
-- Pixel buffers cross the boundary as `Transferable` (no copies) in both
-  directions.
-- The wasm, the worker, and canvas APIs exist only in the browser, which is why
-  the tool route disables SSR.
+- `createDetector()` eagerly creates a module worker from
+  `src/lib/detection/worker.ts`; importing the module never accesses `Worker`.
+- The worker imports the wasm binary with `?url` and initializes it **once**
+  with `init({ module_or_path: wasmUrl })`. Vite emits a hashed asset under
+  the configured base path, suitable for offline precaching.
+- Comlink exposes detection as a tagged success/error result. Every native
+  detection result is freed in `finally`, and sticker buffers are transferred
+  back. The main thread copies the input once before transferring it.
+- Any `WorkerFailed` poisons and terminates the worker. The next detection
+  creates a fresh worker; disposal cancels pending work and releases resources.
+- Build `core/pkg` before installing web dependencies in a fresh clone or
+  worktree: `bun run build:wasm` in `web/` runs wasm-pack before `bun install`.
+  Bun copies the local package, so rebuild and reinstall after core changes.
 
 ## 7. Frontend structure
 
@@ -135,7 +174,8 @@ localized message and shows it as a toast. Provisional variants:
   - `/` - the tool. `export const ssr = false`, with an SPA fallback page that
     respects the locale prefix.
   - how-to-use and about pages - prerendered for every locale (listed in
-    `prerender.entries`). Base-locale slugs are finalized in `web-scaffold`.
+    `prerender.entries`). Slugs are translated: `/como-usar` and `/sobre` (pt-BR),
+    `/en/how-to-use` and `/en/about`, `/es/como-usar` and `/es/acerca-de`.
 - **State:** a runes store in `src/lib/state.svelte.ts` holding the source
   image, the detected stickers, the tolerance, the background color, and the
   chosen tray icon.
@@ -154,27 +194,53 @@ localized message and shows it as a toast. Provisional variants:
 ## 8. WhatsApp output rules
 
 - Each sticker: **WEBP, 512x512, transparent** background.
-- Static sticker size **<= ~100 KB**: lower the WEBP `quality` automatically
-  until the blob fits.
-- **3 to 30 stickers per pack.** More than 30 are split into several packs.
-- **Tray icon:** 96x96 PNG generated from the sticker the user chose.
-- **Locale-neutral file names:** `rusticker-pack-1.zip`, `sticker_01.webp`, ...
+- Static sticker size **<= 100,000 bytes**: start WEBP quality at 0.9 and
+  search for the highest measured fitting quality in five binary steps,
+  with a quality floor of 0.1. If the floor still exceeds the budget, keep
+  the sticker and warn the user; size badges distinguish it from fitting stickers.
+- **3 to 30 stickers per pack.** Fewer than 3 blocks export. More than 30
+  are divided into the minimum number of balanced packs in detection order
+  (31 becomes 16 + 15). Splitting is an informational notice, not an error.
+- **Tray icon:** a transparent 96x96 PNG generated from the chosen sticker,
+  defaulting to the first remaining sticker when no valid selection exists.
+  Every pack in an export uses the same icon.
+- **One locale-neutral ZIP per pack:** `rusticker-pack-1.zip`, etc. Each
+  archive contains only `sticker_01.webp` through its last sticker,
+  `png/sticker_01.png` through its last lossless 512x512 PNG copy, and
+  `tray_icon.png`. Numbering restarts at 01 in each pack. Entries use STORE
+  and fixed dates for deterministic output.
+- WEBP encodings are computed sequentially in the background and reused
+  during export. Cache identity includes sticker id and pixel identity.
+- Multiple archives download in order, with a separate action per pack
+  for re-download. Ready archive blobs remain in the browser session across
+  locale changes until stickers or tray selection change. An active export
+  is cancelled when its view is destroyed. All encoding, archives, and
+  downloads stay on the device.
 
 ## 9. PWA and deployment
 
 - `@vite-pwa/sveltekit` makes the app installable and fully usable offline
   (the wasm and all assets are precached).
 - Output of `bun run build` is a static directory deployable to any static
-  host. The target (GitHub Pages, Vercel, or Netlify) is **undecided**;
-  GitHub Pages would require setting `paths.base`.
+  host. The target is **GitHub Pages**: `paths.base` comes from the
+  `BASE_PATH` environment variable (set by the deploy workflow, empty in dev)
+  and `404.html` is the SPA fallback.
 
 ## 10. Testing strategy (planned)
 
-- **Rust unit tests** with a synthetic image: green background with three
-  rectangles of different colors must yield exactly 3 components, in the
-  correct row-then-column order.
-- **Integration check:** `web/static/example.jpg` is expected to yield
-  **17 stickers** through the worker.
+- **Rust unit tests** (in each `core/src` module) and **synthetic-image
+  tests** (`core/tests/synthetic.rs`): images painted in code, no fixture
+  files. They cover every `sticker-detection` scenario, for example a green
+  background with three rectangles of different colors yielding exactly 3
+  stickers in row-then-column order, interior gaps, soft edges, framing, the
+  size filter, and every error code. Run with `cargo test`; CI runs them in
+  `.github/workflows/rust.yml` together with fmt, clippy, and the wasm build.
+- **Integration check (local only):** a private sample image (never
+  committed; kept in the git-ignored `image/` folder) is expected to yield
+  **17 stickers** in rows of 5, 6, and 6. `core/tests/sample_image.rs` reads
+  its absolute path from `RUSTICKER_SAMPLE_IMAGE` and is skipped when the
+  variable is unset, so CI never runs it:
+  `RUSTICKER_SAMPLE_IMAGE=<abs path> cargo test --release -p rusticker-core --test sample_image -- --nocapture`.
 - **i18n check** (`i18n:check`): fails when any locale is missing a key that
   exists in the base locale `pt-BR`.
 
