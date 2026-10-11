@@ -28,6 +28,11 @@ with the confirmation dialog, then mark a kept sticker as the pack icon. The gri
 supports arrow keys, Home, End and Delete. Switching language keeps your image,
 kept stickers and icon choice until you reload the page.
 
+Keep at least three stickers, then download the pack. Each ZIP contains WEBP
+stickers, lossless PNG copies and the pack icon. More than 30 stickers are split
+into balanced packs, with individual download buttons. Prepared packs survive
+language changes and can be downloaded again without re-encoding the images.
+
 ## Privacy
 
 **Your images never leave your device.** All image processing runs in your
@@ -42,9 +47,10 @@ a vulnerability privately.
 Rusticker is in **early development**. The `core/` crate (`rusticker-core`)
 detects stickers and builds to WebAssembly, with native tests. The `web/` app
 has localized routes in Portuguese (Brazil), English and Spanish, and a browser
-editor for loading, detecting, adjusting and curating stickers. Export is added
-by the `whatsapp-export` change. Commands marked with a later change become
-available as the changes in the [roadmap](#roadmap) land.
+editor for loading, detecting, adjusting, curating and exporting stickers.
+The complete flow is verified with synthetic images, including offline export.
+No release has been created for this integration; live deployment checks remain
+part of the release workflow.
 
 ## Planned stack
 
@@ -180,16 +186,21 @@ and 8; **C** = 6 and 7. See each change's proposal under
 | 4  | `design-tokens`     | shadcn-svelte, theme tokens, `@lucide/svelte` icons, checkerboard, ThemeToggle, LanguageSwitcher, `/_design` route | Integrated in develop; CI verified |
 | 5  | `wasm-worker`       | Comlink worker, detector API + mock; local sample image yields 17 stickers                    | Integrated in develop; CI and fresh setup verified |
 | 6  | `tool-ui`           | DropZone, Preview, Controls, Grid, editor state                                               | Integrated in develop; CI verified |
-| 7  | `whatsapp-export`   | WEBP up to about 100 KB, packs of 3 to 30 stickers, 96×96 tray icon, `.zip`                   | In progress |
+| 7  | `whatsapp-export`   | WEBP up to about 100 KB, packs of 3 to 30 stickers, 96×96 tray icon, `.zip`                   | Integrated in develop; end-to-end CI verified |
 | 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Integrated in develop; release verification pending |
 
 Wave B (changes 4, 5 and 8) is integrated into `develop` through
 [PR #9](https://github.com/LucasReSilva/Rusticker/pull/9), with 233 unit
 tests and 63 browser tests passing in the combined CI. Wave C (`tool-ui` and
-`whatsapp-export`) is being implemented in separate feature worktrees from
-that integration. Release remains pending until loading, detecting, curating
-and exporting a sticker pack work end to end. `web-scaffold` and `pwa-seo`
-retain their live deployment verification tasks for that release.
+`whatsapp-export`) is integrated into `develop` through
+[PR #11](https://github.com/LucasReSilva/Rusticker/pull/11) and
+[PR #10](https://github.com/LucasReSilva/Rusticker/pull/10). The final
+[CI run](https://github.com/LucasReSilva/Rusticker/actions/runs/38152281333)
+passed 321 unit tests and 73 browser tests, verifying loading, detection,
+curation and valid ZIP downloads, offline export and language persistence.
+No release was created. `web-scaffold` and `pwa-seo` retain their live deployment
+verification tasks for the eventual release; optional manual visual checks
+remain unchecked in the design and tool UI changes.
 
 The Windows local-package install failure is resolved by the isolated Bun
 linker configured in `web/bunfig.toml` on the worker branch. A fresh worktree
