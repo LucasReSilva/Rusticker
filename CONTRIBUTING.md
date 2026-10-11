@@ -84,20 +84,19 @@ prek run --all-files
 
 ## Development workflow
 
-Build the WebAssembly core *(after `core-detection`)*:
-
-```sh
-wasm-pack build core --target web
-```
-
-Install the web app's dependencies:
+In every fresh clone or worktree, build the WebAssembly core before installing
+the web dependencies. The setup script runs wasm-pack first, then Bun:
 
 ```sh
 cd web
-bun install
+bun run build:wasm
 ```
 
 Then, from the `web/` directory:
+
+Use `bun run dev:all` for day-to-day development to rebuild the core and refresh
+Bun's copied local package before starting Vite. Use `bun run dev` when the
+installed wasm package is already current.
 
 | Command | What it does |
 |---------|--------------|

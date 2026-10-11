@@ -97,5 +97,9 @@
 	"design_sample_specimen": "Aa",
 	"pwa_name": "Rusticker: stickers para WhatsApp",
 	"pwa_short_name": "Rusticker",
-	"pwa_description": "Recorta una hoja entera de stickers y exporta un paquete listo para WhatsApp. Funciona sin conexión, y tus imágenes nunca salen de tu dispositivo."
+	"pwa_description": "Recorta una hoja entera de stickers y exporta un paquete listo para WhatsApp. Funciona sin conexión, y tus imágenes nunca salen de tu dispositivo.",
+	"error_no_stickers": "No se encontraron stickers. Elige el color de fondo con el cuentagotas o ajusta la tolerancia.",
+	"error_image_too_large": "Imagen demasiado grande. Reduce su resolución e inténtalo de nuevo.",
+	"error_invalid_input": "No se pudo leer esta imagen. Prueba con otro archivo.",
+	"error_worker_failed": "El procesamiento falló. Recarga la página e inténtalo de nuevo."
 }

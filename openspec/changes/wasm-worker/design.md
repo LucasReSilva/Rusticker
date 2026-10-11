@@ -130,6 +130,19 @@ Per contract addendum R1, `web-scaffold` already ships `web.yml` and `deploy.yml
 
 ## Risks / Trade-offs
 
+- [Local Windows verification: Bun 1.3.14 reports `EPERM` copying the rebuilt
+  `rusticker-core` package, including with `--frozen-lockfile`, `--backend copy`
+  and `--no-cache`] → wasm-pack itself succeeds. Verbose output shows
+  `CreateHardLinkW` and its `CopyFileW` fallback failing on the first package
+  file. Moving the generated `.gitignore` only moves the failure to
+  `package.json`; a fresh minimal consumer with one local package and one
+  `package.json` reproduces the same error without wasm or app tooling.
+  For local runtime checks,
+  copy the generated `core/pkg` package files into
+  `web/node_modules/rusticker-core` with PowerShell `Copy-Item`. This temporary
+  workaround does not verify the normal install workflow or CI; tasks 1.3,
+  1.4 and 7.2 remain open until the install issue is resolved.
+
 - [Fresh clones fail at `bun install` until `core/pkg` exists] → `build:wasm` documented in ARCHITECTURE, CONTRIBUTING setup and README quick start (contract R8); CI builds wasm first via the pre-wired step. Parallel Wave B branches (`design-tokens`, `pwa-seo`) need `bun run build:wasm` after rebasing on main.
 - [`bun.lock` may record the copied `file:` package in a way that changes when the wasm is rebuilt, breaking `--frozen-lockfile`] → verify in task 1.x by building, installing, rebuilding and running `bun install --frozen-lockfile`; if it breaks, report it to the coordinator / `web-scaffold` owner (the workflows are not edited here, R1) and document the workaround.
 - [Wasm binary larger than the PWA precache default limit (2 MiB)] → coordination note for `pwa-seo`: include `wasm` in glob patterns and raise `maximumFileSizeToCacheInBytes` if needed. Not configured here.

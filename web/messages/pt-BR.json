@@ -97,5 +97,9 @@
 	"design_sample_specimen": "Aa",
 	"pwa_name": "Rusticker: figurinhas para WhatsApp",
 	"pwa_short_name": "Rusticker",
-	"pwa_description": "Recorte uma folha inteira de figurinhas e exporte um pacote para o WhatsApp. Funciona offline, e suas imagens nunca saem do seu dispositivo."
+	"pwa_description": "Recorte uma folha inteira de figurinhas e exporte um pacote para o WhatsApp. Funciona offline, e suas imagens nunca saem do seu dispositivo.",
+	"error_no_stickers": "Nenhuma figurinha encontrada. Escolha a cor de fundo com o conta-gotas ou ajuste a tolerância.",
+	"error_image_too_large": "Imagem grande demais. Reduza a resolução e tente de novo.",
+	"error_invalid_input": "Não foi possível ler esta imagem. Tente outro arquivo.",
+	"error_worker_failed": "O processamento falhou. Recarregue a página e tente de novo."
 }
