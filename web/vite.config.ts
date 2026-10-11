@@ -8,13 +8,15 @@ export default defineConfig({
 	plugins: [
 		tailwindcss(),
 		sveltekit(),
-		// paraglide: locale comes from the URL (translated slugs, see
-		// src/lib/i18n/routes.js), then the saved preference, then pt-BR.
+		// paraglide: the locale comes only from the URL (translated slugs, see
+		// src/lib/i18n/routes.js). The saved preference is handled by
+		// src/lib/i18n (entry redirect): Paraglide's localStorage strategy would
+		// overwrite it whenever a prefixed URL is visited.
 		paraglideVitePlugin({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide',
 			emitTsDeclarations: true,
-			strategy: ['url', 'localStorage', 'baseLocale'],
+			strategy: ['url', 'baseLocale'],
 			urlPatterns: buildUrlPatterns(process.env.BASE_PATH ?? '')
 		})
 		// /paraglide

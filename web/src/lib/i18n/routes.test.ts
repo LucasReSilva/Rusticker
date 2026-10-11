@@ -111,7 +111,11 @@ describe('parseLocalizedPath', () => {
 	});
 
 	it('keeps the rest of unknown paths', () => {
-		expect(parseLocalizedPath('/en/sobre')).toEqual({ locale: 'en', page: undefined, rest: '/sobre' });
+		expect(parseLocalizedPath('/en/sobre')).toEqual({
+			locale: 'en',
+			page: undefined,
+			rest: '/sobre'
+		});
 		expect(parseLocalizedPath('/unknown')).toEqual({
 			locale: 'pt-BR',
 			page: undefined,

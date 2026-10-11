@@ -59,8 +59,8 @@
   - unsupported saved values being ignored;
   - query and hash being preserved;
   - base path handling.
-- [ ] 3.5 Add `src/hooks.client.ts` with an `init` hook that calls `entryRedirect` with `readSavedLocale()` and `navigator.languages`, then `location.replace` when there is a target. Verify manually with `bun run build && bun run preview`, in a browser with language `en-US` and empty storage: opening `/sobre` ends at `/en/about`. With `localStorage.PARAGLIDE_LOCALE = 'pt-BR'`, opening `/` stays at `/`. Opening `/en/about` with an `es` preference stays in English.
-- [ ] 3.6 Add `src/lib/i18n/locale.svelte.ts`, the reactive `locale` updated after each navigation, and `src/lib/i18n/switch.ts` with `switchLocale(locale)`. `switchLocale` saves the preference, calls `setLocale(locale, { reload: false })`, then `goto(localizeCurrentUrl(page.url, locale))`, keeping the query string and the hash (design D11, addendum R7). Move the pure page-to-locale URL mapping out of `entryRedirect` into a shared `localizeCurrentUrl`.
+- [x] 3.5 Add `src/hooks.client.ts` with an `init` hook that calls `entryRedirect` with `readSavedLocale()` and `navigator.languages`, then `location.replace` when there is a target. Verify manually with `bun run build && bun run preview`, in a browser with language `en-US` and empty storage: opening `/sobre` ends at `/en/about`. With `localStorage.PARAGLIDE_LOCALE = 'pt-BR'`, opening `/` stays at `/`. Opening `/en/about` with an `es` preference stays in English.
+- [x] 3.6 Add `src/lib/i18n/locale.svelte.ts`, the reactive `locale` updated after each navigation, and `src/lib/i18n/switch.ts` with `switchLocale(locale)`. `switchLocale` saves the preference, calls `setLocale(locale, { reload: false })`, then `goto(localizeCurrentUrl(page.url, locale))`, keeping the query string and the hash (design D11, addendum R7). Move the pure page-to-locale URL mapping out of `entryRedirect` into a shared `localizeCurrentUrl`.
 
   Add `src/lib/i18n/switch.svelte.test.ts` in the client project, with `$app/navigation` and `$app/state` mocked. It covers:
   - the `goto` targets for all pages and locales;

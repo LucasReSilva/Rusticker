@@ -12,9 +12,7 @@ function browserStorage(): LocaleStorage {
  * device, under Paraglide's key. Blocked storage and unsupported values count
  * as "no preference".
  */
-export function readSavedLocale(
-	storage: () => LocaleStorage = browserStorage
-): Locale | undefined {
+export function readSavedLocale(storage: () => LocaleStorage = browserStorage): Locale | undefined {
 	try {
 		const value = storage().getItem(localStorageKey);
 		return value !== null && isLocale(value) ? value : undefined;
