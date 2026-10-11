@@ -1,0 +1,64 @@
+import { expect, it, vi } from 'vitest';
+import { createStickerSizes } from './sizes.svelte';
+import { deferred, fakeEncoder, mockStickers } from './test-helpers';
+
+it('reports pending then ready, works unbound, and reuses encodings after sync', async () => {
+	const stickers = await mockStickers();
+	const encoder = fakeEncoder();
+	const spy = vi.spyOn(encoder, 'webp');
+	const sizes = createStickerSizes(encoder);
+	sizes.sync(stickers);
+	const get = sizes.get;
+	expect(get(stickers[0].id)).toEqual({ status: 'pending' });
+	await Promise.all(stickers.map(sizes.encoded));
+	expect(get(stickers[0].id)).toEqual({ status: 'ready', bytes: 42, overLimit: false });
+	await Promise.all(stickers.map(sizes.encoded));
+	expect(spy).toHaveBeenCalledTimes(stickers.length);
+});
+it('reports error and preserves the code for export, allowing a retry', async () => {
+	const [sticker] = await mockStickers(1);
+	const encoder = fakeEncoder();
+	vi.spyOn(encoder, 'webp').mockRejectedValueOnce(new Error('test'));
+	const sizes = createStickerSizes(encoder);
+	sizes.sync([sticker]);
+	await expect(sizes.encoded(sticker)).rejects.toMatchObject({ code: 'EncodeFailed' });
+	expect(sizes.get(sticker.id)).toEqual({ status: 'error' });
+	await sizes.encoded(sticker);
+	expect(sizes.get(sticker.id)).toMatchObject({ status: 'ready' });
+});
+it('invalidates reused ids with different pixels and drops removed entries', async () => {
+	const [sticker, other] = await mockStickers(2);
+	const replacement = { ...other, id: sticker.id };
+	const encoder = fakeEncoder();
+	const spy = vi.spyOn(encoder, 'webp');
+	const sizes = createStickerSizes(encoder);
+	sizes.sync([sticker]);
+	await sizes.encoded(sticker);
+	sizes.sync([replacement]);
+	expect(sizes.get(sticker.id)).toEqual({ status: 'pending' });
+	await sizes.encoded(replacement);
+	expect(spy).toHaveBeenCalledTimes(2);
+	sizes.sync([]);
+	expect(sizes.get(sticker.id)).toEqual({ status: 'pending' });
+	await expect(sizes.encoded(sticker)).rejects.toMatchObject({ code: 'EncodeFailed' });
+	expect(spy).toHaveBeenCalledTimes(2);
+});
+it('runs sequentially and ignores stale queued jobs and in-flight results', async () => {
+	const stickers = await mockStickers(3);
+	const blocked = deferred<Blob>();
+	const encoder = fakeEncoder();
+	const spy = vi.spyOn(encoder, 'webp').mockImplementationOnce(() => blocked.promise);
+	const sizes = createStickerSizes(encoder);
+	sizes.sync(stickers);
+	const first = sizes.encoded(stickers[0]);
+	await Promise.resolve();
+	expect(spy).toHaveBeenCalledTimes(1);
+	sizes.sync([]);
+	await expect(sizes.encoded(stickers[1])).rejects.toMatchObject({ code: 'EncodeFailed' });
+	blocked.resolve(new Blob(['x'], { type: 'image/webp' }));
+	await first;
+	await Promise.resolve();
+	await Promise.resolve();
+	expect(spy).toHaveBeenCalledTimes(1);
+	expect(sizes.get(stickers[0].id)).toEqual({ status: 'pending' });
+});
