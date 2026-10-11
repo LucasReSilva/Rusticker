@@ -197,9 +197,9 @@ and 8; **C** = 6 and 7. See each change's proposal under
 | 7  | `whatsapp-export`   | WEBP up to about 100 KB, packs of 3 to 30 stickers, 96×96 tray icon, `.zip`                   | Archived    |
 | 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Archived    |
 | 9  | `branding-sample-and-deploy` | Branding logo, sample sticker sheet, and automated deploy workflow                  | Archived    |
-| 10 | `release-automation`| Automated semantic versioning and changelogs with `git-cliff` and `release-plz`       | Implementing |
+| 10 | `release-automation`| Automated semantic versioning and changelogs with `git-cliff` and `release-plz`       | Archived    |
 
-All roadmap changes (1 through 9) are fully implemented, verified, and archived under `openspec/changes/archive/`. Their specifications are active as authoritative contracts under `openspec/specs/`. Releases and changelogs are automated using `git-cliff` and `release-plz`. The end-to-end user flow (load image, detect stickers, curate, export WhatsApp sticker pack) is functionally verified and ready for release.
+All roadmap changes (1 through 10) are fully implemented, verified, and archived under `openspec/changes/archive/`. Their specifications are active as authoritative contracts under `openspec/specs/`. Releases and changelogs are automated using `git-cliff` and `release-plz`. The end-to-end user flow (load image, detect stickers, curate, export WhatsApp sticker pack) is functionally verified and ready for release.
 
 The Windows local-package install failure is resolved by the isolated Bun
 linker configured in `web/bunfig.toml` on the worker branch. A fresh worktree
