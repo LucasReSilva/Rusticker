@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('detection module', () => {
 	it('can be imported where Worker does not exist (prerender, SSR)', async () => {
@@ -8,5 +8,110 @@ describe('detection module', () => {
 		expect(typeof detection.createMockDetector).toBe('function');
 		expect(typeof detection.detectionErrorMessage).toBe('function');
 		expect(typeof detection.isCancelled).toBe('function');
+	});
+});
+
+type Behavior = 'crash' | 'succeed' | 'hang';
+
+/**
+ * A stand-in for the module worker that speaks just enough of Comlink's
+ * wire protocol: it answers `detect` with an empty success, crashes (fires
+ * `error`), or never answers.
+ */
+class FakeWorker extends EventTarget {
+	static instances: FakeWorker[] = [];
+	static behaviors: Behavior[] = [];
+	readonly behavior: Behavior;
+	terminated = false;
+	readonly received: Array<{ rgba?: ArrayBuffer }> = [];
+
+	constructor(
+		readonly url: URL,
+		readonly options: WorkerOptions
+	) {
+		super();
+		this.behavior = FakeWorker.behaviors[FakeWorker.instances.length] ?? 'succeed';
+		FakeWorker.instances.push(this);
+	}
+
+	postMessage(message: {
+		id?: string;
+		type: string;
+		argumentList?: Array<{ value: { rgba?: ArrayBuffer } }>;
+	}) {
+		if (message.type !== 'APPLY') return;
+		this.received.push(message.argumentList?.[0]?.value ?? {});
+		setTimeout(() => {
+			if (this.behavior === 'crash') {
+				const event = new Event('error') as Event & { message: string };
+				event.message = 'boom';
+				this.dispatchEvent(event);
+			} else if (this.behavior === 'succeed') {
+				const reply = new Event('message') as Event & { data: unknown };
+				reply.data = { id: message.id, type: 'RAW', value: { ok: true, stickers: [] } };
+				this.dispatchEvent(reply);
+			}
+		}, 0);
+	}
+
+	terminate() {
+		this.terminated = true;
+	}
+}
+
+const options = { background: { r: 0, g: 255, b: 0 }, tolerance: 50 };
+const image = () => ({ data: new Uint8ClampedArray(16).fill(9), width: 2, height: 2 });
+
+describe('createDetector', () => {
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		FakeWorker.instances = [];
+		FakeWorker.behaviors = [];
+	});
+
+	it('spawns one module worker eagerly and keeps the caller image intact', async () => {
+		vi.stubGlobal('Worker', FakeWorker);
+		const { createDetector } = await import('./index');
+		const detector = createDetector();
+		expect(FakeWorker.instances).toHaveLength(1);
+		expect(FakeWorker.instances[0].options).toEqual({ type: 'module' });
+
+		const input = image();
+		await expect(detector.detect(input, options)).resolves.toEqual([]);
+		await expect(detector.detect(input, options)).resolves.toEqual([]);
+		expect(FakeWorker.instances).toHaveLength(1);
+		expect(input.data.every((value) => value === 9)).toBe(true);
+		expect(FakeWorker.instances[0].received[0].rgba?.byteLength).toBe(16);
+		detector.dispose();
+		expect(FakeWorker.instances[0].terminated).toBe(true);
+	});
+
+	it('reports a crash as WorkerFailed and recovers on a fresh worker', async () => {
+		vi.stubGlobal('Worker', FakeWorker);
+		FakeWorker.behaviors = ['crash', 'succeed'];
+		const { createDetector, DetectionError } = await import('./index');
+		const detector = createDetector();
+
+		const failure = await detector.detect(image(), options).catch((error: unknown) => error);
+		expect(failure).toBeInstanceOf(DetectionError);
+		expect((failure as InstanceType<typeof DetectionError>).code).toBe('WorkerFailed');
+		expect(FakeWorker.instances[0].terminated).toBe(true);
+
+		await expect(detector.detect(image(), options)).resolves.toEqual([]);
+		expect(FakeWorker.instances).toHaveLength(2);
+	});
+
+	it('dispose cancels in-flight work and later calls fail with WorkerFailed', async () => {
+		vi.stubGlobal('Worker', FakeWorker);
+		FakeWorker.behaviors = ['hang'];
+		const { createDetector, isCancelled, DetectionError } = await import('./index');
+		const detector = createDetector();
+		const pending = detector.detect(image(), options);
+		detector.dispose();
+		await expect(pending).rejects.toSatisfy(isCancelled);
+		expect(FakeWorker.instances[0].terminated).toBe(true);
+		const after = await detector.detect(image(), options).catch((error: unknown) => error);
+		expect(after).toBeInstanceOf(DetectionError);
+		expect((after as InstanceType<typeof DetectionError>).code).toBe('WorkerFailed');
 	});
 });
