@@ -40,7 +40,9 @@
 - [x] 7.1 Run the full web pipeline from `web/`: `bun run check`, `bun run lint`, `bun run test`, `bun run i18n:check`, `bun run build`; verify all pass and `git status --porcelain` shows only files owned by this change and no image files
 - [ ] 7.2 Optional manual visual check with `bun run dev:all` and the local sample image (path from `RUSTICKER_SAMPLE_IMAGE`, never copied into the repo): look and layout in dark theme, narrow width and reduced motion. Every behavior is automated by task 7.3.
 
-- [ ] 7.3 Add Playwright specs under `web/e2e/tool-ui/` covering: drop, click and paste upload of a synthetic image (`setInputFiles`, dispatched drop and paste events); boxes drawn at the detected count; keyboard eyedropper sets the background; a tolerance change re-detects once after the pause; Delete then confirm removes a sticker and cancel keeps it; tray icon toggle with `aria-pressed`; roving-tabindex arrow/Home/End navigation; curated state kept across a language switch without reload; no request outside the app origin; no horizontal overflow at 375px in dark theme. Verify `bun run test:e2e` passes locally and in the pre-wired CI step.
+- [x] 7.3 Add Playwright specs under `web/e2e/tool-ui/` covering: drop, click and paste upload of a synthetic image (`setInputFiles`, dispatched drop and paste events); boxes drawn at the detected count; keyboard eyedropper sets the background; a tolerance change re-detects once after the pause; Delete then confirm removes a sticker and cancel keeps it; tray icon toggle with `aria-pressed`; roving-tabindex arrow/Home/End navigation; curated state kept across a language switch without reload; no request outside the app origin; no horizontal overflow at 375px in dark theme. Verify `bun run test:e2e` passes locally and in the pre-wired CI step.
+
+Verification: PR #11 CI run 38150720016 passed all checks, including 274 unit tests and 67 browser tests. The fresh worker offline test passed; only the private sample browser test was skipped.
 
 ## 8. Docs
 
@@ -53,4 +55,4 @@
 - The full Playwright run passed 67 tests with one optional private-sample skip. A final focused run passed all four tool UI specs without retries, including the visible, semantically indeterminate progress bar. Synthetic image files exist only in browser/test memory.
 - The existing manual-worker base-path test now starts from the static how-to-use page to isolate its worker from the tool page's new editor worker. It still asserts one wasm binary request, the exact base-path URL, local detection and same-origin requests.
 - Task 7.2 was not performed: the private sample was never copied or committed. Automated dark, narrow-layout and reduced-motion coverage passed instead.
-- Task 7.3's implementation and local browser validation are complete; its checkbox stays open until the feature pull request's pre-wired CI browser step passes.
+- Task 7.3 is complete: PR #11 CI run 38150720016 passed the pre-wired browser step on commit 887e247, with 67 tests passing.
