@@ -36,17 +36,25 @@ test.describe('after a locale switch without reload', () => {
 	test('the canonical, alternates and manifest follow the new page', async ({ page }) => {
 		await page.goto('sobre');
 		await expect(page.locator('h1')).toHaveText('Sobre o Rusticker');
-		await page.waitForFunction(() => '__rusticker_e2e' in window);
 
 		const documentRequests: string[] = [];
 		page.on('request', (request) => {
 			if (request.resourceType() === 'document') documentRequests.push(request.url());
 		});
-		await page.evaluate(() =>
-			(
-				window as unknown as { __rusticker_e2e: { switchLocale: (l: string) => Promise<void> } }
-			).__rusticker_e2e.switchLocale('en')
-		);
+		const switcher = page.getByTestId('language-switcher');
+		if ((await switcher.count()) > 0) {
+			// The design system supplies the real language menu once integrated.
+			await switcher.click();
+			await page.getByRole('menuitemradio', { name: 'English', exact: true }).click();
+		} else {
+			// The standalone PWA branch still has the scaffold's test hook.
+			await page.waitForFunction(() => '__rusticker_e2e' in window);
+			await page.evaluate(() =>
+				(
+					window as unknown as { __rusticker_e2e: { switchLocale: (l: string) => Promise<void> } }
+				).__rusticker_e2e.switchLocale('en')
+			);
+		}
 
 		await expect(page).toHaveURL(`${base}/en/about`);
 		await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
