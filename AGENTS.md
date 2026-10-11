@@ -28,6 +28,9 @@ SvelteKit (static, no server). **User images never leave the browser.**
 
 ## Tooling rules
 
+- **Shell preference:** agents should prefer Git Bash for terminal commands
+  on Windows. Use PowerShell when Git Bash is unavailable or a task requires
+  Windows-specific commands.
 - **Bun only** for JavaScript: `bun install`, `bun run <script>`, `bunx <bin>`.
   Never use `npm`, `npx`, `pnpm`, or `yarn`. Commit `bun.lock`.
 - **Rust**: the toolchain is pinned in `rust-toolchain.toml`. Code must pass
@@ -50,6 +53,14 @@ commit-msg hook. Use types such as `feat`, `fix`, `docs`, `chore`, `refactor`,
 feat(core): detect stickers with 8-connected components
 fix(web): keep locale prefix when switching theme
 ```
+
+- Every commit created by an AI agent must include a `Co-authored-by` trailer
+  identifying the agent that contributed to it. Keep the developer as the
+  primary author and preserve existing co-author trailers. For Codex, use:
+
+  ```text
+  Co-authored-by: Codex <noreply@openai.com>
+  ```
 
 ## Branching: Gitflow
 

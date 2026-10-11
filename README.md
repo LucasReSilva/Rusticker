@@ -73,6 +73,19 @@ openspec/   OpenSpec specs and change proposals
 
 ## Quick start
 
+In a fresh clone or worktree, build the wasm package before installing or
+running the web app:
+
+```sh
+cd web
+bun run build:wasm
+bun run dev
+```
+
+`build:wasm` runs wasm-pack before `bun install`, because the local dependency
+requires `core/pkg` to exist. For day-to-day development, use `bun run dev:all`
+to rebuild the wasm, refresh the copied package, and start Vite together.
+
 | Command                              | Where   | What it does                                     | Available after |
 |--------------------------------------|---------|--------------------------------------------------|-----------------|
 | `wasm-pack build core --target web`  | root    | Compiles the Rust core to `core/pkg/`            | `core-detection` |

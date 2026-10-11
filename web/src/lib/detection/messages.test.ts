@@ -22,10 +22,11 @@ describe('detectionErrorMessage', () => {
 		expect(message).toBe(catalog('pt-BR')[catalogKey[code]]);
 	});
 
-	it.each(['pt-BR', 'en', 'es'])('has a message for every code in %s', (locale) => {
+	it.each(['pt-BR', 'en', 'es'] as const)('returns the %s message for every code', (locale) => {
 		const messages = catalog(locale);
 		for (const code of DETECTION_ERROR_CODES) {
 			expect(messages[catalogKey[code]]?.trim()).toBeTruthy();
+			expect(detectionErrorMessage(code, { locale })).toBe(messages[catalogKey[code]]);
 		}
 	});
 });
