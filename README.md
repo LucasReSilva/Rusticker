@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Rusticker Logo" width="128" />
+  <img src="assets/banner.png" alt="Rusticker Banner" width="800" />
 </p>
 
 # Rusticker
