@@ -5,7 +5,9 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
+		"dev:all": "bun run build:wasm && bun run dev",
 		"build": "vite build",
+		"build:wasm": "wasm-pack build ../core --target web && bun install",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync && bun run i18n:compile || echo ''",
 		"i18n:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide --strategy url baseLocale --emit-ts-declarations --silent",
@@ -38,6 +40,7 @@
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.19.0",
 		"globals": "^17.6.0",
+		"jpeg-js": "^0.4.4",
 		"jsdom": "^30.1.2",
 		"prettier": "^3.8.3",
 		"prettier-plugin-svelte": "^4.1.0",
@@ -49,5 +52,9 @@
 		"typescript-eslint": "^8.60.1",
 		"vite": "^8.0.16",
 		"vitest": "^4.1.8"
+	},
+	"dependencies": {
+		"comlink": "^4.4.2",
+		"rusticker-core": "file:../core/pkg"
 	}
 }

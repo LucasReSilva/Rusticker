@@ -1,10 +1,10 @@
 ## 1. Setup and dependencies
 
-- [ ] 1.1 Work on branch `feature/wasm-worker` (Wave B, own worktree) created from `develop` only after both `core-detection` and `web-scaffold` are merged; runs in parallel with `design-tokens` and `pwa-seo`. Verify `git log develop --oneline` shows both merges and `core/` and `web/` exist in the worktree
-- [ ] 1.2 Build the core once: `wasm-pack build core --target web` from the repo root; verify `core/pkg/` contains `rusticker_core.js`, `rusticker_core.d.ts` and `rusticker_core_bg.wasm`, and the `.d.ts` exports `detect`, `Detection` and default `init` as in contract section 2
+- [x] 1.1 Work on branch `feature/wasm-worker` (Wave B, own worktree) created from `develop` only after both `core-detection` and `web-scaffold` are merged; runs in parallel with `design-tokens` and `pwa-seo`. Verify `git log develop --oneline` shows both merges and `core/` and `web/` exist in the worktree
+- [x] 1.2 Build the core once: `wasm-pack build core --target web` from the repo root; verify `core/pkg/` contains `rusticker_core.js`, `rusticker_core.d.ts` and `rusticker_core_bg.wasm`, and the `.d.ts` exports `detect`, `Detection` and default `init` as in contract section 2
 - [ ] 1.3 In `web/package.json` add `"rusticker-core": "file:../core/pkg"` and `comlink` to dependencies, `jpeg-js` to devDependencies, and scripts `build:wasm` (`wasm-pack build ../core --target web && bun install`) and `dev:all` (`bun run build:wasm && bun run dev`) without touching other entries; verify `bun run build:wasm` succeeds and `web/node_modules/rusticker-core/rusticker_core_bg.wasm` exists
 - [ ] 1.4 Check lockfile stability: rebuild the wasm (`bun run build:wasm`), then run `bun install --frozen-lockfile` in `web/`; verify it passes (if it fails, record the fallback from design.md Risks and use it in task 6.1)
-- [ ] 1.5 Add the separated `wasm-worker` block to `web/vite.config.ts` (`worker.format: 'es'`, `optimizeDeps.exclude: ['rusticker-core']`) per design.md D1 without reformatting other lines; verify `git diff web/vite.config.ts` shows only the marked block and `bun run dev` starts
+- [x] 1.5 Add the separated `wasm-worker` block to `web/vite.config.ts` (`worker.format: 'es'`, `optimizeDeps.exclude: ['rusticker-core']`) per design.md D1 without reformatting other lines; verify `git diff web/vite.config.ts` shows only the marked block and `bun run dev` starts
 
 ## 2. Detection module (web/src/lib/detection/)
 
