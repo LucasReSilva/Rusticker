@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+	<!-- Placeholder brand mark: a peeled sticker, kept inside the central 60%
+	     so it survives the maskable safe zone. Replace with final artwork. -->
+	<rect width="512" height="512" rx="96" fill="#822DDA"/>
+	<path d="M176 160h160a32 32 0 0 1 32 32v96l-80 80H176a32 32 0 0 1-32-32V192a32 32 0 0 1 32-32z" fill="#FFFFFF"/>
+	<path d="M368 288l-80 80v-48a32 32 0 0 1 32-32z" fill="#D9C2F5"/>
+</svg>
