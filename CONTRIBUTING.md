@@ -32,6 +32,7 @@ The full policy, along with the other project rules, is in
 | [rustup](https://rustup.rs/) | Rust toolchain manager | See the rustup website |
 | [wasm-pack](https://rustwasm.github.io/wasm-pack/) | Builds the Rust core into a WebAssembly package | `cargo install wasm-pack` |
 | [Bun](https://bun.sh/) | The **only** JavaScript package manager and runtime for this project | See the Bun website |
+| [Node.js](https://nodejs.org/) 24+ | Runs Vitest, svelte-check and the build tooling under the hood (`URLPattern` global); version pinned in `web/.node-version` | See the Node.js website |
 | [prek](https://github.com/j178/prek) | Runs the Git hooks | See the prek README |
 
 Notes:
@@ -83,28 +84,72 @@ prek run --all-files
 
 ## Development workflow
 
-Build the WebAssembly core *(after `core-detection`)*:
-
-```sh
-wasm-pack build core --target web
-```
-
-Install the web app's dependencies *(after `web-scaffold`)*:
+In every fresh clone or worktree, build the WebAssembly core before installing
+the web dependencies. The setup script runs wasm-pack first, then Bun:
 
 ```sh
 cd web
-bun install
+bun run build:wasm
 ```
 
-Then, from the `web/` directory *(after `web-scaffold`)*:
+Then, from the `web/` directory:
+
+Use `bun run dev:all` for day-to-day development to rebuild the core and refresh
+Bun's copied local package before starting Vite. Use `bun run dev` when the
+installed wasm package is already current.
+
+`web/bunfig.toml` selects Bun's isolated dependency store, avoiding the Windows
+hoisted-linker `EPERM` error for local `file:` packages. Keep this configuration
+when creating a new worktree; rebuild and reinstall after core changes.
+
+In Git Bash on Windows, preserve the URL base when invoking native tools:
+`MSYS2_ENV_CONV_EXCL=BASE_PATH BASE_PATH=/Rusticker bun run build`.
+This prevents Git Bash from converting `/Rusticker` to a Windows filesystem path.
 
 | Command | What it does |
 |---------|--------------|
 | `bun run dev` | Starts the Vite dev server |
-| `bun run build` | Builds the static site |
-| `bun run build:wasm` | Rebuilds the Rust core with wasm-pack and reinstalls the local `rusticker-core` package |
-| `bun run dev:all` | Builds the wasm package, then starts the dev server |
-| `bun run i18n:check` | Fails if any locale is missing a key that exists in `pt-BR` |
+| `bun run build` | Builds the static site (set `BASE_PATH=/Rusticker` to build for GitHub Pages) |
+| `bun run check` | Compiles the messages and type-checks the app |
+| `bun run lint` / `bun run format` | Checks / applies Prettier formatting and ESLint |
+| `bun run test` | Runs the unit tests (Vitest) |
+| `bun run test:e2e` | Builds the site with `BASE_PATH=/Rusticker`, serves it like GitHub Pages, and runs the Playwright end-to-end tests (see below) |
+| `bun run i18n:check` | Fails if any locale is missing a key that exists in `pt-BR`, has an extra key, or has an empty value |
+| `bun run verify:build` | Checks the built site (run after `bun run build`, with the same `BASE_PATH`) |
+| `bun run build:wasm` | Rebuilds the Rust core with wasm-pack and reinstalls the local `rusticker-core` package *(after `wasm-worker`)* |
+| `bun run dev:all` | Builds the wasm package, then starts the dev server *(after `wasm-worker`)* |
+| `bun run changelog:preview` | Previews the next changelog section using `git-cliff` across the workspace |
+| `bun run version:sync` | Synchronizes `web/package.json` version from `core/Cargo.toml` |
+| `bun run version:check` | Verifies that `web/package.json` and `core/Cargo.toml` versions match |
+
+### End-to-end tests
+
+The Playwright suite in `web/e2e/` runs against the production build, served
+by `web/scripts/serve-pages.ts` with the same rules as GitHub Pages (under
+`/Rusticker`). Download the browser once per machine, then run the suite:
+
+```sh
+cd web
+bunx playwright install chromium   # first time only
+bun run test:e2e
+```
+
+The suite has two Playwright projects:
+
+- `pages` runs every `*.spec.ts` file against the built site, served like
+  GitHub Pages. Use it for public pages.
+- `dev` runs only `*.dev.spec.ts` files, against the Vite dev server at
+  `http://localhost:5173/`. Use it for dev-only routes that are never built,
+  such as `/_design` and `/_detection`.
+
+Run one project with `bun run test:e2e --project=pages` (or `--project=dev`);
+only that project's server starts.
+
+On Windows with Git Bash, prefix commands that set or pass `/Rusticker`
+paths with `MSYS_NO_PATHCONV=1` (for example
+`MSYS_NO_PATHCONV=1 bun run test:e2e`), so Git Bash does not rewrite them
+into Windows paths. A failed run leaves a report in `web/playwright-report/`
+(`bunx playwright show-report`).
 
 Run the Rust tests from the repository root *(after `core-detection`)*:
 
@@ -154,14 +199,40 @@ Mark breaking changes with `!` after the type or scope (for example
 `feat(core)!: return stickers as bounding boxes only`) and explain them in a
 `BREAKING CHANGE:` footer.
 
-### Branches and pull requests
+### Branches and pull requests (Gitflow)
 
-- Name branches `<type>/<short-name>` in English, for example
-  `feat/tray-icon-picker`, `fix/zip-file-names`, or `docs/contributing`.
+The repository follows [Gitflow](https://nvie.com/posts/a-successful-git-branching-model/):
+
+| Branch | Purpose | Created from | Merged into |
+|---|---|---|---|
+| `main` | Released code only; every push deploys to GitHub Pages | — | — |
+| `develop` | Integration branch; all feature work lands here | `main` | — |
+| `feature/<name>` | One OpenSpec change or one focused piece of work | `develop` | `develop` (PR) |
+| `release/<x.y.z>` | Stabilize a release: version bump, CHANGELOG, fixes only | `develop` | `main` (tagged `vX.Y.Z`) and back into `develop` |
+| `hotfix/<x.y.z>` | Urgent fix to a released version | `main` | `main` (tagged) and `develop` |
+
+- Name feature branches after the OpenSpec change they implement, e.g.
+  `feature/core-detection`. Other work uses a short English name, e.g.
+  `feature/zip-file-names`.
+- Never commit directly to `main` or `develop`; open a pull request.
+- Parallel work uses one git worktree per feature branch, e.g.
+  `git worktree add ../Rusticker-wt/core-detection -b feature/core-detection develop`.
+  Git-ignored files (such as the local `image/` samples) are not present in a
+  worktree; tests that need the sample image read its path from
+  `RUSTICKER_SAMPLE_IMAGE`.
 - Keep pull requests **small and focused**: one change, one purpose. Split
   unrelated refactors into their own PRs.
 - Describe what changed and why, and link the related OpenSpec change if
   there is one.
+
+### Automated releases (`release-plz` and `git-cliff`)
+
+Releases and semantic versioning are automated via Conventional Commits:
+
+- `release-plz` and `git-cliff` (`cliff.toml`, `release-plz.toml`) analyze git commit history.
+- `feat` commits trigger minor version bumps; `fix` and `perf` commits trigger patch bumps; breaking changes (`!` or `BREAKING CHANGE:`) trigger major version bumps.
+- When unreleased changes land on `main`, `.github/workflows/release.yml` maintains an automated Release PR containing the updated `core/Cargo.toml`, synchronized `web/package.json` (`bun run version:sync`), and `CHANGELOG.md`.
+- When the Release PR is merged into `main`, GitHub Releases and git tag `vX.Y.Z` are created automatically, triggering GitHub Pages deployment.
 
 ## OpenSpec workflow
 
@@ -187,22 +258,27 @@ can go straight to a pull request.
 
 ## Adding a locale
 
-*Applies after `web-scaffold`.* Rusticker ships with `pt-BR` (base), `en`, and
-`es`. To add another locale, for example `de`:
+Rusticker ships with `pt-BR` (base), `en`, and `es`. To add another locale,
+for example `de`:
 
 1. Create `web/messages/de.json` by copying **all** keys from
    `web/messages/pt-BR.json`, then translate every value. Keep the parameter
    placeholders (such as `{count}`) and the plural forms intact.
 2. Register the locale in the Paraglide configuration: add `"de"` to the
    `locales` list in `web/project.inlang/settings.json`.
-3. Check that no keys are missing:
+3. Add slugs for the locale in `web/src/lib/i18n/routes.js`: a `de` entry for
+   every page in `pages` (for example `/de/` for the tool and
+   `/de/ueber-uns` for the about page). The URL patterns, links, and
+   prerendered pages all come from this table.
+4. Check that no keys are missing and that the routes are complete:
 
    ```sh
    cd web
    bun run i18n:check
+   bun run test
    ```
 
-4. Run `bun run dev`, switch to the new locale, and check the layout. Longer
+5. Run `bun run dev`, open the new locale's URLs, and check the layout. Longer
    strings must not break buttons, cards, or the header. Test on a narrow
    (mobile) viewport as well.
 
@@ -211,7 +287,7 @@ plurals, number formatting, and localized routes.
 
 ## Adding a design-system component
 
-*Applies after `web-scaffold` (and `design-tokens` for the `/_design` route).*
+*Applies after `design-tokens` (shadcn-svelte and the `/_design` route).*
 The UI is built only from design-system components and theme tokens. If you
 need a component that does not exist yet:
 

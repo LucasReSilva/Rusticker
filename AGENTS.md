@@ -28,6 +28,9 @@ SvelteKit (static, no server). **User images never leave the browser.**
 
 ## Tooling rules
 
+- **Shell preference:** agents should prefer Git Bash for terminal commands
+  on Windows. Use PowerShell when Git Bash is unavailable or a task requires
+  Windows-specific commands.
 - **Bun only** for JavaScript: `bun install`, `bun run <script>`, `bunx <bin>`.
   Never use `npm`, `npx`, `pnpm`, or `yarn`. Commit `bun.lock`.
 - **Rust**: the toolchain is pinned in `rust-toolchain.toml`. Code must pass
@@ -50,6 +53,29 @@ commit-msg hook. Use types such as `feat`, `fix`, `docs`, `chore`, `refactor`,
 feat(core): detect stickers with 8-connected components
 fix(web): keep locale prefix when switching theme
 ```
+
+- Every commit created by an AI agent must include a `Co-authored-by` trailer
+  identifying the agent that contributed to it. Keep the developer as the
+  primary author and preserve existing co-author trailers. For Codex, use:
+
+  ```text
+  Co-authored-by: Codex <noreply@openai.com>
+  ```
+
+## Branching: Gitflow
+
+- `main` holds released code only (each push deploys); `develop` is the
+  integration branch. Never commit directly to either.
+- Implement each OpenSpec change on `feature/<change-name>`, created from
+  `develop` (one git worktree per feature when working in parallel), and merge
+  back into `develop` through a pull request.
+- Releases go through `release/<x.y.z>` (from `develop`, merged into `main`
+  with a `vX.Y.Z` tag and back into `develop`); urgent fixes through
+  `hotfix/<x.y.z>` from `main`. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+- **Release readiness:** do not create or publish a release until the app can
+  load an image, detect and curate stickers, and download a valid sticker pack
+  end to end. Verify that functional flow before starting a release branch.
 
 ## Workflow: OpenSpec
 

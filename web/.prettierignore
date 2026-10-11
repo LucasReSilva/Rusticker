@@ -1,0 +1,19 @@
+# Package Managers
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lock
+bun.lockb
+
+# Miscellaneous
+/static/
+
+# Paraglide (compiled output)
+/src/lib/paraglide/
+/project.inlang/*
+!/project.inlang/settings.json
+
+# Playwright output
+/test-results/
+/playwright-report/
+/blob-report/

@@ -1,0 +1,197 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev",
+      "type": "shell",
+      "command": "bun run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "problemMatcher": [],
+      "detail": "Start the Vite development server"
+    },
+    {
+      "label": "dev:all",
+      "type": "shell",
+      "command": "bun run dev:all",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "problemMatcher": [],
+      "detail": "Build the WebAssembly core and start the Vite dev server"
+    },
+    {
+      "label": "build:wasm",
+      "type": "shell",
+      "command": "bun run build:wasm",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "problemMatcher": [],
+      "detail": "Compile Rust core with wasm-pack and install in web"
+    },
+    {
+      "label": "build:web",
+      "type": "shell",
+      "command": "bun run build",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "detail": "Build static web application with SvelteKit"
+    },
+    {
+      "label": "verify:build",
+      "type": "shell",
+      "command": "bun run verify:build",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "problemMatcher": [],
+      "detail": "Verify static build output and localized routes"
+    },
+    {
+      "label": "check",
+      "type": "shell",
+      "command": "bun run check",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "group": "build",
+      "problemMatcher": ["$svelte-check"],
+      "detail": "Run SvelteKit sync, Paraglide compilation, and svelte-check"
+    },
+    {
+      "label": "lint",
+      "type": "shell",
+      "command": "bun run lint",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "Check code formatting and linting with Prettier and ESLint"
+    },
+    {
+      "label": "format",
+      "type": "shell",
+      "command": "bun run format",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "problemMatcher": [],
+      "detail": "Format all files with Prettier"
+    },
+    {
+      "label": "test:unit",
+      "type": "shell",
+      "command": "bun run test",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "detail": "Run Vitest unit tests"
+    },
+    {
+      "label": "test:e2e",
+      "type": "shell",
+      "command": "bun run test:e2e",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "group": "test",
+      "problemMatcher": [],
+      "detail": "Run Playwright end-to-end tests"
+    },
+    {
+      "label": "test:rust",
+      "type": "shell",
+      "command": "cargo test",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test",
+      "problemMatcher": ["$rustc"],
+      "detail": "Run Rust crate unit and synthetic tests"
+    },
+    {
+      "label": "test:rust-sample",
+      "type": "shell",
+      "command": "cargo test --release -p rusticker-core --test sample_image -- --nocapture",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test",
+      "problemMatcher": ["$rustc"],
+      "detail": "Run Rust sticker detection on the sample image"
+    },
+    {
+      "label": "cargo:clippy",
+      "type": "shell",
+      "command": "cargo clippy --workspace --all-targets --all-features -- -D warnings",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": ["$rustc"],
+      "detail": "Run cargo clippy with zero warnings allowed"
+    },
+    {
+      "label": "cargo:fmt",
+      "type": "shell",
+      "command": "cargo fmt --check",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": ["$rustc"],
+      "detail": "Check Rust code formatting with rustfmt"
+    },
+    {
+      "label": "changelog:preview",
+      "type": "shell",
+      "command": "bun run changelog:preview",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "problemMatcher": [],
+      "detail": "Preview upcoming changelog section using git-cliff"
+    },
+    {
+      "label": "version:sync",
+      "type": "shell",
+      "command": "bun run version:sync",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "problemMatcher": [],
+      "detail": "Synchronize web/package.json version from core/Cargo.toml"
+    },
+    {
+      "label": "version:check",
+      "type": "shell",
+      "command": "bun run version:check",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "problemMatcher": [],
+      "detail": "Verify that web and core versions match"
+    },
+    {
+      "label": "demo:record",
+      "type": "shell",
+      "command": "bun run demo:record",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "problemMatcher": [],
+      "detail": "Record automated demo with Playwright and generate assets/demo.gif"
+    }
+  ]
+}

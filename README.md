@@ -1,6 +1,14 @@
+<p align="center">
+  <img src="assets/banner.png" alt="Rusticker Banner" width="800" />
+</p>
+
 # Rusticker
 
 Cut a whole sheet of stickers into a WhatsApp sticker pack, right in your browser.
+
+<p align="center">
+  <img src="assets/demo.gif" alt="Rusticker Demo" width="800" />
+</p>
 
 ## What it does
 
@@ -18,6 +26,22 @@ You can pick the background color with an eyedropper and adjust the tolerance
 with a slider. The interface is available in Portuguese (Brazil), English, and
 Spanish.
 
+## Using the tool
+
+Drop an image, click the drop area to choose one, click "Try with sample image"
+to test with the bundled sample sheet ([`samples/rust-stickers.png`](samples/rust-stickers.png)),
+or paste an image with Ctrl+V (Cmd+V on macOS). Detection runs automatically on your device. Pick the background
+with the eyedropper, using the pointer or arrow keys and Enter, and adjust the
+tolerance slider; detection updates after a short pause. Remove unwanted stickers
+with the confirmation dialog, then mark a kept sticker as the pack icon. The grid
+supports arrow keys, Home, End and Delete. Switching language keeps your image,
+kept stickers and icon choice until you reload the page.
+
+Keep at least three stickers, then download the pack. Each ZIP contains WEBP
+stickers, lossless PNG copies and the pack icon. More than 30 stickers are split
+into balanced packs, with individual download buttons. Prepared packs survive
+language changes and can be downloaded again without re-encoding the images.
+
 ## Privacy
 
 **Your images never leave your device.** All image processing runs in your
@@ -29,10 +53,13 @@ a vulnerability privately.
 
 ## Status
 
-Rusticker is in **early development**. The repository currently contains only
-the project foundation (documentation, configuration, and toolchain pin). The
-`core/` crate and the `web/` app do not exist yet. The commands below become
-available as the changes in the [roadmap](#roadmap) land.
+Rusticker is in **early development**. The `core/` crate (`rusticker-core`)
+detects stickers and builds to WebAssembly, with native tests. The `web/` app
+has localized routes in Portuguese (Brazil), English and Spanish, and a browser
+editor for loading, detecting, adjusting, curating and exporting stickers.
+The complete flow is verified with synthetic images, including offline export.
+No release has been created for this integration; live deployment checks remain
+part of the release workflow.
 
 ## Planned stack
 
@@ -71,31 +98,83 @@ openspec/   OpenSpec specs and change proposals
 
 ## Quick start
 
+In a fresh clone or worktree, build the wasm package before installing or
+running the web app:
+
+```sh
+cd web
+bun run build:wasm
+bun run dev
+```
+
+`build:wasm` runs wasm-pack before `bun install`, because the local dependency
+requires `core/pkg` to exist. For day-to-day development, use `bun run dev:all`
+to rebuild the wasm, refresh the copied package, and start Vite together.
+
 | Command                              | Where   | What it does                                     | Available after |
 |--------------------------------------|---------|--------------------------------------------------|-----------------|
 | `wasm-pack build core --target web`  | root    | Compiles the Rust core to `core/pkg/`            | `core-detection` |
-| `bun install`                        | `web/`  | Installs dependencies, including `core/pkg`      | `web-scaffold`  |
+| `cargo test`                         | root    | Runs the Rust unit and synthetic-image tests     | `core-detection` |
+| `RUSTICKER_SAMPLE_IMAGE=<abs path> cargo test --release -p rusticker-core --test sample_image -- --nocapture` | root | Local-only check on the private sample image (17 stickers); skipped when the variable is unset | `core-detection` |
+| `bun install`                        | `web/`  | Installs dependencies (and `core/pkg` once `wasm-worker` adds it) | `web-scaffold`  |
 | `bun run dev`                        | `web/`  | Starts the Vite dev server                       | `web-scaffold`  |
-| `bun run build`                      | `web/`  | Builds the static site                           | `web-scaffold`  |
+| `bun run build`                      | `web/`  | Builds the static site into `web/build/`         | `web-scaffold`  |
 
-Scripts planned in `web/package.json`:
+Scripts in `web/package.json`:
 
 | Script                  | What it does                                                    | Available after |
 |-------------------------|-----------------------------------------------------------------|-----------------|
-| `bun run build:wasm`    | Compiles the crate with `wasm-pack` and reinstalls the local package | `web-scaffold` |
-| `bun run dev:all`       | Builds the wasm, then starts the Vite dev server                | `web-scaffold`  |
-| `bun run i18n:check`    | Fails if any locale is missing a key that exists in `pt-BR`     | `web-scaffold`  |
+| `bun run check`         | Compiles the messages and type-checks the app (`svelte-check`)  | `web-scaffold`  |
+| `bun run lint`          | Checks formatting (Prettier) and lints (ESLint)                 | `web-scaffold`  |
+| `bun run format`        | Formats every file with Prettier                                | `web-scaffold`  |
+| `bun run test`          | Runs the unit tests (Vitest `server` and `client` projects)     | `web-scaffold`  |
+| `bun run test:e2e`      | Runs the Playwright end-to-end tests against a GitHub Pages-like build | `web-scaffold` |
+| `bun run i18n:compile`  | Compiles the Paraglide catalogs into `src/lib/paraglide/`       | `web-scaffold`  |
+| `bun run i18n:check`    | Fails if a locale is missing a key that exists in `pt-BR`, has an extra key, or has an empty value | `web-scaffold` |
+| `bun run verify:build`  | Checks the built site: the 9 localized pages, `404.html`, `lang`, and `BASE_PATH` links | `web-scaffold` |
+| `bun run build:wasm`    | Compiles the crate with `wasm-pack` and reinstalls the local package | `wasm-worker` |
+| `bun run dev:all`       | Builds the wasm, then starts the Vite dev server                | `wasm-worker`   |
+| `bun run seo:check`     | Checks the built site for SEO and offline install: canonical and `hreflang` links on the 9 pages, `sitemap.xml`, `robots.txt`, the 3 manifests and icons, and the service-worker precache list | `pwa-seo` |
+| `bun run pwa:icons`     | Regenerates the app icons in `static/icons/` from `static/icons/icon.svg` | `pwa-seo` |
+| `bun run changelog:preview` | Previews the next changelog section using `git-cliff` across the workspace | `release-automation` |
+| `bun run version:sync`  | Synchronizes `web/package.json` version from `core/Cargo.toml` | `release-automation` |
+| `bun run version:check` | Verifies that `web/package.json` and `core/Cargo.toml` have matching versions | `release-automation` |
+| `bun run demo:record`   | Records automated demo of the app with Playwright and generates `assets/demo.gif` | `developer-tooling` |
 
 > **Note:** the web app depends on the core through `"rusticker-core": "file:../core/pkg"`,
 > which Bun **copies** rather than links. Re-run `bun install` in `web/` after
 > every `wasm-pack build`, or use `bun run build:wasm`, which does both.
 
+## Install and offline use
+
+Rusticker is an installable web app (PWA). Open it in a supporting browser and
+use the browser's install option, from any language: the app is the same, and
+it shows its name and opens its start page in the language you installed it
+from. After the first visit, every page in every language, the tool, and the
+detection runtime are cached, so the app works fully offline. A new version
+downloads in the background and is used only after every window of the app has
+been closed, so an update never reloads a page while you are editing stickers.
+The cache holds only the app's own files, never your images.
+
+Build variables (set by the deploy workflow):
+
+| Variable          | Example                                   | Used for |
+|-------------------|-------------------------------------------|----------|
+| `BASE_PATH`       | `/Rusticker`                              | Sub-path the site is served from; also the service-worker and manifest scope |
+| `PUBLIC_SITE_URL` | `https://lucasresilva.github.io/Rusticker` | Absolute URLs in canonical and `hreflang` links, `sitemap.xml`, and `robots.txt` (includes the base path). When unset, the build warns and uses `http://localhost:4173${BASE_PATH}` |
+
+Run `bun run seo:check` after a build, with the same variables, to verify the
+output. On a GitHub Pages project site, crawlers ignore `robots.txt` because it
+is not at the host root, so submit `<PUBLIC_SITE_URL>/sitemap.xml` in Google
+Search Console instead; with a custom domain, set the repository variable
+`PUBLIC_SITE_URL` and an empty `BASE_PATH`.
+
 ## Adding a locale
 
 Create `web/messages/<locale>.json` with every key from `pt-BR.json`, register
-the locale in the Paraglide configuration, and run `bun run i18n:check`. See
-[CONTRIBUTING.md](CONTRIBUTING.md) for the full steps (applicable after
-`web-scaffold`).
+the locale in `web/project.inlang/settings.json`, add its URL slugs to
+`web/src/lib/i18n/routes.js`, and run `bun run i18n:check`. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for the full steps.
 
 ## Adding a design-system component
 
@@ -107,22 +186,49 @@ Add an existing shadcn-svelte component with
 
 ## Roadmap
 
-Work is organized as [OpenSpec](openspec/) changes, in this order. Changes 2
-and 3 are independent of each other.
+Work is organized as [OpenSpec](openspec/) changes, implemented in parallel
+waves (each change on its own `feature/<change>` branch and git worktree, merged into `develop`): **A** = 2 and 3; **B** = 4, 5
+and 8; **C** = 6 and 7. See each change's proposal under
+[openspec/changes/](openspec/changes/) for its dependencies and file ownership.
 
 | #  | Change              | Scope                                                                                         | Status      |
 |----|---------------------|-----------------------------------------------------------------------------------------------|-------------|
-| 1  | `project-bootstrap` | Docs, config, repository hygiene, toolchain pin                                               | In progress |
-| 2  | `core-detection`    | Rust crate with synthetic-image tests, Cargo workspace, CI Rust job                           | Planned     |
-| 3  | `web-scaffold`      | SvelteKit app, Tailwind, Paraglide, shadcn-svelte, adapter-static, theme, icons, route slugs, hosting | Planned |
-| 4  | `design-tokens`     | Theme tokens, transparency checkerboard, `/_design` living documentation route                | Planned     |
-| 5  | `wasm-worker`       | Comlink worker; `web/static/example.jpg` yields 17 stickers                                   | Planned     |
-| 6  | `tool-ui`           | DropZone, Preview, Controls, Grid, LanguageSwitcher, ThemeToggle                              | Planned     |
-| 7  | `whatsapp-export`   | WEBP up to about 100 KB, packs of 3 to 30 stickers, 96×96 tray icon, `.zip`                   | Planned     |
-| 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, `i18n:check` in CI                     | Planned     |
+| 1  | `project-bootstrap` | Docs, config, repository hygiene, toolchain pin                                               | Archived    |
+| 2  | `core-detection`    | Rust crate with synthetic-image tests, Cargo workspace, CI Rust job                           | Archived    |
+| 3  | `web-scaffold`      | SvelteKit app, Tailwind, Paraglide, adapter-static, localized routes, `i18n:check`, CI, GitHub Pages deploy | Archived    |
+| 4  | `design-tokens`     | shadcn-svelte, theme tokens, `@lucide/svelte` icons, checkerboard, ThemeToggle, LanguageSwitcher, `/_design` route | Archived    |
+| 5  | `wasm-worker`       | Comlink worker, detector API + mock; local sample image yields 17 stickers                    | Archived    |
+| 6  | `tool-ui`           | DropZone, Preview, Controls, Grid, editor state                                               | Archived    |
+| 7  | `whatsapp-export`   | WEBP up to about 100 KB, packs of 3 to 30 stickers, 96×96 tray icon, `.zip`                   | Archived    |
+| 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Archived    |
+| 9  | `branding-sample-and-deploy` | Branding logo, sample sticker sheet, and automated deploy workflow                  | Archived    |
+| 10 | `release-automation`| Automated semantic versioning and changelogs with `git-cliff` and `release-plz`       | Archived    |
 
-The app will also have how-to-use and about pages (slugs to be finalized in
-`web-scaffold`). Component and type names in the docs are provisional until the
+All roadmap changes (1 through 10) are fully implemented, verified, and archived under `openspec/changes/archive/`. Their specifications are active as authoritative contracts under `openspec/specs/`. Releases and changelogs are automated using `git-cliff` and `release-plz`. The end-to-end user flow (load image, detect stickers, curate, export WhatsApp sticker pack) is functionally verified and ready for release.
+
+The Windows local-package install failure is resolved by the isolated Bun
+linker configured in `web/bunfig.toml` on the worker branch. A fresh worktree
+successfully builds and installs wasm without a manual copy; the generated
+and installed wasm hashes match. The private sample yields 17 stickers.
+Combined validation passes the unit tests and production build, including
+one wasm asset in the offline precache. Browser checks cover all localized
+pages, accessible controls, worker detection, and a fresh worker initialized
+offline. The combined implementation and CI evidence are available in
+[integration PR #9](https://github.com/LucasReSilva/Rusticker/pull/9).
+
+The site is hosted on GitHub Pages at
+<https://lucasresilva.github.io/Rusticker/>. The deploy workflow builds it with
+`BASE_PATH=/Rusticker` (the repository name); locally `BASE_PATH` is empty and
+the site is served from the root. Routes use translated slugs, relative to the
+base path (`/en` and `/es` redirect to `/en/` and `/es/`):
+
+| Page       | pt-BR (base, no prefix) | en               | es              |
+|------------|-------------------------|------------------|-----------------|
+| Tool       | `/`                     | `/en/`           | `/es/`          |
+| How to use | `/como-usar`            | `/en/how-to-use` | `/es/como-usar` |
+| About      | `/sobre`                | `/en/about`      | `/es/acerca-de` |
+
+ Component and type names in the docs are provisional until the
 change that introduces them.
 
 **Later (not planned yet):**
