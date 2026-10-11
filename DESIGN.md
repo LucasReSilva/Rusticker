@@ -159,6 +159,13 @@ changed component must appear there.
 typed functions (`m.dropzone_title()`), and only the messages actually used
 are shipped (tree-shaken). A missing message is a type error.
 
+- Configuration: `web/project.inlang/settings.json` (`baseLocale`, `locales`,
+  and `pathPattern: "./messages/{locale}.json"`).
+- Compiled output: `web/src/lib/paraglide/` (git-ignored), produced by the
+  Vite plugin and by `bun run i18n:compile`.
+- Locale helpers live in `web/src/lib/i18n/`: the route table (`routes.js`),
+  `localizedPath()` for links, the reactive `locale`, and `switchLocale()`.
+
 ### Locales
 
 | Locale  | Role             | URL prefix |
@@ -167,8 +174,9 @@ are shipped (tree-shaken). A missing message is a type error.
 | `en`    | translation      | `/en`      |
 | `es`    | translation      | `/es`      |
 
-Adding a locale = create `messages/<locale>.json` and register the locale in
-the Paraglide/inlang project settings. Nothing else should need to change.
+Adding a locale = create `messages/<locale>.json`, register the locale in
+`project.inlang/settings.json`, and add its slugs to `src/lib/i18n/routes.js`.
+Nothing else should need to change.
 
 ### Messages
 
@@ -195,10 +203,31 @@ the Paraglide/inlang project settings. Nothing else should need to change.
 ### Routing and detection
 
 - Non-base locales get a URL prefix (`/en/...`, `/es/...`); the base locale is
-  unprefixed. Slugs are translated: `/como-usar`, `/en/how-to-use`,
-  `/es/como-usar`; `/sobre`, `/en/about`, `/es/acerca-de`.
-- **Detection order:** URL → saved preference (localStorage/cookie) → browser
+  unprefixed. Slugs are translated, and the single source of truth is
+  `src/lib/i18n/routes.js` (paths are relative to the base path):
+
+  | Page       | pt-BR        | en               | es              |
+  |------------|--------------|------------------|-----------------|
+  | Tool       | `/`          | `/en/`           | `/es/`          |
+  | How to use | `/como-usar` | `/en/how-to-use` | `/es/como-usar` |
+  | About      | `/sobre`     | `/en/about`      | `/es/acerca-de` |
+
+  The tool URLs end with a slash (`/en` redirects to `/en/` on GitHub Pages);
+  content pages have none. Route directories stay English (`how-to-use/`,
+  `about/`); a `reroute` hook maps each localized URL to them.
+- **Detection order:** URL → saved preference (`localStorage`) → browser
   language → `pt-BR`.
+  - Rendering depends only on the URL: Paraglide's strategy is
+    `['url', 'baseLocale']`, and every unprefixed URL means `pt-BR`. This keeps
+    prerendering deterministic.
+  - The saved preference and browser language apply through an **entry
+    redirect**: when a document loads at an unprefixed URL, the client `init`
+    hook (`src/hooks.client.ts`) replaces it with the same page in the saved or
+    matching browser locale, keeping the query and hash. In-app navigation
+    never redirects.
+  - The preference is stored only in the browser, under `PARAGLIDE_LOCALE`,
+    and only when the user switches language. Visiting a prefixed URL does not
+    change it.
 
 ```text
 request --> URL has /en or /es? --yes--> use it
@@ -215,10 +244,16 @@ request --> URL has /en or /es? --yes--> use it
 
 ### Static site
 
-- Content pages (how-to-use, about) are **prerendered for every locale**; list
-  each variant in `entries` / `prerender.entries`.
-- The tool route (`ssr = false`) needs an **SPA fallback that honors the
-  locale prefix**, so `/en/` and `/es/` load the tool in the right language.
+- Content pages (how-to-use, about) are **prerendered for every locale**.
+  `prerender.entries` in `svelte.config.js` comes from `prerenderEntries()` in
+  the route table.
+- The tool route (`ssr = false`) is prerendered as a script-only shell per
+  locale (`index.html`, `en/index.html`, `es/index.html`), each with the right
+  `<html lang>`, so `/en/` and `/es/` load the tool in the right language.
+- Every other URL gets the `404.html` SPA fallback, which boots the app and
+  shows the matching page or a localized not-found page.
+- The base path comes from `BASE_PATH` (empty locally, `/Rusticker` on GitHub
+  Pages); `bun run verify:build` checks the generated files.
 
 ### SEO
 
@@ -230,6 +265,9 @@ request --> URL has /en or /es? --yes--> use it
 
 Built on the design-system DropdownMenu, placed in the header. Switching
 keeps the current page (same route, other locale) and saves the preference.
+It calls `switchLocale(locale)` from `src/lib/i18n/switch.ts`, which navigates
+in-app without reloading the document. Never call Paraglide's `setLocale`
+directly, because it reloads the page.
 
 ### Formatting
 
@@ -252,5 +290,7 @@ They never depend on the active language.
 ### Missing-key check
 
 `bun run i18n:check` fails if any locale lacks a key present in `pt-BR` (the
-base). It runs in CI (wired in `web-scaffold`) and should be run before committing
-new messages.
+base), has a key that `pt-BR` lacks, or has an empty value. It reads the
+locale list from `project.inlang/settings.json`, runs in CI
+(`.github/workflows/web.yml`), and should be run before committing new
+messages.

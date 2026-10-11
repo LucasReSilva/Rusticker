@@ -30,9 +30,11 @@ a vulnerability privately.
 ## Status
 
 Rusticker is in **early development**. The `core/` crate (`rusticker-core`)
-detects stickers and builds to WebAssembly, with native tests; the `web/` app
-does not exist yet. The remaining commands below become available as the
-changes in the [roadmap](#roadmap) land.
+detects stickers and builds to WebAssembly, with native tests. The `web/` app
+shell exists: a static SvelteKit site with localized routes in Portuguese
+(Brazil), English, and Spanish, a placeholder tool page, and the how-to-use and
+about pages. The browser tool itself is not wired yet. Commands marked with a
+later change become available as the changes in the [roadmap](#roadmap) land.
 
 ## Planned stack
 
@@ -76,17 +78,24 @@ openspec/   OpenSpec specs and change proposals
 | `wasm-pack build core --target web`  | root    | Compiles the Rust core to `core/pkg/`            | `core-detection` |
 | `cargo test`                         | root    | Runs the Rust unit and synthetic-image tests     | `core-detection` |
 | `RUSTICKER_SAMPLE_IMAGE=<abs path> cargo test --release -p rusticker-core --test sample_image -- --nocapture` | root | Local-only check on the private sample image (17 stickers); skipped when the variable is unset | `core-detection` |
-| `bun install`                        | `web/`  | Installs dependencies, including `core/pkg`      | `web-scaffold`  |
+| `bun install`                        | `web/`  | Installs dependencies (and `core/pkg` once `wasm-worker` adds it) | `web-scaffold`  |
 | `bun run dev`                        | `web/`  | Starts the Vite dev server                       | `web-scaffold`  |
-| `bun run build`                      | `web/`  | Builds the static site                           | `web-scaffold`  |
+| `bun run build`                      | `web/`  | Builds the static site into `web/build/`         | `web-scaffold`  |
 
-Scripts planned in `web/package.json`:
+Scripts in `web/package.json`:
 
 | Script                  | What it does                                                    | Available after |
 |-------------------------|-----------------------------------------------------------------|-----------------|
-| `bun run build:wasm`    | Compiles the crate with `wasm-pack` and reinstalls the local package | `web-scaffold` |
-| `bun run dev:all`       | Builds the wasm, then starts the Vite dev server                | `web-scaffold`  |
-| `bun run i18n:check`    | Fails if any locale is missing a key that exists in `pt-BR`     | `web-scaffold`  |
+| `bun run check`         | Compiles the messages and type-checks the app (`svelte-check`)  | `web-scaffold`  |
+| `bun run lint`          | Checks formatting (Prettier) and lints (ESLint)                 | `web-scaffold`  |
+| `bun run format`        | Formats every file with Prettier                                | `web-scaffold`  |
+| `bun run test`          | Runs the unit tests (Vitest `server` and `client` projects)     | `web-scaffold`  |
+| `bun run test:e2e`      | Runs the Playwright end-to-end tests against a GitHub Pages-like build | `web-scaffold` |
+| `bun run i18n:compile`  | Compiles the Paraglide catalogs into `src/lib/paraglide/`       | `web-scaffold`  |
+| `bun run i18n:check`    | Fails if a locale is missing a key that exists in `pt-BR`, has an extra key, or has an empty value | `web-scaffold` |
+| `bun run verify:build`  | Checks the built site: the 9 localized pages, `404.html`, `lang`, and `BASE_PATH` links | `web-scaffold` |
+| `bun run build:wasm`    | Compiles the crate with `wasm-pack` and reinstalls the local package | `wasm-worker` |
+| `bun run dev:all`       | Builds the wasm, then starts the Vite dev server                | `wasm-worker`   |
 
 > **Note:** the web app depends on the core through `"rusticker-core": "file:../core/pkg"`,
 > which Bun **copies** rather than links. Re-run `bun install` in `web/` after
@@ -95,9 +104,9 @@ Scripts planned in `web/package.json`:
 ## Adding a locale
 
 Create `web/messages/<locale>.json` with every key from `pt-BR.json`, register
-the locale in the Paraglide configuration, and run `bun run i18n:check`. See
-[CONTRIBUTING.md](CONTRIBUTING.md) for the full steps (applicable after
-`web-scaffold`).
+the locale in `web/project.inlang/settings.json`, add its URL slugs to
+`web/src/lib/i18n/routes.js`, and run `bun run i18n:check`. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for the full steps.
 
 ## Adding a design-system component
 
@@ -118,18 +127,22 @@ and 8; **C** = 6 and 7. See each change's proposal under
 |----|---------------------|-----------------------------------------------------------------------------------------------|-------------|
 | 1  | `project-bootstrap` | Docs, config, repository hygiene, toolchain pin                                               | Done        |
 | 2  | `core-detection`    | Rust crate with synthetic-image tests, Cargo workspace, CI Rust job                           | Done        |
-| 3  | `web-scaffold`      | SvelteKit app, Tailwind, Paraglide, adapter-static, localized routes, `i18n:check`, CI, GitHub Pages deploy | Planned |
-| 4  | `design-tokens`     | shadcn-svelte, theme tokens, checkerboard, ThemeToggle, LanguageSwitcher, `/_design` route    | Planned     |
+| 3  | `web-scaffold`      | SvelteKit app, Tailwind, Paraglide, adapter-static, localized routes, `i18n:check`, CI, GitHub Pages deploy | Done        |
+| 4  | `design-tokens`     | shadcn-svelte, theme tokens, `@lucide/svelte` icons, checkerboard, ThemeToggle, LanguageSwitcher, `/_design` route | Planned |
 | 5  | `wasm-worker`       | Comlink worker, detector API + mock; local sample image yields 17 stickers                    | Planned     |
 | 6  | `tool-ui`           | DropZone, Preview, Controls, Grid, editor state                                               | Planned     |
 | 7  | `whatsapp-export`   | WEBP up to about 100 KB, packs of 3 to 30 stickers, 96×96 tray icon, `.zip`                   | Planned     |
 | 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Planned     |
 
-The site is hosted on GitHub Pages. Routes use translated slugs:
+The site is hosted on GitHub Pages at
+<https://lucasresilva.github.io/Rusticker/>. The deploy workflow builds it with
+`BASE_PATH=/Rusticker` (the repository name); locally `BASE_PATH` is empty and
+the site is served from the root. Routes use translated slugs, relative to the
+base path (`/en` and `/es` redirect to `/en/` and `/es/`):
 
 | Page       | pt-BR (base, no prefix) | en               | es              |
 |------------|-------------------------|------------------|-----------------|
-| Tool       | `/`                     | `/en`            | `/es`           |
+| Tool       | `/`                     | `/en/`           | `/es/`          |
 | How to use | `/como-usar`            | `/en/how-to-use` | `/es/como-usar` |
 | About      | `/sobre`                | `/en/about`      | `/es/acerca-de` |
 
