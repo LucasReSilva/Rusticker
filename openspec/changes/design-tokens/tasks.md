@@ -1,8 +1,8 @@
 ## 1. Setup
 
-- [ ] 1.1 Wave B, branch `feature/design-tokens` (own git worktree), created from `develop` **after `web-scaffold` is merged** (does not need `core-detection` or `wasm-worker`; runs in parallel with `wasm-worker` and `pwa-seo`). Verify `web/` exists with Tailwind v4 and Paraglide, and run `bun install && bun run check && bun run build` in `web/` to confirm a green baseline.
-- [ ] 1.2 In `web/`, run `bunx shadcn-svelte@latest init` (aliases `$lib/components/ui`, `$lib/utils`, base color neutral) and record the CLI version used. Verify `web/components.json` and `web/src/lib/utils.ts` (`cn()`) exist, and `bun run check` passes.
-- [ ] 1.3 Run `bunx shadcn-svelte@latest add button card slider tooltip badge dialog dropdown-menu sonner progress skeleton separator`, then `bun add mode-watcher @lucide/svelte`. Verify the 11 folders exist under `web/src/lib/components/ui/`, `package.json` only gained this change's deps, and `bun run check` passes.
+- [x] 1.1 Wave B, branch `feature/design-tokens` (own git worktree), created from `develop` **after `web-scaffold` is merged** (does not need `core-detection` or `wasm-worker`; runs in parallel with `wasm-worker` and `pwa-seo`). Verify `web/` exists with Tailwind v4 and Paraglide, and run `bun install && bun run check && bun run build` in `web/` to confirm a green baseline.
+- [x] 1.2 In `web/`, run `bunx shadcn-svelte@latest init` (aliases `$lib/components/ui`, `$lib/utils`, base color neutral) and record the CLI version used. Verify `web/components.json` and `web/src/lib/utils.ts` (`cn()`) exist, and `bun run check` passes.
+- [x] 1.3 Run `bunx shadcn-svelte@latest add button card slider tooltip badge dialog dropdown-menu sonner progress skeleton separator`, then `bun add mode-watcher @lucide/svelte`. Verify the 11 folders exist under `web/src/lib/components/ui/`, `package.json` only gained this change's deps, and `bun run check` passes.
 
 ## 2. Theme tokens (`web/src/app.css`)
 
