@@ -1,0 +1,68 @@
+name: Rust
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "core/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".github/workflows/rust.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "core/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".github/workflows/rust.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  core:
+    name: Format, lint, test, and build wasm
+    runs-on: ubuntu-latest
+    # RUSTICKER_SAMPLE_IMAGE is intentionally never set: the sample-image test
+    # is local-only and skips itself here.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the toolchain from rust-toolchain.toml
+        run: rustup toolchain install
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+      - name: Clippy (host)
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+      - name: Clippy (wasm32)
+        run: cargo clippy -p rusticker-core --target wasm32-unknown-unknown -- -D warnings
+
+      - name: Test
+        run: cargo test --workspace
+
+      - name: Install wasm-pack
+        uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
+
+      - name: Build the wasm package
+        run: wasm-pack build core --target web
+
+      - name: Check the package exports
+        run: |
+          grep -q "export function detect(" core/pkg/rusticker_core.d.ts
+          grep -q "export class Detection" core/pkg/rusticker_core.d.ts
