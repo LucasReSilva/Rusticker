@@ -1,0 +1,105 @@
+# GitHub Pages deployment (web-scaffold, design D9). Every push to main (each
+# Gitflow release or hotfix merged into it) publishes web/build. Requires
+# Pages to be configured with "GitHub Actions" as the source. Later changes do
+# not edit this file; the wasm steps run once core/Cargo.toml exists.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'core/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: web
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      BASE_PATH: /${{ github.event.repository.name }}
+      PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL || format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # Vitest, svelte-check and the Paraglide prerender run on Node; URLPattern
+      # is a global only from Node 24.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: web/.node-version
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: web/package.json
+
+      - name: Set up Rust (from rust-toolchain.toml)
+        if: hashFiles('core/Cargo.toml') != ''
+        working-directory: .
+        run: rustup toolchain install
+
+      - name: Install wasm-pack
+        if: hashFiles('core/Cargo.toml') != ''
+        uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
+
+      - name: Build wasm
+        if: hashFiles('core/Cargo.toml') != ''
+        working-directory: .
+        run: wasm-pack build core --target web
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Compile messages
+        run: bun run i18n:compile
+
+      - name: Catalog completeness
+        run: bun run i18n:check
+
+      - name: Build
+        run: bun run build
+
+      - name: SEO check (if defined)
+        run: bun run --if-present seo:check
+
+      - name: Verify build output
+        run: bun run verify:build
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: web/build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

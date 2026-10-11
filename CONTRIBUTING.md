@@ -32,6 +32,7 @@ The full policy, along with the other project rules, is in
 | [rustup](https://rustup.rs/) | Rust toolchain manager | See the rustup website |
 | [wasm-pack](https://rustwasm.github.io/wasm-pack/) | Builds the Rust core into a WebAssembly package | `cargo install wasm-pack` |
 | [Bun](https://bun.sh/) | The **only** JavaScript package manager and runtime for this project | See the Bun website |
+| [Node.js](https://nodejs.org/) 24+ | Runs Vitest, svelte-check and the build tooling under the hood (`URLPattern` global); version pinned in `web/.node-version` | See the Node.js website |
 | [prek](https://github.com/j178/prek) | Runs the Git hooks | See the prek README |
 
 Notes:
@@ -89,22 +90,56 @@ Build the WebAssembly core *(after `core-detection`)*:
 wasm-pack build core --target web
 ```
 
-Install the web app's dependencies *(after `web-scaffold`)*:
+Install the web app's dependencies:
 
 ```sh
 cd web
 bun install
 ```
 
-Then, from the `web/` directory *(after `web-scaffold`)*:
+Then, from the `web/` directory:
 
 | Command | What it does |
 |---------|--------------|
 | `bun run dev` | Starts the Vite dev server |
-| `bun run build` | Builds the static site |
-| `bun run build:wasm` | Rebuilds the Rust core with wasm-pack and reinstalls the local `rusticker-core` package |
-| `bun run dev:all` | Builds the wasm package, then starts the dev server |
-| `bun run i18n:check` | Fails if any locale is missing a key that exists in `pt-BR` |
+| `bun run build` | Builds the static site (set `BASE_PATH=/Rusticker` to build for GitHub Pages) |
+| `bun run check` | Compiles the messages and type-checks the app |
+| `bun run lint` / `bun run format` | Checks / applies Prettier formatting and ESLint |
+| `bun run test` | Runs the unit tests (Vitest) |
+| `bun run test:e2e` | Builds the site with `BASE_PATH=/Rusticker`, serves it like GitHub Pages, and runs the Playwright end-to-end tests (see below) |
+| `bun run i18n:check` | Fails if any locale is missing a key that exists in `pt-BR`, has an extra key, or has an empty value |
+| `bun run verify:build` | Checks the built site (run after `bun run build`, with the same `BASE_PATH`) |
+| `bun run build:wasm` | Rebuilds the Rust core with wasm-pack and reinstalls the local `rusticker-core` package *(after `wasm-worker`)* |
+| `bun run dev:all` | Builds the wasm package, then starts the dev server *(after `wasm-worker`)* |
+
+### End-to-end tests
+
+The Playwright suite in `web/e2e/` runs against the production build, served
+by `web/scripts/serve-pages.ts` with the same rules as GitHub Pages (under
+`/Rusticker`). Download the browser once per machine, then run the suite:
+
+```sh
+cd web
+bunx playwright install chromium   # first time only
+bun run test:e2e
+```
+
+The suite has two Playwright projects:
+
+- `pages` runs every `*.spec.ts` file against the built site, served like
+  GitHub Pages. Use it for public pages.
+- `dev` runs only `*.dev.spec.ts` files, against the Vite dev server at
+  `http://localhost:5173/`. Use it for dev-only routes that are never built,
+  such as `/_design` and `/_detection`.
+
+Run one project with `bun run test:e2e --project=pages` (or `--project=dev`);
+only that project's server starts.
+
+On Windows with Git Bash, prefix commands that set or pass `/Rusticker`
+paths with `MSYS_NO_PATHCONV=1` (for example
+`MSYS_NO_PATHCONV=1 bun run test:e2e`), so Git Bash does not rewrite them
+into Windows paths. A failed run leaves a report in `web/playwright-report/`
+(`bunx playwright show-report`).
 
 Run the Rust tests from the repository root *(after `core-detection`)*:
 
@@ -204,22 +239,27 @@ can go straight to a pull request.
 
 ## Adding a locale
 
-*Applies after `web-scaffold`.* Rusticker ships with `pt-BR` (base), `en`, and
-`es`. To add another locale, for example `de`:
+Rusticker ships with `pt-BR` (base), `en`, and `es`. To add another locale,
+for example `de`:
 
 1. Create `web/messages/de.json` by copying **all** keys from
    `web/messages/pt-BR.json`, then translate every value. Keep the parameter
    placeholders (such as `{count}`) and the plural forms intact.
 2. Register the locale in the Paraglide configuration: add `"de"` to the
    `locales` list in `web/project.inlang/settings.json`.
-3. Check that no keys are missing:
+3. Add slugs for the locale in `web/src/lib/i18n/routes.js`: a `de` entry for
+   every page in `pages` (for example `/de/` for the tool and
+   `/de/ueber-uns` for the about page). The URL patterns, links, and
+   prerendered pages all come from this table.
+4. Check that no keys are missing and that the routes are complete:
 
    ```sh
    cd web
    bun run i18n:check
+   bun run test
    ```
 
-4. Run `bun run dev`, switch to the new locale, and check the layout. Longer
+5. Run `bun run dev`, open the new locale's URLs, and check the layout. Longer
    strings must not break buttons, cards, or the header. Test on a narrow
    (mobile) viewport as well.
 
@@ -228,7 +268,7 @@ plurals, number formatting, and localized routes.
 
 ## Adding a design-system component
 
-*Applies after `web-scaffold` (and `design-tokens` for the `/_design` route).*
+*Applies after `design-tokens` (shadcn-svelte and the `/_design` route).*
 The UI is built only from design-system components and theme tokens. If you
 need a component that does not exist yet:
 

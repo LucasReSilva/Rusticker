@@ -28,9 +28,13 @@ Later changes edit some of the files created here (`+layout.svelte`, `vite.confi
 
 ## Decisions
 
+### D0. SvelteKit 2 pinned
+
+SvelteKit 2 is pinned; the SvelteKit 3 migration is deferred because `@vite-pwa/sveltekit` (needed by `pwa-seo`) only supports kit `^1`/`^2`. `sv@1.x` scaffolds SvelteKit 3, so the scaffold uses `sv@0.17.1`, the last release that targets SvelteKit 2. Installed at scaffold time: `@sveltejs/kit` 2.70.3 (range `^2.63.0`), `svelte` 5.57.2, `vite` 8.3.4, `@sveltejs/vite-plugin-svelte` 7.3.1, `svelte-check` 4.7.6, and `typescript` 6.0.3. These are all within kit 2's declared peer ranges (`vite ^8`, `typescript ^6`, `vite-plugin-svelte ^7`), and `vite-plugin-pwa` 1.2 (the dependency of `@vite-pwa/sveltekit`) supports Vite 8. The kit config lives in the standard `svelte.config.js`, not in the `sveltekit()` Vite plugin options.
+
 ### D1. Scaffold with the official CLI, then normalize to Bun
 
-From the repo root:
+From the repo root (with `sv@0.17.1`, see D0):
 
 ```sh
 bunx sv create web --template minimal --types ts --install bun --no-add-ons
@@ -91,9 +95,9 @@ The fallback stays as the safety net for every other URL (spec "SPA fallback for
   - `plugin.inlang.messageFormat.pathPattern: "./messages/{locale}.json"`.
 - **Catalogs:** `web/messages/{locale}.json`.
 - **Compiled output:** `web/src/lib/paraglide/`, git-ignored in `web/.gitignore` and excluded from ESLint and Prettier. This is the path CONTRIBUTING's "Adding a locale" already names, so that section only needs the slug note (task 8).
-- **Strategy:** `['url', 'localStorage', 'baseLocale']`. The Vite plugin also receives `urlPatterns` (D4).
+- **Strategy:** `['url', 'baseLocale']` (implementation note: `localStorage` was dropped, see below). The Vite plugin also receives `urlPatterns` (D4).
   - `url` comes first, and the patterns cover every URL, including the unprefixed ones, which map to `pt-BR`. The locale used for rendering therefore depends only on the URL, which keeps prerendering deterministic.
-  - `localStorage` is listed so that Paraglide reads and writes the choice under its own key (`PARAGLIDE_LOCALE`). Switching is done only through `switchLocale` (D11), never through Paraglide's reloading `setLocale(locale)`.
+  - `localStorage` is **not** listed. Paraglide's first `getLocale()` call runs `setLocale(resolved, { reload: false })`, which with that strategy writes the URL's locale to `PARAGLIDE_LOCALE`; visiting `/en/about` would then overwrite a saved `es` preference, against the spec ("Visiting a prefixed link does not overwrite the preference"). The preference helpers (D5) read and write the same `PARAGLIDE_LOCALE` key themselves. Switching is done only through `switchLocale` (D11), never through Paraglide's reloading `setLocale(locale)`.
   - `cookie` is dropped: a static host cannot read it, and a cookie would be sent with every request for no benefit.
   - `preferredLanguage` is dropped: Paraglide matches only on the primary subtag, so `pt-PT` would not match `pt-BR`. The negotiation in D5 handles browser languages instead.
 - **`src/hooks.server.ts`:** `export const handle = sequence(paraglideHandle, /* @pwa-seo:handle */)` (addendum R3). `paraglideHandle` wraps `paraglideMiddleware` with a `transformPageChunk` that replaces `%paraglide.lang%` in `app.html`'s `<html lang="%paraglide.lang%">`. `pwa-seo` inserts its head-tags handle at the anchor and changes nothing else. This runs during prerendering, so every generated document, including `404.html` (always `pt-BR`), carries a `lang`.
@@ -229,7 +233,7 @@ On this change's branch `core/` does not exist yet, so all three are skipped. Th
 
 **`.github/workflows/web.yml`**
 
-- Triggers: `push` to `develop` and `develop`, and `pull_request` targeting either. Path filters: `web/**`, `core/**`, `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, and `.github/workflows/web.yml`.
+- Triggers: `push` to `main` and `develop`, and `pull_request` targeting either. Path filters: `web/**`, `core/**`, `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, and `.github/workflows/web.yml`.
 - One job on `ubuntu-latest`. Steps, in this exact order:
   1. checkout;
   2. `oven-sh/setup-bun` with `bun-version-file: web/package.json`;
@@ -240,7 +244,8 @@ On this change's branch `core/` does not exist yet, so all three are skipped. Th
   7. `bun run test`, `bun run i18n:check`;
   8. build with `BASE_PATH=/Rusticker`, which exercises a non-empty base;
   9. `bun run --if-present seo:check` (a no-op until `pwa-seo` defines it);
-  10. `BASE_PATH=/Rusticker bun run verify:build`.
+  10. `BASE_PATH=/Rusticker bun run verify:build`;
+  11. the Playwright e2e suite (D13): read the `@playwright/test` version, restore `~/.cache/ms-playwright` from a cache keyed on it, `bunx playwright install --with-deps chromium`, `bun run --if-present test:e2e`, and upload `web/playwright-report/` as an artifact when the job fails. `deploy.yml` does not run e2e.
 
 **`.github/workflows/deploy.yml`**
 
@@ -301,6 +306,22 @@ Nothing in this change can send user data off the device.
 Dev dependencies: `jsdom`, `@testing-library/svelte`, `@testing-library/jest-dom`.
 
 One smoke test proves the client project works: `src/lib/i18n/switch.svelte.test.ts` (D11). Later changes only add test files that follow these naming rules.
+
+### D13. Playwright e2e against a Pages-like server (approved scope addition)
+
+Unit tests cannot show what only a real browser and a real static host do: the client `init` redirect, `<html lang>` after hydration, `switchLocale` without a document reload, the `404.html` fallback, the `/en` → `/en/` redirect, and pages readable without JavaScript. These run as a Playwright suite.
+
+- **Setup:** `bunx sv add playwright` (then normalized: the demo route removed, `test` stays Vitest-only, `test:e2e` = `playwright test`). Chromium only for now; `bunx playwright install chromium` once per machine.
+- **Server:** `playwright.config.ts` has a `webServer` that runs `bun run build` with `BASE_PATH=/Rusticker`, then `bun scripts/serve-pages.ts`. That script reproduces the GitHub Pages rules the app depends on: everything under the base path, `/x` → `x.html`, `/x/` → `x/index.html`, a directory without the slash → 301 to `/x/`, and anything else → `404.html` with status 404. `vite preview` is not used because it falls back to SvelteKit's server rendering for unknown URLs, which GitHub Pages never does. `baseURL` is `http://localhost:4173/Rusticker/`, traces are kept on the first retry, and CI retries once.
+- **Specs** (`web/e2e/web-scaffold/`): entry redirect (saved preference via `storageState`, browser language via the context `locale`), `switchLocale` (no extra `document` request, a `window` marker survives, and URL, text, header, `<html lang>`, and storage update), `/en` → `/en/`, the localized not-found page and its link back, the Spanish about page with JavaScript disabled, and same-origin requests only.
+- **Triggering `switchLocale`:** there is no language switcher UI until `design-tokens`. A build-time flag, `VITE_E2E_HOOKS=true`, which only the e2e `webServer` sets, makes `src/hooks.client.ts` expose `window.__rusticker_e2e.switchLocale`. Vite replaces the flag at build time, so normal and deploy builds compile the block out (checked: no `__rusticker_e2e` in a normal build). Once `LanguageSwitcher` exists, the spec can click it instead.
+- **Two fixed projects**, so later changes add spec files and never edit `playwright.config.ts`:
+  - `pages`: everything except `**/*.dev.spec.ts`, against the Pages-like server above;
+  - `dev`: `**/*.dev.spec.ts` only, against the Vite dev server (`bun run dev --port 5173 --strictPort`, `BASE_PATH` empty, `baseURL` `http://localhost:5173/`). It is for dev-only routes that are never built or prerendered, such as `/_design` (`design-tokens`) and `/_detection` (`wasm-worker`).
+  - Each project's `webServer` starts only when that project is selected: with no `--project` filter both start, and `--project=pages` or `--project=dev` starts just one. The servers start one after the other, pages first, so the dev server's Paraglide compile (empty base) cannot overwrite `src/lib/paraglide` during the `/Rusticker` build. The cost of a default run is one extra dev-server start, a few seconds.
+- **CI:** see D9 step 11. Deploy does not run e2e.
+
+*Alternative:* keep the ad-hoc puppeteer-core script used during implementation. Rejected: it lived outside the repo, drove an installed desktop browser, had no runner, assertions, retries, traces, or reports, and could not run in CI. Playwright provides all of these, ships its own browser builds, and is the upstream `sv` add-on.
 
 ## Risks / Trade-offs
 
