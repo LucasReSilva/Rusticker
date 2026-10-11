@@ -7,13 +7,12 @@
 	import InfoIcon from '@lucide/svelte/icons/info';
 	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
 	import { m } from '$lib/paraglide/messages';
+	import { locale } from '$lib/i18n/locale.svelte';
 
 	// Assistive labels default to the active locale's messages (text-free kit).
-	let {
-		containerAriaLabel = m.a11y_notifications(),
-		closeButtonAriaLabel = m.a11y_close(),
-		...restProps
-	}: SonnerProps = $props();
+	let { containerAriaLabel, closeButtonAriaLabel, ...restProps }: SonnerProps = $props();
+
+	const messageOptions = $derived({ locale: locale.current });
 </script>
 
 <!-- Toasts follow mode-watcher's resolved mode and use theme tokens only. -->
@@ -21,8 +20,8 @@
 	theme={mode.current ?? 'system'}
 	class="toaster group"
 	style="--normal-bg: var(--color-popover); --normal-text: var(--color-popover-foreground); --normal-border: var(--color-border); --border-radius: var(--radius);"
-	{containerAriaLabel}
-	{closeButtonAriaLabel}
+	containerAriaLabel={containerAriaLabel ?? m.a11y_notifications({}, messageOptions)}
+	closeButtonAriaLabel={closeButtonAriaLabel ?? m.a11y_close({}, messageOptions)}
 	toastOptions={{
 		classes: {
 			toast: 'cn-toast font-sans shadow-lg',
