@@ -1,0 +1,177 @@
+import { afterEach, beforeEach, expect, it, vi, type Mock } from 'vitest';
+import {
+	createEditorState,
+	getEditor,
+	setEditorForTesting,
+	type EditorState
+} from './state.svelte';
+import { createMockDetector, cancelledError, type Detector, type Sticker } from './detection';
+
+const pixels = { width: 30, height: 30, data: new Uint8ClampedArray(30 * 30 * 4) } as ImageData;
+const decoded = { imageData: pixels, width: 30, height: 30 };
+const file = () => new File([], 'sheet.png', { type: 'image/png' });
+let editor: EditorState;
+let detector: Detector;
+let decode: Mock<() => Promise<typeof decoded>>;
+
+beforeEach(() => {
+	vi.stubGlobal(
+		'ImageData',
+		class {
+			data: Uint8ClampedArray;
+			width: number;
+			height: number;
+			constructor(data: Uint8ClampedArray, width: number, height: number) {
+				this.data = data;
+				this.width = width;
+				this.height = height;
+			}
+		}
+	);
+	URL.createObjectURL = vi.fn(() => 'blob:local-sheet');
+	URL.revokeObjectURL = vi.fn();
+	detector = createMockDetector({ count: 3 });
+	vi.spyOn(detector, 'detect');
+	vi.spyOn(detector, 'dispose');
+	decode = vi.fn(async () => decoded);
+	editor = createEditorState({ detector, decode });
+});
+afterEach(() => {
+	editor.dispose();
+	setEditorForTesting(null);
+	vi.useRealTimers();
+	vi.unstubAllGlobals();
+});
+
+it('loads locally, defaults the tray icon, curates and falls back when the tray is removed', async () => {
+	await editor.loadFile(file());
+	expect(editor.stickers).toHaveLength(3);
+	expect(editor.trayIconId).toBe(editor.stickers[0].id);
+	const chosen = editor.stickers[1].id;
+	editor.setTrayIcon(chosen);
+	expect(editor.trayIconId).toBe(chosen);
+	editor.removeSticker(chosen);
+	expect(editor.stickers).toHaveLength(2);
+	expect(editor.trayIconId).toBe(editor.stickers[0].id);
+	editor.setTrayIcon('missing');
+	expect(editor.trayIconId).toBe(editor.stickers[0].id);
+});
+it('keeps the previous source and results after an unsupported file or decode failure, including repeated errors', async () => {
+	await editor.loadFile(file());
+	const source = editor.source;
+	const stickers = editor.stickers;
+	await editor.loadFile(new Blob([], { type: 'text/plain' }));
+	expect(editor.lastError).toBe('UnsupportedFile');
+	expect(editor.source).toBe(source);
+	expect(editor.stickers).toEqual(stickers);
+	const sequence = editor.errorSequence;
+	editor.rejectFile();
+	expect(editor.errorSequence).toBe(sequence + 1);
+	decode.mockRejectedValueOnce(new Error('bad image'));
+	await editor.loadFile(file());
+	expect(editor.lastError).toBe('DecodeFailed');
+	expect(editor.source).toBe(source);
+	expect(editor.stickers).toEqual(stickers);
+	expect(editor.isProcessing).toBe(false);
+});
+it('coalesces tolerance changes and cancels the debounce when the background changes', async () => {
+	vi.useFakeTimers();
+	await editor.loadFile(file());
+	editor.setTolerance(55);
+	editor.setTolerance(63);
+	editor.setTolerance(70.4);
+	expect(editor.tolerance).toBe(70);
+	expect(editor.isProcessing).toBe(true);
+	expect(detector.detect).toHaveBeenCalledTimes(1);
+	await vi.advanceTimersByTimeAsync(299);
+	expect(detector.detect).toHaveBeenCalledTimes(1);
+	await vi.advanceTimersByTimeAsync(1);
+	expect(detector.detect).toHaveBeenCalledTimes(2);
+	expect(detector.detect).toHaveBeenLastCalledWith(pixels, {
+		background: { r: 0, g: 177, b: 64 },
+		tolerance: 70
+	});
+	editor.removeSticker(editor.stickers[0].id);
+	expect(editor.removedIds.size).toBe(1);
+	editor.setTolerance(80);
+	editor.setBackground({ r: 1, g: 2, b: 3 });
+	await vi.advanceTimersByTimeAsync(300);
+	expect(detector.detect).toHaveBeenCalledTimes(3);
+	expect(editor.removedIds.size).toBe(0);
+	expect(editor.isProcessing).toBe(false);
+	expect(editor.stickers).toHaveLength(3);
+});
+it('clears results on NoStickers while keeping the source', async () => {
+	editor.dispose();
+	editor = createEditorState({ detector: createMockDetector({ failWith: 'NoStickers' }), decode });
+	await editor.loadFile(file());
+	expect(editor.lastError).toBe('NoStickers');
+	expect(editor.status).toBe('error');
+	expect(editor.source).not.toBeNull();
+	expect(editor.stickers).toHaveLength(0);
+});
+it('tracks processing across asynchronous decode and detection', async () => {
+	vi.useFakeTimers();
+	let finishDecode!: (value: typeof decoded) => void;
+	editor.dispose();
+	editor = createEditorState({
+		detector: createMockDetector({ delayMs: 50 }),
+		decode: () => new Promise((resolve) => (finishDecode = resolve))
+	});
+	const loading = editor.loadFile(file());
+	expect(editor.status).toBe('decoding');
+	expect(editor.isProcessing).toBe(true);
+	finishDecode(decoded);
+	await vi.advanceTimersByTimeAsync(0);
+	expect(editor.status).toBe('detecting');
+	expect(editor.isProcessing).toBe(true);
+	await vi.advanceTimersByTimeAsync(50);
+	await loading;
+	expect(editor.isProcessing).toBe(false);
+});
+it('ignores stale decode results after a newer file and disposes local resources', async () => {
+	let finishDecode!: (value: typeof decoded) => void;
+	decode.mockImplementationOnce(() => new Promise((resolve) => (finishDecode = resolve)));
+	const older = editor.loadFile(file());
+	await editor.loadFile(new File([], 'new.png', { type: 'image/png' }));
+	finishDecode(decoded);
+	await older;
+	expect(editor.source?.name).toBe('new.png');
+	expect(detector.detect).toHaveBeenCalledOnce();
+	editor.dispose();
+	expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:local-sheet');
+	expect(detector.dispose).toHaveBeenCalled();
+});
+it('ignores stale detection results and cancellation when a newer setting is waiting', async () => {
+	vi.useFakeTimers();
+	const completions: { resolve: (value: Sticker[]) => void; reject: (error: unknown) => void }[] =
+		[];
+	vi.mocked(detector.detect).mockImplementation(
+		() => new Promise((resolve, reject) => completions.push({ resolve, reject }))
+	);
+	const loading = editor.loadFile(file());
+	await vi.advanceTimersByTimeAsync(0);
+	editor.setTolerance(60);
+	completions[0].resolve([]);
+	await loading;
+	expect(editor.status).toBe('detecting');
+	expect(editor.isProcessing).toBe(true);
+	await vi.advanceTimersByTimeAsync(300);
+	editor.setBackground({ r: 0, g: 0, b: 0 });
+	completions[1].reject(cancelledError());
+	completions[2].resolve([]);
+	await vi.advanceTimersByTimeAsync(0);
+	expect(editor.lastError).toBeNull();
+	expect(editor.status).toBe('ready');
+	expect(editor.isProcessing).toBe(false);
+});
+it('retains one injected singleton and can reset it without creating a worker', () => {
+	setEditorForTesting(editor);
+	expect(getEditor()).toBe(editor);
+	expect(getEditor()).toBe(getEditor());
+	const replacement = createEditorState({ detector: createMockDetector(), decode });
+	setEditorForTesting(replacement);
+	expect(getEditor()).toBe(replacement);
+	replacement.dispose();
+	setEditorForTesting(null);
+});
