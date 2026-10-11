@@ -36,5 +36,9 @@ test('the service worker never precaches dev-only routes', async ({ request }) =
 	const urls = [...sw.matchAll(/\burl:\s*"([^"]*)"/g)].map((match) => match[1]);
 	expect(urls).toContain('404.html');
 	expect(urls).toContain('es/acerca-de');
-	expect(urls.filter((url) => /(^|\/)_(?!app\/)/.test(url))).toEqual([]);
+	// Generated asset names may start with an underscore; only route paths
+	// outside SvelteKit's asset directory must reject internal route segments.
+	expect(urls.filter((url) => !url.startsWith('_app/') && /(^|\/)_(?!app\/)/.test(url))).toEqual(
+		[]
+	);
 });
