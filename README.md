@@ -96,10 +96,36 @@ Scripts in `web/package.json`:
 | `bun run verify:build`  | Checks the built site: the 9 localized pages, `404.html`, `lang`, and `BASE_PATH` links | `web-scaffold` |
 | `bun run build:wasm`    | Compiles the crate with `wasm-pack` and reinstalls the local package | `wasm-worker` |
 | `bun run dev:all`       | Builds the wasm, then starts the Vite dev server                | `wasm-worker`   |
+| `bun run seo:check`     | Checks the built site for SEO and offline install: canonical and `hreflang` links on the 9 pages, `sitemap.xml`, `robots.txt`, the 3 manifests and icons, and the service-worker precache list | `pwa-seo` |
+| `bun run pwa:icons`     | Regenerates the app icons in `static/icons/` from `static/icons/icon.svg` | `pwa-seo` |
 
 > **Note:** the web app depends on the core through `"rusticker-core": "file:../core/pkg"`,
 > which Bun **copies** rather than links. Re-run `bun install` in `web/` after
 > every `wasm-pack build`, or use `bun run build:wasm`, which does both.
+
+## Install and offline use
+
+Rusticker is an installable web app (PWA). Open it in a supporting browser and
+use the browser's install option, from any language: the app is the same, and
+it shows its name and opens its start page in the language you installed it
+from. After the first visit, every page in every language, the tool, and the
+detection runtime are cached, so the app works fully offline. A new version
+downloads in the background and is used only after every window of the app has
+been closed, so an update never reloads a page while you are editing stickers.
+The cache holds only the app's own files, never your images.
+
+Build variables (set by the deploy workflow):
+
+| Variable          | Example                                   | Used for |
+|-------------------|-------------------------------------------|----------|
+| `BASE_PATH`       | `/Rusticker`                              | Sub-path the site is served from; also the service-worker and manifest scope |
+| `PUBLIC_SITE_URL` | `https://lucasresilva.github.io/Rusticker` | Absolute URLs in canonical and `hreflang` links, `sitemap.xml`, and `robots.txt` (includes the base path). When unset, the build warns and uses `http://localhost:4173${BASE_PATH}` |
+
+Run `bun run seo:check` after a build, with the same variables, to verify the
+output. On a GitHub Pages project site, crawlers ignore `robots.txt` because it
+is not at the host root, so submit `<PUBLIC_SITE_URL>/sitemap.xml` in Google
+Search Console instead; with a custom domain, set the repository variable
+`PUBLIC_SITE_URL` and an empty `BASE_PATH`.
 
 ## Adding a locale
 
