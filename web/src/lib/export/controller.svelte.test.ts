@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { flushSync } from 'svelte';
 import { SvelteMap } from 'svelte/reactivity';
 import { createExportController } from './controller.svelte';
+import { createExportSession } from './session';
 import { createStickerSizes } from './sizes.svelte';
 import { deferred, fakeEncoder, mockStickers } from './test-helpers';
 import type { Sticker } from '$lib/detection/types';
@@ -25,23 +26,84 @@ async function setup(count = 3, encoder = fakeEncoder()) {
 	sizes.sync(stickers);
 	const download = vi.fn();
 	const pause = vi.fn(async () => {});
+	const deps = {
+		getStickers: () => source.get('stickers') as Sticker[],
+		getTrayIconId: () => source.get('tray') as string | null,
+		isDetecting: () => source.get('detecting') as boolean,
+		sizes,
+		encoder,
+		download,
+		pause,
+		session: createExportSession()
+	};
 	let controller!: ReturnType<typeof createExportController>;
 	cleanups.push(
 		$effect.root(() => {
-			controller = createExportController({
-				getStickers: () => source.get('stickers') as Sticker[],
-				getTrayIconId: () => source.get('tray') as string | null,
-				isDetecting: () => source.get('detecting') as boolean,
-				sizes,
-				encoder,
-				download,
-				pause
-			});
+			controller = createExportController(deps);
 		})
 	);
 	flushSync();
-	return { stickers, source, sizes, controller, download, pause };
+	return { stickers, source, sizes, controller, download, pause, deps };
 }
+
+it('retains ready ZIPs across a locale remount without re-encoding and invalidates changed input', async () => {
+	const encoder = fakeEncoder();
+	const webp = vi.spyOn(encoder, 'webp');
+	const png = vi.spyOn(encoder, 'png');
+	const { controller, deps, source, download, stickers } = await setup(31, encoder);
+	await controller.exportAll();
+	const ready = controller.archives;
+	cleanups.pop()!();
+	let remounted!: ReturnType<typeof createExportController>;
+	cleanups.push(
+		$effect.root(() => {
+			remounted = createExportController(deps);
+		})
+	);
+	flushSync();
+	expect(remounted.phase).toBe('done');
+	expect(remounted.archives).toBe(ready);
+	await remounted.downloadPack(1);
+	expect(download).toHaveBeenLastCalledWith(ready[1].blob, 'rusticker-pack-2.zip');
+	await remounted.exportAll();
+	expect(remounted.progress).toEqual({ done: 33, total: 33 });
+	expect(webp).toHaveBeenCalledTimes(31);
+	expect(png).toHaveBeenCalledTimes(31);
+	source.set('tray', stickers[1].id);
+	flushSync();
+	expect(remounted.archives).toEqual([]);
+	cleanups.pop()!();
+	cleanups.push(
+		$effect.root(() => {
+			remounted = createExportController(deps);
+		})
+	);
+	flushSync();
+	expect(remounted.archives).toEqual([]);
+});
+
+it('keeps ready archives on teardown while cancelling remaining automatic downloads', async () => {
+	const { controller, deps, pause, download } = await setup(31);
+	const gap = deferred<void>();
+	pause.mockImplementation(() => gap.promise);
+	const pending = controller.exportAll();
+	await vi.waitFor(() => expect(pause).toHaveBeenCalled());
+	const ready = controller.archives;
+	cleanups.pop()!();
+	gap.resolve();
+	await pending;
+	expect(download).toHaveBeenCalledTimes(1);
+	let remounted!: ReturnType<typeof createExportController>;
+	cleanups.push(
+		$effect.root(() => {
+			remounted = createExportController(deps);
+		})
+	);
+	flushSync();
+	expect(remounted.archives).toBe(ready);
+	await remounted.downloadPack(1);
+	expect(download).toHaveBeenCalledTimes(2);
+});
 
 it('blocks fewer than three stickers and detection, and plans balanced packs', async () => {
 	const { controller, source, download } = await setup(2);

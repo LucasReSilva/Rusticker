@@ -2,6 +2,7 @@ import { untrack } from 'svelte';
 import type { Sticker } from '$lib/detection/types';
 import { exportPacks } from './export';
 import { splitIntoPacks } from './split';
+import { createExportSession, type ExportSession } from './session';
 import type { Encoder, ExportProgress, ExportResult, PackArchive, StickerSizes } from './types';
 
 interface Snapshot {
@@ -16,20 +17,24 @@ export interface ControllerDependencies {
 	encoder: Encoder;
 	download: (blob: Blob, fileName: string) => void | Promise<void>;
 	pause?: () => Promise<void>;
+	session?: ExportSession;
 }
 
 export function createExportController(deps: ControllerDependencies) {
-	let phase = $state<'idle' | 'exporting' | 'done' | 'error'>('idle');
-	let progress = $state<ExportProgress>({ done: 0, total: 0 });
-	let archives = $state.raw<PackArchive[]>([]);
-	let saved: Snapshot | undefined;
-	let lastResult: ExportResult | undefined;
-	let active: Snapshot | undefined;
-	let invalidated = false;
 	const snapshot = (): Snapshot => ({
 		stickers: deps.getStickers().map((sticker) => ({ ...sticker })),
 		trayIconId: deps.getTrayIconId()
 	});
+	const session = deps.session ?? createExportSession();
+	const initialInput = snapshot();
+	const initialResult = session.get(initialInput.stickers, initialInput.trayIconId);
+	let phase = $state<'idle' | 'exporting' | 'done' | 'error'>(initialResult ? 'done' : 'idle');
+	const initialTotal = initialResult ? initialResult.stickerCount + initialResult.packCount : 0;
+	let progress = $state<ExportProgress>({ done: initialTotal, total: initialTotal });
+	let archives = $state.raw<PackArchive[]>(initialResult?.archives ?? []);
+	let saved: Snapshot | undefined = initialResult ? initialInput : undefined;
+	let active: Snapshot | undefined;
+	let invalidated = false;
 	const matches = (value: Snapshot): boolean => {
 		const current = deps.getStickers();
 		return (
@@ -53,7 +58,7 @@ export function createExportController(deps: ControllerDependencies) {
 			if (active && (!matches(active) || detecting)) invalidated = true;
 			if (saved && !matches(saved)) {
 				archives = [];
-				lastResult = undefined;
+				session.clear();
 				saved = undefined;
 				if (phase !== 'exporting') phase = 'idle';
 			}
@@ -102,22 +107,22 @@ export function createExportController(deps: ControllerDependencies) {
 			progress = { done: 0, total: input.stickers.length + splitIntoPacks(input.stickers).length };
 			try {
 				const result =
-					saved && matches(saved) && lastResult
-						? lastResult
-						: await exportPacks(input.stickers, input.trayIconId, {
-								sizes: deps.sizes,
-								encoder: deps.encoder,
-								onProgress: (value) => {
-									if (valid()) progress = value;
-								}
-							});
+					session.get(input.stickers, input.trayIconId) ??
+					(await exportPacks(input.stickers, input.trayIconId, {
+						sizes: deps.sizes,
+						encoder: deps.encoder,
+						onProgress: (value) => {
+							if (valid()) progress = value;
+						}
+					}));
 				if (!valid()) {
 					phase = 'idle';
 					return;
 				}
 				saved = input;
-				lastResult = result;
+				session.set(input.stickers, input.trayIconId, result);
 				archives = result.archives;
+				progress = { done: progress.total, total: progress.total };
 				for (const [index, archive] of result.archives.entries()) {
 					if (index > 0)
 						await (deps.pause?.() ?? new Promise((resolve) => setTimeout(resolve, 400)));
@@ -127,6 +132,10 @@ export function createExportController(deps: ControllerDependencies) {
 						return;
 					}
 					await deps.download(archive.blob, archive.fileName);
+				}
+				if (!valid()) {
+					phase = 'idle';
+					return;
 				}
 				phase = 'done';
 				return result;
