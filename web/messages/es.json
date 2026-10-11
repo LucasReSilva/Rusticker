@@ -5,6 +5,7 @@
 	"tool_dropzone_hint": "Arrastra una imagen, haz clic para elegir o pega con Ctrl+V o Cmd+V.",
 	"tool_dropzone_replace": "Reemplazar imagen",
 	"tool_dropzone_dragging": "Suelta la imagen aquí",
+	"dropzone_try_sample": "Probar con imagen de ejemplo",
 	"tool_preview_alt": "Hoja original de stickers",
 	"tool_preview_heading": "Vista previa de la imagen",
 	"tool_eyedropper_label": "Elegir color de fondo",

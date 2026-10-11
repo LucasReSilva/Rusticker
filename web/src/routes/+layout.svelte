@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import '../app.css';
-	import favicon from '$lib/assets/favicon.svg';
 	import AppHeader from '$lib/components/AppHeader.svelte';
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
 	import { afterNavigate } from '$app/navigation';
@@ -19,7 +19,7 @@
 	});
 </script>
 
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
+<svelte:head><link rel="icon" type="image/png" href="{base}/logo.png" /></svelte:head>
 
 <AppHeader />
 
