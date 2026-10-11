@@ -86,12 +86,12 @@
 
 ## 5. Catalog completeness check
 
-- [ ] 5.1 Write `web/scripts/i18n-check.ts`:
+- [x] 5.1 Write `web/scripts/i18n-check.ts`:
   - a pure `checkCatalogs` function plus a CLI guarded by `import.meta.main`;
   - the CLI reads `settings.json` and `pathPattern`, ignores `$schema`, reports `missing`, `extra`, `empty`, and `missing-catalog`, and exits `1` or `0`.
 
   Add the `i18n:check` script. Verify that `bun run i18n:check` exits 0 on the real catalogs.
-- [ ] 5.2 Add `scripts/i18n-check.test.ts` covering every scenario of the "Catalog completeness check" requirement, and make sure the Vitest `include` covers `scripts/**`. Verify with `bun run test`. Also check by hand: deleting `nav_about` from `messages/es.json` makes `bun run i18n:check` exit non-zero and print `es: missing key nav_about`. Revert the deletion afterwards.
+- [x] 5.2 Add `scripts/i18n-check.test.ts` covering every scenario of the "Catalog completeness check" requirement, and make sure the Vitest `include` covers `scripts/**`. Verify with `bun run test`. Also check by hand: deleting `nav_about` from `messages/es.json` makes `bun run i18n:check` exit non-zero and print `es: missing key nav_about`. Revert the deletion afterwards.
 
 ## 6. Build verification
 
