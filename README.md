@@ -132,6 +132,9 @@ Scripts in `web/package.json`:
 | `bun run dev:all`       | Builds the wasm, then starts the Vite dev server                | `wasm-worker`   |
 | `bun run seo:check`     | Checks the built site for SEO and offline install: canonical and `hreflang` links on the 9 pages, `sitemap.xml`, `robots.txt`, the 3 manifests and icons, and the service-worker precache list | `pwa-seo` |
 | `bun run pwa:icons`     | Regenerates the app icons in `static/icons/` from `static/icons/icon.svg` | `pwa-seo` |
+| `bun run changelog:preview` | Previews the next changelog section using `git-cliff` across the workspace | `release-automation` |
+| `bun run version:sync`  | Synchronizes `web/package.json` version from `core/Cargo.toml` | `release-automation` |
+| `bun run version:check` | Verifies that `web/package.json` and `core/Cargo.toml` have matching versions | `release-automation` |
 
 > **Note:** the web app depends on the core through `"rusticker-core": "file:../core/pkg"`,
 > which Bun **copies** rather than links. Re-run `bun install` in `web/` after
@@ -193,8 +196,10 @@ and 8; **C** = 6 and 7. See each change's proposal under
 | 6  | `tool-ui`           | DropZone, Preview, Controls, Grid, editor state                                               | Archived    |
 | 7  | `whatsapp-export`   | WEBP up to about 100 KB, packs of 3 to 30 stickers, 96×96 tray icon, `.zip`                   | Archived    |
 | 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Archived    |
+| 9  | `branding-sample-and-deploy` | Branding logo, sample sticker sheet, and automated deploy workflow                  | Archived    |
+| 10 | `release-automation`| Automated semantic versioning and changelogs with `git-cliff` and `release-plz`       | Implementing |
 
-All roadmap changes (1 through 8) are fully implemented, verified, and archived under `openspec/changes/archive/`. Their specifications are active as authoritative contracts under `openspec/specs/`. Wave B (`design-tokens`, `wasm-worker`, `pwa-seo`) and Wave C (`tool-ui`, `whatsapp-export`) are merged into `develop` with all unit, lint, design, build and e2e checks passing. The end-to-end user flow (load image, detect stickers, curate, export WhatsApp sticker pack) is functionally verified and ready for release.
+All roadmap changes (1 through 9) are fully implemented, verified, and archived under `openspec/changes/archive/`. Their specifications are active as authoritative contracts under `openspec/specs/`. Releases and changelogs are automated using `git-cliff` and `release-plz`. The end-to-end user flow (load image, detect stickers, curate, export WhatsApp sticker pack) is functionally verified and ready for release.
 
 The Windows local-package install failure is resolved by the isolated Bun
 linker configured in `web/bunfig.toml` on the worker branch. A fresh worktree

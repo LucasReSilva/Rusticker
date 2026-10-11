@@ -118,6 +118,9 @@ This prevents Git Bash from converting `/Rusticker` to a Windows filesystem path
 | `bun run verify:build` | Checks the built site (run after `bun run build`, with the same `BASE_PATH`) |
 | `bun run build:wasm` | Rebuilds the Rust core with wasm-pack and reinstalls the local `rusticker-core` package *(after `wasm-worker`)* |
 | `bun run dev:all` | Builds the wasm package, then starts the dev server *(after `wasm-worker`)* |
+| `bun run changelog:preview` | Previews the next changelog section using `git-cliff` across the workspace |
+| `bun run version:sync` | Synchronizes `web/package.json` version from `core/Cargo.toml` |
+| `bun run version:check` | Verifies that `web/package.json` and `core/Cargo.toml` versions match |
 
 ### End-to-end tests
 
@@ -221,6 +224,15 @@ The repository follows [Gitflow](https://nvie.com/posts/a-successful-git-branchi
   unrelated refactors into their own PRs.
 - Describe what changed and why, and link the related OpenSpec change if
   there is one.
+
+### Automated releases (`release-plz` and `git-cliff`)
+
+Releases and semantic versioning are automated via Conventional Commits:
+
+- `release-plz` and `git-cliff` (`cliff.toml`, `release-plz.toml`) analyze git commit history.
+- `feat` commits trigger minor version bumps; `fix` and `perf` commits trigger patch bumps; breaking changes (`!` or `BREAKING CHANGE:`) trigger major version bumps.
+- When unreleased changes land on `main`, `.github/workflows/release.yml` maintains an automated Release PR containing the updated `core/Cargo.toml`, synchronized `web/package.json` (`bun run version:sync`), and `CHANGELOG.md`.
+- When the Release PR is merged into `main`, GitHub Releases and git tag `vX.Y.Z` are created automatically, triggering GitHub Pages deployment.
 
 ## OpenSpec workflow
 
