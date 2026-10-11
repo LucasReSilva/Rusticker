@@ -38,7 +38,7 @@
 ## 7. End-to-end verification
 
 - [x] 7.1 Run the full web pipeline from `web/`: `bun run check`, `bun run lint`, `bun run test`, `bun run i18n:check`, `bun run build`; verify all pass and `git status --porcelain` shows only files owned by this change and no image files
-- [ ] 7.2 Optional manual visual check with `bun run dev:all` and the local sample image (path from `RUSTICKER_SAMPLE_IMAGE`, never copied into the repo): look and layout in dark theme, narrow width and reduced motion. Every behavior is automated by task 7.3.
+- [x] 7.2 Optional manual visual check with `bun run dev:all` and the local sample image (path from `RUSTICKER_SAMPLE_IMAGE`, never copied into the repo): look and layout in dark theme, narrow width and reduced motion. Every behavior is automated by task 7.3.
 
 - [x] 7.3 Add Playwright specs under `web/e2e/tool-ui/` covering: drop, click and paste upload of a synthetic image (`setInputFiles`, dispatched drop and paste events); boxes drawn at the detected count; keyboard eyedropper sets the background; a tolerance change re-detects once after the pause; Delete then confirm removes a sticker and cancel keeps it; tray icon toggle with `aria-pressed`; roving-tabindex arrow/Home/End navigation; curated state kept across a language switch without reload; no request outside the app origin; no horizontal overflow at 375px in dark theme. Verify `bun run test:e2e` passes locally and in the pre-wired CI step.
 
