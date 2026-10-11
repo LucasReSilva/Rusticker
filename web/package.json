@@ -16,6 +16,7 @@
 		"test:unit": "vitest",
 		"test": "vitest run",
 		"i18n:check": "bun scripts/i18n-check.ts",
+		"lint:design": "bun scripts/lint-design.ts",
 		"verify:build": "bun scripts/verify-build.ts",
 		"test:e2e": "playwright test"
 	},

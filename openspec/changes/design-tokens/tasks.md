@@ -13,14 +13,14 @@
 
 ## 3. Adapt the `ui/` components
 
-- [ ] 3.1 Make the kit text-free: Dialog close label becomes a `closeLabel` prop defaulting to `m.a11y_close()`, and the Sonner wrapper's container/close labels default to `m.a11y_notifications()` / `m.a11y_close()`. Mark every internal Lucide icon `aria-hidden="true"`. Verify with `grep -rnE '>[^<{]*[A-Za-z]{3,}[^<{]*<|sr-only">[A-Za-z]' web/src/lib/components/ui` (no literal text) and `bun run check`.
+- [x] 3.1 Make the kit text-free: Dialog close label becomes a `closeLabel` prop defaulting to `m.a11y_close()`, and the Sonner wrapper's container/close labels default to `m.a11y_notifications()` / `m.a11y_close()`. Mark every internal Lucide icon `aria-hidden="true"`. Verify with `grep -rnE '>[^<{]*[A-Za-z]{3,}[^<{]*<|sr-only">[A-Za-z]' web/src/lib/components/ui` (no literal text) and `bun run check`.
 - [ ] 3.2 Rewrite physical utilities in the generated components to logical ones (`end-*`, `start-*`, `ms-*`, `me-*`, `ps-*`, `pe-*`, `text-start`, `border-s`, `rounded-s`…), keeping only `data-[side=left|right]:` animation classes. Verify `bun run lint:design` (after 4.1) reports nothing under `ui/`, and the dialog close button sits at the inline end.
 - [ ] 3.3 Make the Sonner wrapper follow mode-watcher's mode and use theme tokens for its colors, and make sure every focusable element (slider thumb, menu items, dialog close, button) shows the `ring` focus style. Verify by keyboard in `bun run dev` in both themes. Automated: `web/e2e/design-tokens/focus.dev.spec.ts` (task 9.3), in both color schemes.
 
 ## 4. Guardrail script
 
-- [ ] 4.1 Write `web/scripts/lint-design.ts` (D6: raw colors, physical direction utilities, arbitrary px outside `ui/`, `data-[side=…]` and `lint-design-ignore: <reason>` exceptions; prints `file:line` + suggestion; exit 1 on findings) and add `"lint:design": "bun scripts/lint-design.ts"` to `web/package.json`. Verify `bun run lint:design` exits 0 on the tree.
-- [ ] 4.2 Add `web/scripts/lint-design.test.ts` with inline fixtures (one clean file; one each for a hex class, `rgb()` style, `bg-[#…]`, `ml-2`, `pr-4`, `left-0`, `text-right`, `w-[37px]` outside `ui/`; plus allowed `data-[side=left]:slide-in-from-right-2`). Verify with `bun test scripts/lint-design.test.ts` in `web/`.
+- [x] 4.1 Write `web/scripts/lint-design.ts` (D6: raw colors, physical direction utilities, arbitrary px outside `ui/`, `data-[side=…]` and `lint-design-ignore: <reason>` exceptions; prints `file:line` + suggestion; exit 1 on findings) and add `"lint:design": "bun scripts/lint-design.ts"` to `web/package.json`. Verify `bun run lint:design` exits 0 on the tree.
+- [x] 4.2 Add `web/scripts/lint-design.test.ts` with inline fixtures (one clean file; one each for a hex class, `rgb()` style, `bg-[#…]`, `ml-2`, `pr-4`, `left-0`, `text-right`, `w-[37px]` outside `ui/`; plus allowed `data-[side=left]:slide-in-from-right-2`). Verify with `bun test scripts/lint-design.test.ts` in `web/`.
 - [ ] 4.3 Do not edit any workflow (contract addendum R1). Verify that `.github/workflows/web.yml` (from `web-scaffold`) contains the step `bun run --if-present lint:design` after lint, that the step now actually runs the script (the PR's CI log shows `lint-design` output, not a silent skip), and that it passes.
 
 ## 5. Messages
