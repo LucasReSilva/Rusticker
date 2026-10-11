@@ -194,11 +194,28 @@ never by Rust.
 ## 8. WhatsApp output rules
 
 - Each sticker: **WEBP, 512x512, transparent** background.
-- Static sticker size **<= ~100 KB**: lower the WEBP `quality` automatically
-  until the blob fits.
-- **3 to 30 stickers per pack.** More than 30 are split into several packs.
-- **Tray icon:** 96x96 PNG generated from the sticker the user chose.
-- **Locale-neutral file names:** `rusticker-pack-1.zip`, `sticker_01.webp`, ...
+- Static sticker size **<= 100,000 bytes**: start WEBP quality at 0.9 and
+  search for the highest measured fitting quality in five binary steps,
+  with a quality floor of 0.1. If the floor still exceeds the budget, keep
+  the sticker and warn the user; size badges distinguish it from fitting stickers.
+- **3 to 30 stickers per pack.** Fewer than 3 blocks export. More than 30
+  are divided into the minimum number of balanced packs in detection order
+  (31 becomes 16 + 15). Splitting is an informational notice, not an error.
+- **Tray icon:** a transparent 96x96 PNG generated from the chosen sticker,
+  defaulting to the first remaining sticker when no valid selection exists.
+  Every pack in an export uses the same icon.
+- **One locale-neutral ZIP per pack:** `rusticker-pack-1.zip`, etc. Each
+  archive contains only `sticker_01.webp` through its last sticker,
+  `png/sticker_01.png` through its last lossless 512x512 PNG copy, and
+  `tray_icon.png`. Numbering restarts at 01 in each pack. Entries use STORE
+  and fixed dates for deterministic output.
+- WEBP encodings are computed sequentially in the background and reused
+  during export. Cache identity includes sticker id and pixel identity.
+- Multiple archives download in order, with a separate action per pack
+  for re-download. Ready archive blobs remain in the browser session across
+  locale changes until stickers or tray selection change. An active export
+  is cancelled when its view is destroyed. All encoding, archives, and
+  downloads stay on the device.
 
 ## 9. PWA and deployment
 
