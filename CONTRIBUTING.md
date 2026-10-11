@@ -32,6 +32,7 @@ The full policy, along with the other project rules, is in
 | [rustup](https://rustup.rs/) | Rust toolchain manager | See the rustup website |
 | [wasm-pack](https://rustwasm.github.io/wasm-pack/) | Builds the Rust core into a WebAssembly package | `cargo install wasm-pack` |
 | [Bun](https://bun.sh/) | The **only** JavaScript package manager and runtime for this project | See the Bun website |
+| [Node.js](https://nodejs.org/) 24+ | Runs Vitest, svelte-check and the build tooling under the hood (`URLPattern` global); version pinned in `web/.node-version` | See the Node.js website |
 | [prek](https://github.com/j178/prek) | Runs the Git hooks | See the prek README |
 
 Notes:

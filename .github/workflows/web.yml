@@ -42,6 +42,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # Vitest, svelte-check and the Paraglide prerender run on Node; URLPattern
+      # is a global only from Node 24.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: web/.node-version
+
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
