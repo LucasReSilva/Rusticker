@@ -95,14 +95,14 @@
 
 ## 6. Build verification
 
-- [ ] 6.1 Write `web/scripts/verify-build.ts` and the `verify:build` script (design D8). It asserts:
+- [x] 6.1 Write `web/scripts/verify-build.ts` and the `verify:build` script (design D8). It asserts:
   - the 9 HTML files and `404.html` exist;
   - each document has the expected `lang`;
   - the content pages contain their localized heading;
   - every root-relative `href`/`src` starts with `BASE_PATH`.
 
   Verify with `BASE_PATH=/Rusticker bun run build && BASE_PATH=/Rusticker bun run verify:build` (passes), and with the same build verified with `BASE_PATH=` (fails on the base check).
-- [ ] 6.2 Run the full local gate in `web/`: `bun run check && bun run lint && bun run test && bun run i18n:check && BASE_PATH=/Rusticker bun run build && BASE_PATH=/Rusticker bun run verify:build`. Verify that every command exits 0. Then, with `bun run preview` under the same base and scripts disabled in the browser, check that `/Rusticker/es/acerca-de` shows Spanish content.
+- [x] 6.2 Run the full local gate in `web/`: `bun run check && bun run lint && bun run test && bun run i18n:check && BASE_PATH=/Rusticker bun run build && BASE_PATH=/Rusticker bun run verify:build`. Verify that every command exits 0. Then, with `bun run preview` under the same base and scripts disabled in the browser, check that `/Rusticker/es/acerca-de` shows Spanish content.
 
 ## 7. CI and deployment
 
