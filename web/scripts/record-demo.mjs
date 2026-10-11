@@ -1,8 +1,32 @@
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import { existsSync, mkdirSync, rmSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
+
+// Branch gate: restrict automated demo recording to main releases (or with --force)
+const force = process.argv.includes('--force');
+const gitBranch = (() => {
+	try {
+		return execSync('git rev-parse --abbrev-ref HEAD', { stdio: ['pipe', 'pipe', 'ignore'] })
+			.toString()
+			.trim();
+	} catch {
+		return '';
+	}
+})();
+
+const isMainBranch =
+	gitBranch === 'main' ||
+	process.env.GITHUB_REF === 'refs/heads/main' ||
+	process.env.GITHUB_BASE_REF === 'main';
+
+if (!isMainBranch && !force) {
+	console.log(
+		`[demo] Skipping demo recording on branch '${gitBranch}'. Demo recording is restricted to main releases to avoid dirtying git history. Use --force to run locally.`
+	);
+	process.exit(0);
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const webDir = resolve(__dirname, '..');
@@ -15,7 +39,11 @@ if (!existsSync(assetsDir)) {
 	mkdirSync(assetsDir, { recursive: true });
 }
 if (existsSync(videoDir)) {
-	rmSync(videoDir, { recursive: true, force: true });
+	try {
+		rmSync(videoDir, { recursive: true, force: true });
+	} catch {
+		// ignore
+	}
 }
 mkdirSync(videoDir, { recursive: true });
 
@@ -45,17 +73,21 @@ async function waitForServer(url, timeoutMs = 10000) {
 }
 
 async function record() {
+	let browser;
+	let context;
+
 	try {
-		await waitForServer('http://localhost:4173/');
+		await waitForServer('http://localhost:4173/en/');
 		console.log('[demo] Server is ready. Launching Playwright browser...');
 
-		const browser = await chromium.launch({
+		browser = await chromium.launch({
 			headless: true
 		});
 
-		const context = await browser.newContext({
+		context = await browser.newContext({
 			viewport: { width: 1000, height: 680 },
 			deviceScaleFactor: 1.5,
+			colorScheme: 'dark',
 			recordVideo: {
 				dir: videoDir,
 				size: { width: 1000, height: 680 }
@@ -63,14 +95,27 @@ async function record() {
 		});
 
 		const page = await context.newPage();
-		console.log('[demo] Navigating to http://localhost:4173/ ...');
-		await page.goto('http://localhost:4173/', { waitUntil: 'networkidle' });
+
+		// Configure dark mode in localStorage before any script runs
+		await page.addInitScript(() => {
+			try {
+				localStorage.setItem('mode-watcher-mode', 'dark');
+			} catch {
+				// ignore
+			}
+		});
+
+		console.log('[demo] Navigating to http://localhost:4173/en/ (English, dark mode)...');
+		await page.goto('http://localhost:4173/en/', { waitUntil: 'networkidle' });
+
+		const isDark = await page.evaluate(() => document.documentElement.classList.contains('dark'));
+		console.log(`[demo] Dark mode verified: ${isDark}`);
 
 		// 1. Initial view: DropZone is idle
 		console.log('[demo] Initial pause on DropZone...');
 		await page.waitForTimeout(1000);
 
-		// 2. Click "Try with sample image" ("Testar com exemplo")
+		// 2. Click "Try with sample image" button
 		console.log('[demo] Clicking sample image button...');
 		const sampleBtn = page.locator('[data-tool-sample-button]');
 		await sampleBtn.waitFor({ state: 'visible', timeout: 5000 });
@@ -78,15 +123,22 @@ async function record() {
 		await page.waitForTimeout(400);
 		await sampleBtn.click();
 
-		// 3. Wait for detection to complete
+		// 3. Wait for detection to complete in English
 		console.log('[demo] Waiting for sticker detection...');
 		const detectedCount = page.locator('[data-detected-count]');
 		await detectedCount.waitFor({ state: 'visible', timeout: 15000 });
-		// Wait until processing finishes
+
+		// Wait until processing finishes and English count ("X stickers kept") is visible
 		await page.waitForFunction(
 			() => {
 				const el = document.querySelector('[data-detected-count]');
-				return el && el.textContent && !el.textContent.includes('Processando');
+				if (!el || !el.textContent) return false;
+				const text = el.textContent.trim();
+				return (
+					!text.includes('Processing') &&
+					!text.includes('Processando') &&
+					(text.includes('stickers kept') || text.includes('sticker kept'))
+				);
 			},
 			{ timeout: 15000 }
 		);
@@ -107,7 +159,7 @@ async function record() {
 			await page.waitForTimeout(800);
 		}
 
-		// 5. Scroll down to show the grid of stickers and export
+		// 5. Scroll down to show the grid of stickers
 		console.log('[demo] Hovering over grid stickers...');
 		const cards = page.locator('[data-tool-grid-card]');
 		const firstCard = cards.first();
@@ -126,7 +178,9 @@ async function record() {
 
 		console.log('[demo] Closing browser context to flush video...');
 		await context.close();
+		context = null;
 		await browser.close();
+		browser = null;
 
 		// Find the recorded video file
 		const files = readdirSync(videoDir).filter((f) => f.endsWith('.webm'));
@@ -140,15 +194,25 @@ async function record() {
 		console.log(`[demo] Converting to GIF with ffmpeg -> ${outputGif}`);
 		const ffmpegCmd = `ffmpeg -y -i "${videoFile}" -vf "fps=12,scale=800:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3" -loop 0 "${outputGif}"`;
 
-		const { execSync } = await import('node:child_process');
 		execSync(ffmpegCmd, { stdio: 'inherit' });
 
 		console.log('[demo] GIF created successfully!');
 	} finally {
-		console.log('[demo] Stopping static server...');
+		console.log('[demo] Stopping static server and cleaning up...');
 		server.kill('SIGTERM');
+		if (context) {
+			await context.close().catch(() => {});
+		}
+		if (browser) {
+			await browser.close().catch(() => {});
+		}
+		await new Promise((r) => setTimeout(r, 600));
 		if (existsSync(videoDir)) {
-			rmSync(videoDir, { recursive: true, force: true });
+			try {
+				rmSync(videoDir, { recursive: true, force: true });
+			} catch (e) {
+				console.warn('[demo] Could not remove temp video dir immediately:', e.message);
+			}
 		}
 	}
 }
