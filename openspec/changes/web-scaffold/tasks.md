@@ -127,11 +127,11 @@
 
 ## 8. Documentation
 
-- [ ] 8.1 Update only the web-scaffold sections of the docs:
+- [x] 8.1 Update only the web-scaffold sections of the docs:
   - **README:** Status, Quick start, and scripts table, with the real scripts (`check`, `lint`, `format`, `test`, `i18n:check`, `verify:build`). `build:wasm` and `dev:all` stay marked as coming with `wasm-pack`/`wasm-worker`. Also state the final slugs, set the hosting to GitHub Pages with `BASE_PATH`, and adjust roadmap row 3 so shadcn-svelte, theme, and icons are listed under `design-tokens`.
   - **DESIGN.md Part 2:** the final slug table, the Paraglide config path `web/project.inlang/settings.json`, the locale strategy and entry redirect, and `i18n:check` in CI via `web.yml`.
   - **CONTRIBUTING "Adding a locale":** add the step "add slugs for the locale in `web/src/lib/i18n/routes.js`" and remove the "after web-scaffold" markers that no longer apply.
 
   Verify that `grep -n "slugs to be finalized\|undecided" README.md DESIGN.md ARCHITECTURE.md` shows no stale web-scaffold wording in the edited sections.
-- [ ] 8.2 Add one CHANGELOG bullet under `Unreleased` / `Added`, for example "Static SvelteKit web app shell with localized routes (pt-BR, en, es), catalog check, CI, and GitHub Pages deployment". Verify that `git diff CHANGELOG.md` shows exactly one added bullet.
-- [ ] 8.3 Final validation. Verify that `openspec validate web-scaffold --strict` passes and that the full gate from 6.2 still exits 0.
+- [x] 8.2 Add one CHANGELOG bullet under `Unreleased` / `Added`, for example "Static SvelteKit web app shell with localized routes (pt-BR, en, es), catalog check, CI, and GitHub Pages deployment". Verify that `git diff CHANGELOG.md` shows exactly one added bullet.
+- [x] 8.3 Final validation. Verify that `openspec validate web-scaffold --strict` passes and that the full gate from 6.2 still exits 0.

@@ -14,3 +14,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Repository hygiene: `.gitignore`, `.gitattributes` with LF line-ending normalization, and `.editorconfig`.
 - Pinned Rust toolchain (`rust-toolchain.toml`): Rust 1.98 with `rustfmt`, `clippy`, and the `wasm32-unknown-unknown` target.
 - Git hooks via [prek](https://github.com/j178/prek): `cargo fmt`, `cargo clippy`, and `cargo check` checks, plus Conventional Commits validation for commit messages.
+- Static SvelteKit web app shell with localized routes (pt-BR, en, es), catalog check, CI, and GitHub Pages deployment.
