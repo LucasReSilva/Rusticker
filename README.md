@@ -179,7 +179,7 @@ and 8; **C** = 6 and 7. See each change's proposal under
 | 3  | `web-scaffold`      | SvelteKit app, Tailwind, Paraglide, adapter-static, localized routes, `i18n:check`, CI, GitHub Pages deploy | Done        |
 | 4  | `design-tokens`     | shadcn-svelte, theme tokens, `@lucide/svelte` icons, checkerboard, ThemeToggle, LanguageSwitcher, `/_design` route | Integrated in develop; CI verified |
 | 5  | `wasm-worker`       | Comlink worker, detector API + mock; local sample image yields 17 stickers                    | Integrated in develop; CI and fresh setup verified |
-| 6  | `tool-ui`           | DropZone, Preview, Controls, Grid, editor state                                               | In progress |
+| 6  | `tool-ui`           | DropZone, Preview, Controls, Grid, editor state                                               | Integrated in develop; CI verified |
 | 7  | `whatsapp-export`   | WEBP up to about 100 KB, packs of 3 to 30 stickers, 96×96 tray icon, `.zip`                   | In progress |
 | 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Integrated in develop; release verification pending |
 
