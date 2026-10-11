@@ -39,7 +39,7 @@ Out of scope (even though the brief mentions them nearby):
 ## Impact
 
 - **Wave:** B (branch `feature/wasm-worker`). **Depends on:** `core-detection` and `web-scaffold` merged to `develop`. Runs in parallel with `design-tokens` and `pwa-seo`. **Unblocks:** `tool-ui`, `whatsapp-export` (Wave C).
-- **Files owned (create/modify):** `web/src/lib/detection/**`; `web/src/routes/_detection/**` (dev-only page, new); a separated wasm block in `web/vite.config.ts`; deps `comlink`, `rusticker-core` and devDependency `jpeg-js` (integration test only) plus scripts `build:wasm`, `dev:all` in `web/package.json` / `web/bun.lock`; keys `error_*` in `web/messages/{pt-BR,en,es}.json`.
+- **Files owned (create/modify):** `web/src/lib/detection/**`; `web/src/routes/_detection/**` (dev-only page, new); `web/e2e/wasm-worker/**` (dev-route specs run in the pre-wired `dev` project, no config change); a separated wasm block in `web/vite.config.ts`; deps `comlink`, `rusticker-core` and devDependency `jpeg-js` (integration test only) plus scripts `build:wasm`, `dev:all` in `web/package.json` / `web/bun.lock`; keys `error_*` in `web/messages/{pt-BR,en,es}.json`.
 - **Not edited:** `.github/workflows/web.yml` and `deploy.yml` (owned and pre-wired by `web-scaffold`).
 - **Docs:** ARCHITECTURE.md sections 3 and 6 (data flow, worker), CONTRIBUTING.md setup, README quick start, one bullet in CHANGELOG.md under Unreleased.
 - **Developer workflow:** after this merges, `bun install` in `web/` requires `core/pkg` to exist; run `bun run build:wasm` (or `wasm-pack build core --target web`) first. CI does this automatically through the pre-wired "Build wasm" step.

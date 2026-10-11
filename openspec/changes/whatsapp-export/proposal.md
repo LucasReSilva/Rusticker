@@ -35,7 +35,7 @@ Out of scope (the brief could be read as including them):
 ## Impact
 
 - **Wave C**, branch `feature/whatsapp-export`. Requires `web-scaffold`, `design-tokens`, and `wasm-worker` merged (uses `Sticker` from `web/src/lib/detection/types.ts`, `createMockDetector()` for tests, and the Button, Progress, Badge, and Sonner components). Runs in parallel with `tool-ui`; its last integration task runs after `tool-ui` is merged.
-- **Files owned (create/modify):** `web/src/lib/export/**`, `web/src/lib/components/Export.svelte`, `export_*` keys in `web/messages/{pt-BR,en,es}.json`, the `jszip` dependency in `web/package.json` / `web/bun.lock`.
+- **Files owned (create/modify):** `web/src/lib/export/**`, `web/src/lib/components/Export.svelte`, `export_*` keys in `web/messages/{pt-BR,en,es}.json`, the `jszip` dependency in `web/package.json` / `web/bun.lock`; Playwright specs `web/e2e/whatsapp-export/**`.
 - **Files touched outside ownership, final task only:** the tool page `web/src/routes/+page.svelte` (mount `<Export>` and pass the size lookup to the grid), as allowed by the shared contract; `ARCHITECTURE.md` section 8; `CHANGELOG.md` (one bullet under Unreleased).
 - **Consumes from `tool-ui` (shared contract addendum R6):** the `StickerSizeInfo` type in `web/src/lib/tool/size.ts` (a structurally identical local copy with a type-compat test is used until `tool-ui` merges), the `sizeOf` prop on `Grid`/`StickerCard`, `editor.stickers` / `editor.trayIconId` / `editor.isProcessing`, and the `<!-- @whatsapp-export:mount -->` marker in the tool page. The KB badge is formatted by `tool-ui` with its own Intl helpers.
 - **Privacy:** all encoding and zipping happens in the browser; downloads use local blob URLs. No network requests.
