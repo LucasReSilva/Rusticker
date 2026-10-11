@@ -130,6 +130,14 @@ Per contract addendum R1, `web-scaffold` already ships `web.yml` and `deploy.yml
 
 ## Risks / Trade-offs
 
+- [Bun's Windows hoisted linker reports `EPERM` materializing `file:` packages]
+  → a fresh minimal local dependency reproduces the same `CreateHardLinkW` /
+  `CopyFileW` failure in Bun 1.3.14 and 1.3.13. `web/bunfig.toml` selects the
+  isolated linker, which successfully materializes the package in Bun's local
+  store. `node_modules` points to that store, rather than to `core/pkg`.
+  The regular build/install scripts and frozen lockfile workflow are preserved;
+  continue reinstalling after every wasm rebuild.
+
 - [Fresh clones fail at `bun install` until `core/pkg` exists] → `build:wasm` documented in ARCHITECTURE, CONTRIBUTING setup and README quick start (contract R8); CI builds wasm first via the pre-wired step. Parallel Wave B branches (`design-tokens`, `pwa-seo`) need `bun run build:wasm` after rebasing on main.
 - [`bun.lock` may record the copied `file:` package in a way that changes when the wasm is rebuilt, breaking `--frozen-lockfile`] → verify in task 1.x by building, installing, rebuilding and running `bun install --frozen-lockfile`; if it breaks, report it to the coordinator / `web-scaffold` owner (the workflows are not edited here, R1) and document the workaround.
 - [Wasm binary larger than the PWA precache default limit (2 MiB)] → coordination note for `pwa-seo`: include `wasm` in glob patterns and raise `maximumFileSizeToCacheInBytes` if needed. Not configured here.
