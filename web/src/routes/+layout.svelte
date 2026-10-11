@@ -5,6 +5,7 @@
 	import { localizedPath } from '$lib/i18n/links';
 	import { locale, syncLocaleFromUrl } from '$lib/i18n/locale.svelte';
 	import { m } from '$lib/paraglide/messages';
+	import PwaRegistration from '$lib/pwa/PwaRegistration.svelte';
 
 	let { children } = $props();
 
@@ -45,4 +46,4 @@
 
 <!-- @design-tokens:toaster -->
 
-<!-- @pwa-seo:registration -->
+<PwaRegistration />
