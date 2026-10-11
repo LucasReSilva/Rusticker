@@ -1,7 +1,7 @@
 {
 	"name": "web",
 	"private": true,
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
@@ -21,6 +21,9 @@
 		"lint:design": "bun scripts/lint-design.ts",
 		"seo:check": "bun scripts/seo-check.ts",
 		"pwa:icons": "pwa-assets-generator --preset minimal-2023 --manifest false static/icons/icon.svg",
+		"changelog:preview": "git-cliff --workdir .. --unreleased",
+		"version:sync": "bun scripts/sync-version.ts",
+		"version:check": "bun scripts/sync-version.ts --check",
 		"dev:all": "bun run build:wasm && bun run dev",
 		"build:wasm": "wasm-pack build ../core --target web && bun install"
 	},
@@ -47,6 +50,7 @@
 		"eslint": "^10.4.1",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.19.0",
+		"git-cliff": "^2.14.2",
 		"globals": "^17.6.0",
 		"jpeg-js": "^0.4.4",
 		"jsdom": "^30.1.2",
