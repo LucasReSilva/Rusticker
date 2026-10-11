@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { ModeWatcher } from 'mode-watcher';
 	import { page } from '$app/state';
 	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
@@ -44,9 +45,10 @@
 	<div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
 		<a
 			href={localizedPath('tool', locale.current)}
-			class="rounded-md font-display text-xl font-bold text-foreground focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
+			class="flex items-center gap-2 rounded-md font-display text-xl font-bold text-foreground focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
 		>
-			{m.app_name({}, opts)}
+			<img src="{base}/logo.png" alt="" class="h-7 w-7 object-contain" />
+			<span>{m.app_name({}, opts)}</span>
 		</a>
 		<nav aria-label={m.a11y_main_navigation({}, opts)} class="min-w-0">
 			<ul class="flex flex-wrap gap-x-4 gap-y-1">

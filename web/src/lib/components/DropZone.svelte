@@ -1,6 +1,8 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card';
+	import { Button } from '$lib/components/ui/button';
 	import ImagePlus from '@lucide/svelte/icons/image-plus';
+	import { base } from '$app/paths';
 	import { m } from '$lib/paraglide/messages';
 	let {
 		compact = false,
@@ -16,6 +18,7 @@
 	let input: HTMLInputElement;
 	let depth = $state(0);
 	let hovered = $state(false);
+	let loadingSample = $state(false);
 	const dropState = $derived(depth > 0 ? 'dragging' : hovered ? 'hover' : 'idle');
 	function choose(files: FileList | File[] | null) {
 		if (disabled || !files?.length) return;
@@ -25,6 +28,24 @@
 	}
 	function open() {
 		if (!disabled) input.click();
+	}
+	async function trySample() {
+		if (disabled || loadingSample) return;
+		loadingSample = true;
+		try {
+			const res = await fetch(`${base}/samples/rust-stickers.png`);
+			if (!res.ok) {
+				onReject();
+				return;
+			}
+			const blob = await res.blob();
+			const file = new File([blob], 'rust-stickers.png', { type: 'image/png' });
+			onFile(file);
+		} catch {
+			onReject();
+		} finally {
+			loadingSample = false;
+		}
 	}
 </script>
 
@@ -85,6 +106,27 @@
 					? m.tool_dropzone_replace()
 					: m.tool_dropzone_title()}
 		</p>
-		{#if !compact}<p class="text-sm text-muted-foreground">{m.tool_dropzone_hint()}</p>{/if}
+		{#if !compact}
+			<p class="text-sm text-muted-foreground">{m.tool_dropzone_hint()}</p>
+			<Button
+				type="button"
+				variant="secondary"
+				size="sm"
+				class="mt-2"
+				disabled={disabled || loadingSample}
+				data-tool-sample-button
+				onclick={(event) => {
+					event.stopPropagation();
+					void trySample();
+				}}
+				onkeydown={(event) => {
+					if (event.key === 'Enter' || event.key === ' ') {
+						event.stopPropagation();
+					}
+				}}
+			>
+				{m.dropzone_try_sample()}
+			</Button>
+		{/if}
 	</div>
 </Card.Root>

@@ -5,6 +5,7 @@
 	"tool_dropzone_hint": "Drop an image, click to choose, or paste with Ctrl+V or Cmd+V.",
 	"tool_dropzone_replace": "Replace image",
 	"tool_dropzone_dragging": "Drop the image here",
+	"dropzone_try_sample": "Try with sample image",
 	"tool_preview_alt": "Original sticker sheet",
 	"tool_preview_heading": "Image preview",
 	"tool_eyedropper_label": "Pick background color",

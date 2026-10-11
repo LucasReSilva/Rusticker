@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Rusticker Logo" width="160" />
+</p>
+
 # Rusticker
 
 Cut a whole sheet of stickers into a WhatsApp sticker pack, right in your browser.
@@ -20,8 +24,9 @@ Spanish.
 
 ## Using the tool
 
-Drop an image, click the drop area to choose one, or paste an image with Ctrl+V
-(Cmd+V on macOS). Detection runs automatically on your device. Pick the background
+Drop an image, click the drop area to choose one, click "Try with sample image"
+to test with the bundled sample sheet ([`samples/rust-stickers.png`](samples/rust-stickers.png)),
+or paste an image with Ctrl+V (Cmd+V on macOS). Detection runs automatically on your device. Pick the background
 with the eyedropper, using the pointer or arrow keys and Enter, and adjust the
 tolerance slider; detection updates after a short pause. Remove unwanted stickers
 with the confirmation dialog, then mark a kept sticker as the pack icon. The grid
