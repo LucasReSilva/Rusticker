@@ -150,5 +150,42 @@
 	"error_no_stickers": "Nenhuma figurinha encontrada. Escolha a cor de fundo com o conta-gotas ou ajuste a tolerância.",
 	"error_image_too_large": "Imagem grande demais. Reduza a resolução e tente de novo.",
 	"error_invalid_input": "Não foi possível ler esta imagem. Tente outro arquivo.",
-	"error_worker_failed": "O processamento falhou. Recarregue a página e tente de novo."
+	"error_worker_failed": "O processamento falhou. Recarregue a página e tente de novo.",
+	"export_download_button": "Baixar pacote (.zip)",
+	"export_download_all_button": "Baixar todos os {total} pacotes (.zip)",
+	"export_download_pack_button": "Baixar pacote {n} de {total}",
+	"export_min_stickers_notice": "O WhatsApp precisa de pelo menos {min} figurinhas por pacote.",
+	"export_split_notice": "{count} figurinhas serão divididas em {packs} pacotes (até 30 em cada).",
+	"export_progress_label": "Preparando {done} de {total}…",
+	"export_success_toast": [
+		{
+			"declarations": [
+				"input count",
+				"input packs",
+				"local packPlural = packs: plural",
+				"local packNumber = packs: number"
+			],
+			"selectors": ["packPlural"],
+			"match": {
+				"packPlural=one": "Pacote pronto: {count} figurinhas",
+				"packPlural=other": "{packNumber} pacotes prontos: {count} figurinhas"
+			}
+		}
+	],
+	"export_over_budget_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural",
+				"local countNumber = count: number"
+			],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 figurinha ultrapassa 100 KB e pode ser rejeitada pelo WhatsApp.",
+				"countPlural=other": "{countNumber} figurinhas ultrapassam 100 KB e podem ser rejeitadas pelo WhatsApp."
+			}
+		}
+	],
+	"export_error_webp_unsupported": "Este navegador não consegue criar figurinhas WEBP. Tente Chrome, Edge ou Firefox.",
+	"export_error_failed": "Não foi possível criar o pacote. Tente de novo."
 }
