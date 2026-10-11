@@ -72,17 +72,17 @@
 
 ## 4. Layout, pages, and messages
 
-- [ ] 4.1 Write the `app_*`, `nav_*`, and `meta_*` keys (design D6) with real translations in `messages/pt-BR.json`, `en.json`, and `es.json`. Verify with `bun run i18n:compile` and `bun run check`.
-- [ ] 4.2 Build `src/routes/+layout.svelte` (design D6, addendum R2):
+- [x] 4.1 Write the `app_*`, `nav_*`, and `meta_*` keys (design D6) with real translations in `messages/pt-BR.json`, `en.json`, and `es.json`. Verify with `bun run i18n:compile` and `bun run check`.
+- [x] 4.2 Build `src/routes/+layout.svelte` (design D6, addendum R2):
   - import `../app.css`, which contains only the Tailwind import;
   - in this order: the block `<!-- @design-tokens:header -->`, then the minimal `<header>` with the app name and three nav links via `localizedPath`, then `<!-- /@design-tokens:header -->`; `<main id="main-content">{#key locale}{@render children()}{/key}</main>`; `<!-- @design-tokens:toaster -->`; `<!-- @pwa-seo:registration -->`;
   - an `$effect` that syncs `document.documentElement.lang` with `locale`.
 
   Verify with `bun run dev`: on `/es/como-usar`, the header links point to `/es/`, `/es/como-usar`, and `/es/acerca-de`, and `<main>` has `id="main-content"`. Also verify that `grep -c "@design-tokens:header\|@design-tokens:toaster\|@pwa-seo:registration" src/routes/+layout.svelte` prints `3` and that `<!-- /@design-tokens:header -->` closes the header block.
-- [ ] 4.3 Add the tool placeholder `src/routes/+page.svelte` (`app_tool_heading`, `app_tool_placeholder`, and the `meta_tool_*` head tags) and `src/routes/+error.svelte` (the not-found or generic error message, `meta_not_found_title`, and a link to the tool page in the active locale). Verify with `bun run preview`: `/es/unknown` shows the Spanish not-found page linking to `/es/`.
-- [ ] 4.4 Write the `page_how_to_use_*` keys in all three locales with real, short step-by-step content (design D6 content rules). Add `src/routes/how-to-use/+page.svelte`, which renders the steps as an ordered list, with the `meta_how_to_use_*` head tags. Verify with `bun run build`, then check that `build/como-usar.html`, `build/en/how-to-use.html`, and `build/es/como-usar.html` contain the localized heading.
-- [ ] 4.5 Write the `page_about_*` keys in all three locales. They must say that processing is local, images are never uploaded, there is no account or tracking, and the project is open source. Add `src/routes/about/+page.svelte` with the `meta_about_*` head tags. Verify with `bun run build`, then check that `build/sobre.html`, `build/en/about.html`, and `build/es/acerca-de.html` contain the privacy statement in their own language.
-- [ ] 4.6 Review every `.svelte` file this change created for user-visible literals, `aria-label`s, and titles that do not come from `m.*()`. Verify that `bun run lint` passes and that the review found no literal text.
+- [x] 4.3 Add the tool placeholder `src/routes/+page.svelte` (`app_tool_heading`, `app_tool_placeholder`, and the `meta_tool_*` head tags) and `src/routes/+error.svelte` (the not-found or generic error message, `meta_not_found_title`, and a link to the tool page in the active locale). Verify with `bun run preview`: `/es/unknown` shows the Spanish not-found page linking to `/es/`.
+- [x] 4.4 Write the `page_how_to_use_*` keys in all three locales with real, short step-by-step content (design D6 content rules). Add `src/routes/how-to-use/+page.svelte`, which renders the steps as an ordered list, with the `meta_how_to_use_*` head tags. Verify with `bun run build`, then check that `build/como-usar.html`, `build/en/how-to-use.html`, and `build/es/como-usar.html` contain the localized heading.
+- [x] 4.5 Write the `page_about_*` keys in all three locales. They must say that processing is local, images are never uploaded, there is no account or tracking, and the project is open source. Add `src/routes/about/+page.svelte` with the `meta_about_*` head tags. Verify with `bun run build`, then check that `build/sobre.html`, `build/en/about.html`, and `build/es/acerca-de.html` contain the privacy statement in their own language.
+- [x] 4.6 Review every `.svelte` file this change created for user-visible literals, `aria-label`s, and titles that do not come from `m.*()`. Verify that `bun run lint` passes and that the review found no literal text.
 
 ## 5. Catalog completeness check
 

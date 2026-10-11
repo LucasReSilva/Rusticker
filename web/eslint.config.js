@@ -40,6 +40,10 @@ export default defineConfig(
 	{
 		// Override or add rule settings here, such as:
 		// 'svelte/button-has-type': 'error'
-		rules: {}
+		rules: {
+			// Internal links use localizedPath() from $lib/i18n/links, which calls
+			// resolve() itself; the rule cannot see through that helper.
+			'svelte/no-navigation-without-resolve': ['error', { ignoreLinks: true }]
+		}
 	}
 );
