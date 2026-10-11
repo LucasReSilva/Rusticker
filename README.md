@@ -18,6 +18,16 @@ You can pick the background color with an eyedropper and adjust the tolerance
 with a slider. The interface is available in Portuguese (Brazil), English, and
 Spanish.
 
+## Using the tool
+
+Drop an image, click the drop area to choose one, or paste an image with Ctrl+V
+(Cmd+V on macOS). Detection runs automatically on your device. Pick the background
+with the eyedropper, using the pointer or arrow keys and Enter, and adjust the
+tolerance slider; detection updates after a short pause. Remove unwanted stickers
+with the confirmation dialog, then mark a kept sticker as the pack icon. The grid
+supports arrow keys, Home, End and Delete. Switching language keeps your image,
+kept stickers and icon choice until you reload the page.
+
 ## Privacy
 
 **Your images never leave your device.** All image processing runs in your
@@ -31,10 +41,10 @@ a vulnerability privately.
 
 Rusticker is in **early development**. The `core/` crate (`rusticker-core`)
 detects stickers and builds to WebAssembly, with native tests. The `web/` app
-shell exists: a static SvelteKit site with localized routes in Portuguese
-(Brazil), English, and Spanish, a placeholder tool page, and the how-to-use and
-about pages. The browser tool itself is not wired yet. Commands marked with a
-later change become available as the changes in the [roadmap](#roadmap) land.
+has localized routes in Portuguese (Brazil), English and Spanish, and a browser
+editor for loading, detecting, adjusting and curating stickers. Export is added
+by the `whatsapp-export` change. Commands marked with a later change become
+available as the changes in the [roadmap](#roadmap) land.
 
 ## Planned stack
 
