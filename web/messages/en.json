@@ -94,5 +94,8 @@
 	"design_sample_toast_error_trigger": "Show error",
 	"design_sample_toast_description": "A short toast description.",
 	"design_sample_progress_label": "Sample progress",
-	"design_sample_specimen": "Aa"
+	"design_sample_specimen": "Aa",
+	"pwa_name": "Rusticker: WhatsApp stickers",
+	"pwa_short_name": "Rusticker",
+	"pwa_description": "Cut a whole sticker sheet into a WhatsApp-ready pack. Works offline, and your images never leave your device."
 }

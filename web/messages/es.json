@@ -94,5 +94,8 @@
 	"design_sample_toast_error_trigger": "Mostrar error",
 	"design_sample_toast_description": "Una descripción breve del aviso.",
 	"design_sample_progress_label": "Progreso de ejemplo",
-	"design_sample_specimen": "Aa"
+	"design_sample_specimen": "Aa",
+	"pwa_name": "Rusticker: stickers para WhatsApp",
+	"pwa_short_name": "Rusticker",
+	"pwa_description": "Recorta una hoja entera de stickers y exporta un paquete listo para WhatsApp. Funciona sin conexión, y tus imágenes nunca salen de tu dispositivo."
 }

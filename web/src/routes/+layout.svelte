@@ -5,6 +5,7 @@
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
 	import { afterNavigate } from '$app/navigation';
 	import { locale, syncLocaleFromUrl } from '$lib/i18n/locale.svelte';
+	import PwaRegistration from '$lib/pwa/PwaRegistration.svelte';
 
 	let { children } = $props();
 
@@ -30,4 +31,4 @@
 
 <Toaster />
 
-<!-- @pwa-seo:registration -->
+<PwaRegistration />

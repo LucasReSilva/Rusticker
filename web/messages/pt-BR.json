@@ -94,5 +94,8 @@
 	"design_sample_toast_error_trigger": "Mostrar erro",
 	"design_sample_toast_description": "Uma descrição curta do aviso.",
 	"design_sample_progress_label": "Progresso do exemplo",
-	"design_sample_specimen": "Aa"
+	"design_sample_specimen": "Aa",
+	"pwa_name": "Rusticker: figurinhas para WhatsApp",
+	"pwa_short_name": "Rusticker",
+	"pwa_description": "Recorte uma folha inteira de figurinhas e exporte um pacote para o WhatsApp. Funciona offline, e suas imagens nunca saem do seu dispositivo."
 }
