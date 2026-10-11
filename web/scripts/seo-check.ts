@@ -199,11 +199,26 @@ export function seoCheck(webDir: string, base: string, siteUrl: string): string[
 if (import.meta.main) {
 	const webDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 	const base = process.env.BASE_PATH ?? '';
-	const siteUrl = (process.env.PUBLIC_SITE_URL || `http://localhost:4173${base}`).replace(
-		/\/+$/,
-		''
-	);
-	const errors = seoCheck(webDir, base, siteUrl);
+	const errors: string[] = [];
+	let siteUrl = process.env.PUBLIC_SITE_URL?.replace(/\/+$/, '');
+	if (!siteUrl) {
+		// Without PUBLIC_SITE_URL, take the origin the build used (its root
+		// canonical), which must end with BASE_PATH; every other URL is then
+		// checked against it.
+		const index = join(webDir, 'build', 'index.html');
+		const canonical = existsSync(index)
+			? headLinks(readFileSync(index, 'utf8')).find((link) => link.rel === 'canonical')?.href
+			: undefined;
+		siteUrl = (canonical ?? `http://localhost:4173${base}/`).replace(/\/+$/, '');
+		if (
+			!/^https?:\/\/[^/]+/.test(siteUrl) ||
+			new URL(siteUrl).pathname.replace(/\/$/, '') !== base
+		) {
+			errors.push(`index.html: canonical "${canonical}" is not absolute under BASE_PATH "${base}"`);
+		}
+		console.log(`PUBLIC_SITE_URL is not set; checking against the build's site "${siteUrl}".`);
+	}
+	errors.push(...seoCheck(webDir, base, siteUrl));
 	for (const error of errors) console.error(error);
 	if (errors.length > 0) {
 		console.error(`seo:check failed with ${errors.length} problem(s) (site "${siteUrl}").`);
