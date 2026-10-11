@@ -150,5 +150,42 @@
 	"error_no_stickers": "No stickers found. Pick the background color with the eyedropper or adjust the tolerance.",
 	"error_image_too_large": "Image too large. Reduce its resolution and try again.",
 	"error_invalid_input": "This image could not be read. Try another file.",
-	"error_worker_failed": "Processing failed. Reload the page and try again."
+	"error_worker_failed": "Processing failed. Reload the page and try again.",
+	"export_download_button": "Download pack (.zip)",
+	"export_download_all_button": "Download all {total} packs (.zip)",
+	"export_download_pack_button": "Download pack {n} of {total}",
+	"export_min_stickers_notice": "WhatsApp needs at least {min} stickers per pack.",
+	"export_split_notice": "{count} stickers will be split into {packs} packs (up to 30 each).",
+	"export_progress_label": "Preparing {done} of {total}…",
+	"export_success_toast": [
+		{
+			"declarations": [
+				"input count",
+				"input packs",
+				"local packPlural = packs: plural",
+				"local packNumber = packs: number"
+			],
+			"selectors": ["packPlural"],
+			"match": {
+				"packPlural=one": "Pack ready: {count} stickers",
+				"packPlural=other": "{packNumber} packs ready: {count} stickers"
+			}
+		}
+	],
+	"export_over_budget_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural",
+				"local countNumber = count: number"
+			],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 sticker is over 100 KB and may be rejected by WhatsApp.",
+				"countPlural=other": "{countNumber} stickers are over 100 KB and may be rejected by WhatsApp."
+			}
+		}
+	],
+	"export_error_webp_unsupported": "This browser can't create WEBP stickers. Try Chrome, Edge, or Firefox.",
+	"export_error_failed": "Couldn't create the pack. Please try again."
 }

@@ -1,7 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import Page from './+page.svelte';
-import pageSource from './+page.svelte?raw';
 import { createEditorState, setEditorForTesting, type EditorState } from '$lib/state.svelte';
 import { createMockDetector } from '$lib/detection';
 import { image, installDomMocks } from '$lib/tool/test-support';
@@ -105,10 +104,14 @@ it('rejects pasted non-image files, ignores text and editable targets, and remov
 	await fireEvent.paste(window, { clipboardData });
 	expect(editor.errorSequence).toBe(sequence);
 });
-it('publishes the export mount marker inside its section and leaves Grid sizeOf unwired', () => {
-	expect(pageSource).toMatch(
-		/<section\s+data-slot="export"[^>]*>\s*<!-- @whatsapp-export:mount -->\s*<\/section>/
-	);
-	expect(pageSource).not.toMatch(/<Grid[^>]*sizeOf=/);
+it('mounts export with background size badges and blocks export after removing stickers below the minimum', async () => {
+	const { container } = render(Page);
+	await editor.loadFile(file());
+	const action = await screen.findByRole('button', { name: m.export_download_button() });
+	await waitFor(() => expect(action).toBeEnabled());
+	await waitFor(() => expect(container.querySelectorAll('[data-size-badge]')).toHaveLength(3));
+	editor.removeSticker(editor.stickers[0].id);
+	await waitFor(() => expect(action).toBeDisabled());
+	expect(screen.getByText(m.export_min_stickers_notice({ min: 3 }))).toBeInTheDocument();
 });
 import '@testing-library/jest-dom/vitest';
