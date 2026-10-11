@@ -98,6 +98,14 @@ Use `bun run dev:all` for day-to-day development to rebuild the core and refresh
 Bun's copied local package before starting Vite. Use `bun run dev` when the
 installed wasm package is already current.
 
+`web/bunfig.toml` selects Bun's isolated dependency store, avoiding the Windows
+hoisted-linker `EPERM` error for local `file:` packages. Keep this configuration
+when creating a new worktree; rebuild and reinstall after core changes.
+
+In Git Bash on Windows, preserve the URL base when invoking native tools:
+`MSYS2_ENV_CONV_EXCL=BASE_PATH BASE_PATH=/Rusticker bun run build`.
+This prevents Git Bash from converting `/Rusticker` to a Windows filesystem path.
+
 | Command | What it does |
 |---------|--------------|
 | `bun run dev` | Starts the Vite dev server |
