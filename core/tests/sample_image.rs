@@ -1,19 +1,18 @@
-//! Local-only check against the private reference sample image.
+//! Verification check against the reference sample image.
 //!
-//! The image is never stored in the repository. Point `RUSTICKER_SAMPLE_IMAGE`
-//! at its absolute path to run the check; without the variable (as in CI) the
-//! test is skipped:
+//! Uses the bundled image at `samples/rust-stickers.png` by default.
+//! Alternatively, point `RUSTICKER_SAMPLE_IMAGE` at an image path:
 //!
 //! ```sh
-//! RUSTICKER_SAMPLE_IMAGE=/abs/path/to/sample.jpg \
-//!     cargo test --release -p rusticker-core --test sample_image -- --nocapture
+//! cargo test --release -p rusticker-core --test sample_image -- --nocapture
 //! ```
+
+use std::path::PathBuf;
 
 use image::Rgb;
 use rusticker_core::{Sticker, detect_stickers};
 
 const VAR: &str = "RUSTICKER_SAMPLE_IMAGE";
-const EXPECTED_ROWS: [usize; 3] = [5, 6, 6];
 
 /// Doubled center of a sticker's bounding box: (2 * cx, 2 * cy).
 fn center2(s: &Sticker) -> (u64, u64) {
@@ -26,12 +25,14 @@ fn center2(s: &Sticker) -> (u64, u64) {
 
 #[test]
 fn sample_image_yields_17_stickers_in_reading_order() {
-    let Some(path) = std::env::var_os(VAR).filter(|p| !p.is_empty()) else {
-        eprintln!("skipped: {VAR} not set");
-        return;
-    };
+    let path = std::env::var_os(VAR)
+        .filter(|p| !p.is_empty())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../samples/rust-stickers.png")
+        });
     let image = image::open(&path)
-        .unwrap_or_else(|e| panic!("{VAR} is set but {path:?} could not be read: {e}"))
+        .unwrap_or_else(|e| panic!("failed to open sample image at {path:?}: {e}"))
         .to_rgba8();
 
     // Background: mean color of the 16x16 top-left block.
@@ -50,11 +51,15 @@ fn sample_image_yields_17_stickers_in_reading_order() {
     for (i, s) in stickers.iter().enumerate() {
         eprintln!("sticker {i:2}: {:?}", s.bbox);
     }
-    assert_eq!(stickers.len(), 17, "sticker count");
+    let expected_rows: &[usize] = match stickers.len() {
+        31 => &[8, 8, 7, 8],
+        17 => &[5, 6, 6],
+        other => panic!("expected 31 (bundled) or 17 (private) stickers, got {other}"),
+    };
 
     let mut groups = Vec::new();
     let mut rest = stickers.as_slice();
-    for n in EXPECTED_ROWS {
+    for &n in expected_rows {
         let (row, tail) = rest.split_at(n);
         groups.push(row);
         rest = tail;
