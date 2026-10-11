@@ -32,5 +32,16 @@
 	"page_about_privacy_heading": "Sua privacidade",
 	"page_about_privacy_body": "Todo o processamento das imagens acontece localmente, no seu dispositivo. Suas imagens nunca são enviadas para nenhum servidor.",
 	"page_about_no_account_body": "Não há conta, cadastro nem rastreamento. O site guarda apenas o idioma que você escolher, e somente no seu navegador.",
-	"page_about_open_source_body": "O Rusticker é um projeto de código aberto, distribuído sob a licença MIT."
+	"page_about_open_source_body": "O Rusticker é um projeto de código aberto, distribuído sob a licença MIT.",
+	"theme_toggle_label": "Alterar tema",
+	"theme_light": "Claro",
+	"theme_dark": "Escuro",
+	"theme_system": "Sistema",
+	"lang_switcher_label": "Mudar idioma",
+	"lang_current": "Idioma atual: {language}",
+	"a11y_close": "Fechar",
+	"a11y_skip_to_content": "Pular para o conteúdo",
+	"a11y_main_navigation": "Navegação principal",
+	"a11y_notifications": "Notificações",
+	"a11y_loading": "Carregando…"
 }

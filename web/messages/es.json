@@ -32,5 +32,16 @@
 	"page_about_privacy_heading": "Tu privacidad",
 	"page_about_privacy_body": "Todo el procesamiento de las imágenes ocurre localmente, en tu dispositivo. Tus imágenes nunca se suben a ningún servidor.",
 	"page_about_no_account_body": "No hay cuenta, registro ni rastreo. El sitio solo recuerda el idioma que elijas, y solo en tu navegador.",
-	"page_about_open_source_body": "Rusticker es un proyecto de código abierto, publicado bajo la licencia MIT."
+	"page_about_open_source_body": "Rusticker es un proyecto de código abierto, publicado bajo la licencia MIT.",
+	"theme_toggle_label": "Cambiar tema",
+	"theme_light": "Claro",
+	"theme_dark": "Oscuro",
+	"theme_system": "Sistema",
+	"lang_switcher_label": "Cambiar idioma",
+	"lang_current": "Idioma actual: {language}",
+	"a11y_close": "Cerrar",
+	"a11y_skip_to_content": "Saltar al contenido",
+	"a11y_main_navigation": "Navegación principal",
+	"a11y_notifications": "Notificaciones",
+	"a11y_loading": "Cargando…"
 }

@@ -25,7 +25,7 @@
 
 ## 5. Messages
 
-- [ ] 5.1 Add the `theme_*`, `lang_*`, `a11y_*` keys from design.md D11 to `web/messages/pt-BR.json`, `en.json`, `es.json` with real translations (snake_case, only these prefixes). Verify `bun run i18n:check` and `bun run check` (Paraglide compiles the new functions).
+- [x] 5.1 Add the `theme_*`, `lang_*`, `a11y_*` keys from design.md D11 to `web/messages/pt-BR.json`, `en.json`, `es.json` with real translations (snake_case, only these prefixes). Verify `bun run i18n:check` and `bun run check` (Paraglide compiles the new functions).
 
 ## 6. Header components
 
