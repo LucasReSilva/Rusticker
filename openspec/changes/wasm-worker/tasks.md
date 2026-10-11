@@ -41,7 +41,7 @@
 ## 7. Documentation
 
 - [x] 7.1 Update `ARCHITECTURE.md` section 3 (data flow: worker path `src/lib/detection/worker.ts`, input copy + transfer, latest-wins, `WorkerFailed`) and section 6 (worker: `?url` + `init`, init once, recycle on failure, build `core/pkg` before `bun install`), touching no other section; verify the sections describe the implemented module
-- [ ] 7.2 Update the `CONTRIBUTING.md` setup section and the `README.md` quick start: in any fresh clone or worktree, run `bun run build:wasm` in `web/` (wasm-pack first, then `bun install`) before anything else; `dev:all` for day-to-day work; verify by following the steps in a fresh worktree (`bun run build:wasm`, then `bun run dev` starts)
+- [x] 7.2 Update the `CONTRIBUTING.md` setup section and the `README.md` quick start: in any fresh clone or worktree, run `bun run build:wasm` in `web/` (wasm-pack first, then `bun install`) before anything else; `dev:all` for day-to-day work; verify by following the steps in a fresh worktree (`bun run build:wasm`, then `bun run dev` starts)
 - [x] 7.3 Add one bullet under `## [Unreleased]` in `CHANGELOG.md` for the detection runtime; verify `git diff develop --stat` lists only ARCHITECTURE.md, CONTRIBUTING.md, README.md, CHANGELOG.md among docs, plus this change's own files
 
 ## Verification evidence
@@ -54,3 +54,8 @@
   passed the guarded wasm build before frozen installation, 153 unit tests
   (two sample tests skipped), and 23 E2E tests (one private sample skipped).
   Local E2E also passed all 24 tests with the private sample configured.
+- Fresh detached worktree `wasm-worker-install-check` at `2a8662d`: both
+  `core/pkg` and `web/node_modules` were absent before the normal
+  `bun run build:wasm`, which passed. `bun run dev --port 53174 --strictPort`
+  started and served HTTP 200; compiled/installed wasm hashes match and
+  the fresh worktree remains clean.
