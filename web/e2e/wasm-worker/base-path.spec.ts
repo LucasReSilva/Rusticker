@@ -3,9 +3,9 @@ import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
 import { base, origin } from '../web-scaffold/fixtures';
 
-// Pages project: the production build served under /Rusticker. No page uses
-// the detector yet (the tool UI comes later), so the test starts the built
-// detection worker directly and talks to it with Comlink's wire protocol.
+// Pages project: isolate the manually started worker on a static content page.
+// The tool page starts its own editor worker; that behavior is covered by tool-ui.
+// This test talks to the built worker with Comlink's wire protocol.
 test.use({ locale: 'pt-BR' });
 
 const workersDir = fileURLToPath(new URL('../../build/_app/immutable/workers/', import.meta.url));
@@ -20,7 +20,7 @@ test('the built worker loads its wasm under the base path and detects', async ({
 
 	const requests: URL[] = [];
 	page.on('request', (request) => requests.push(new URL(request.url())));
-	await page.goto('');
+	await page.goto('como-usar');
 
 	const reply = await page.evaluate(async (workerUrl) => {
 		const width = 300;
