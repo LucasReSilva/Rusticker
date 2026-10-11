@@ -32,5 +32,9 @@
 	"page_about_privacy_heading": "Sua privacidade",
 	"page_about_privacy_body": "Todo o processamento das imagens acontece localmente, no seu dispositivo. Suas imagens nunca são enviadas para nenhum servidor.",
 	"page_about_no_account_body": "Não há conta, cadastro nem rastreamento. O site guarda apenas o idioma que você escolher, e somente no seu navegador.",
-	"page_about_open_source_body": "O Rusticker é um projeto de código aberto, distribuído sob a licença MIT."
+	"page_about_open_source_body": "O Rusticker é um projeto de código aberto, distribuído sob a licença MIT.",
+	"error_no_stickers": "Nenhuma figurinha encontrada. Escolha a cor de fundo com o conta-gotas ou ajuste a tolerância.",
+	"error_image_too_large": "Imagem grande demais. Reduza a resolução e tente de novo.",
+	"error_invalid_input": "Não foi possível ler esta imagem. Tente outro arquivo.",
+	"error_worker_failed": "O processamento falhou. Recarregue a página e tente de novo."
 }
