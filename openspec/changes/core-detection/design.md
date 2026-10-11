@@ -157,7 +157,7 @@ Alternatives considered: fixed pixel threshold (scale-dependent); k-means / gap 
 
 `.github/workflows/rust.yml`:
 
-- Triggers: `push` to `develop` and `develop`, and `pull_request` targeting either, with `paths` filter on `core/**`, `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, `.github/workflows/rust.yml`. `permissions: contents: read`; concurrency group per ref with cancel-in-progress.
+- Triggers: `push` to `main` and `develop`, and `pull_request` targeting either, with `paths` filter on `core/**`, `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, `.github/workflows/rust.yml`. `permissions: contents: read`; concurrency group per ref with cancel-in-progress.
 - One `ubuntu-latest` job: checkout; `rustup toolchain install` (reads `rust-toolchain.toml`); `Swatinem/rust-cache@v2`; `cargo fmt --all --check`; `cargo clippy --workspace --all-targets --all-features -- -D warnings`; `cargo clippy -p rusticker-core --target wasm32-unknown-unknown -- -D warnings`; `cargo test --workspace`; install wasm-pack with `taiki-e/install-action` (prebuilt binary, faster than `cargo install`); `wasm-pack build core --target web`; assert `core/pkg/rusticker_core.d.ts` exports `detect` and `class Detection`.
 - `RUSTICKER_SAMPLE_IMAGE` is never set in CI.
 

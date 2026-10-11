@@ -29,10 +29,10 @@ a vulnerability privately.
 
 ## Status
 
-Rusticker is in **early development**. The repository currently contains only
-the project foundation (documentation, configuration, and toolchain pin). The
-`core/` crate and the `web/` app do not exist yet. The commands below become
-available as the changes in the [roadmap](#roadmap) land.
+Rusticker is in **early development**. The `core/` crate (`rusticker-core`)
+detects stickers and builds to WebAssembly, with native tests; the `web/` app
+does not exist yet. The remaining commands below become available as the
+changes in the [roadmap](#roadmap) land.
 
 ## Planned stack
 
@@ -74,6 +74,8 @@ openspec/   OpenSpec specs and change proposals
 | Command                              | Where   | What it does                                     | Available after |
 |--------------------------------------|---------|--------------------------------------------------|-----------------|
 | `wasm-pack build core --target web`  | root    | Compiles the Rust core to `core/pkg/`            | `core-detection` |
+| `cargo test`                         | root    | Runs the Rust unit and synthetic-image tests     | `core-detection` |
+| `RUSTICKER_SAMPLE_IMAGE=<abs path> cargo test --release -p rusticker-core --test sample_image -- --nocapture` | root | Local-only check on the private sample image (17 stickers); skipped when the variable is unset | `core-detection` |
 | `bun install`                        | `web/`  | Installs dependencies, including `core/pkg`      | `web-scaffold`  |
 | `bun run dev`                        | `web/`  | Starts the Vite dev server                       | `web-scaffold`  |
 | `bun run build`                      | `web/`  | Builds the static site                           | `web-scaffold`  |
@@ -115,7 +117,7 @@ and 8; **C** = 6 and 7. See each change's proposal under
 | #  | Change              | Scope                                                                                         | Status      |
 |----|---------------------|-----------------------------------------------------------------------------------------------|-------------|
 | 1  | `project-bootstrap` | Docs, config, repository hygiene, toolchain pin                                               | Done        |
-| 2  | `core-detection`    | Rust crate with synthetic-image tests, Cargo workspace, CI Rust job                           | Planned     |
+| 2  | `core-detection`    | Rust crate with synthetic-image tests, Cargo workspace, CI Rust job                           | Done        |
 | 3  | `web-scaffold`      | SvelteKit app, Tailwind, Paraglide, adapter-static, localized routes, `i18n:check`, CI, GitHub Pages deploy | Planned |
 | 4  | `design-tokens`     | shadcn-svelte, theme tokens, checkerboard, ThemeToggle, LanguageSwitcher, `/_design` route    | Planned     |
 | 5  | `wasm-worker`       | Comlink worker, detector API + mock; local sample image yields 17 stickers                    | Planned     |
