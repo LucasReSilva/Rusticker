@@ -16,3 +16,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Git hooks via [prek](https://github.com/j178/prek): `cargo fmt`, `cargo clippy`, and `cargo check` checks, plus Conventional Commits validation for commit messages.
 - `rusticker-core` crate (`core/`) in a Cargo workspace: detects stickers on a uniform-color background (HSV tolerance, 3x3 noise opening, 8-connected components, transparent interior gaps, reading order, 512x512 framing), exposed to the browser through `wasm-bindgen`; reports only the codes `NoStickers`, `ImageTooLarge`, and `InvalidInput`. Rust CI workflow (format, clippy, tests, `wasm-pack` build).
 - Static SvelteKit web app shell with localized routes (pt-BR, en, es), catalog check, CI, and GitHub Pages deployment.
+- Installable, offline-capable PWA with localized manifests (pt-BR, en, es), canonical and `hreflang` links on every page, `sitemap.xml`, `robots.txt`, and a `seo:check` build-output check.
