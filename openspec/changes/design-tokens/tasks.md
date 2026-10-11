@@ -9,7 +9,7 @@
 - [ ] 2.1 Replace the generated color tokens with the D1 palette (light on `:root, .light`, dark on `.dark`), map them through `@theme inline`, and set the dark variant to the nestable selector from D3. Verify `bun run build` succeeds and `bun run dev` shows the violet primary on a Button in both themes.
 - [ ] 2.2 Add radius (`--radius: 0.75rem` + steps), font stacks (`--font-sans`, `--font-mono`, `--font-display`), a violet-tinted shadow scale plus `--shadow-sticker`, and the checkerboard tokens with the `@utility bg-checkerboard`. Verify classes `rounded-lg`, `font-display`, `shadow-sticker`, `bg-checkerboard` compile (`bun run build`) and the checkerboard recolors when toggling the `dark` class in dev tools.
 - [ ] 2.3 Add the global `prefers-reduced-motion` rule from D5. Verify in the browser with reduced motion emulated that a Dialog and a DropdownMenu open and close instantly and are removed from the DOM after closing. Automated: `web/e2e/design-tokens/motion.dev.spec.ts` (task 9.3).
-- [ ] 2.4 Write `web/src/lib/theme/contrast.ts` (oklch → sRGB, relative luminance, ratio, gamut check) and `contrast.test.ts`, which parses `app.css` and asserts every D1 pair and threshold in both themes. Verify with `bun run test`. Also temporarily lower `--primary` lightness to make the test fail with a message naming the pair and theme, then revert.
+- [x] 2.4 Write `web/src/lib/theme/contrast.ts` (oklch → sRGB, relative luminance, ratio, gamut check) and `contrast.test.ts`, which parses `app.css` and asserts every D1 pair and threshold in both themes. Verify with `bun run test`. Also temporarily lower `--primary` lightness to make the test fail with a message naming the pair and theme, then revert.
 
 ## 3. Adapt the `ui/` components
 
