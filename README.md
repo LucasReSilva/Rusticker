@@ -73,6 +73,19 @@ openspec/   OpenSpec specs and change proposals
 
 ## Quick start
 
+In a fresh clone or worktree, build the wasm package before installing or
+running the web app:
+
+```sh
+cd web
+bun run build:wasm
+bun run dev
+```
+
+`build:wasm` runs wasm-pack before `bun install`, because the local dependency
+requires `core/pkg` to exist. For day-to-day development, use `bun run dev:all`
+to rebuild the wasm, refresh the copied package, and start Vite together.
+
 | Command                              | Where   | What it does                                     | Available after |
 |--------------------------------------|---------|--------------------------------------------------|-----------------|
 | `wasm-pack build core --target web`  | root    | Compiles the Rust core to `core/pkg/`            | `core-detection` |
@@ -96,10 +109,36 @@ Scripts in `web/package.json`:
 | `bun run verify:build`  | Checks the built site: the 9 localized pages, `404.html`, `lang`, and `BASE_PATH` links | `web-scaffold` |
 | `bun run build:wasm`    | Compiles the crate with `wasm-pack` and reinstalls the local package | `wasm-worker` |
 | `bun run dev:all`       | Builds the wasm, then starts the Vite dev server                | `wasm-worker`   |
+| `bun run seo:check`     | Checks the built site for SEO and offline install: canonical and `hreflang` links on the 9 pages, `sitemap.xml`, `robots.txt`, the 3 manifests and icons, and the service-worker precache list | `pwa-seo` |
+| `bun run pwa:icons`     | Regenerates the app icons in `static/icons/` from `static/icons/icon.svg` | `pwa-seo` |
 
 > **Note:** the web app depends on the core through `"rusticker-core": "file:../core/pkg"`,
 > which Bun **copies** rather than links. Re-run `bun install` in `web/` after
 > every `wasm-pack build`, or use `bun run build:wasm`, which does both.
+
+## Install and offline use
+
+Rusticker is an installable web app (PWA). Open it in a supporting browser and
+use the browser's install option, from any language: the app is the same, and
+it shows its name and opens its start page in the language you installed it
+from. After the first visit, every page in every language, the tool, and the
+detection runtime are cached, so the app works fully offline. A new version
+downloads in the background and is used only after every window of the app has
+been closed, so an update never reloads a page while you are editing stickers.
+The cache holds only the app's own files, never your images.
+
+Build variables (set by the deploy workflow):
+
+| Variable          | Example                                   | Used for |
+|-------------------|-------------------------------------------|----------|
+| `BASE_PATH`       | `/Rusticker`                              | Sub-path the site is served from; also the service-worker and manifest scope |
+| `PUBLIC_SITE_URL` | `https://lucasresilva.github.io/Rusticker` | Absolute URLs in canonical and `hreflang` links, `sitemap.xml`, and `robots.txt` (includes the base path). When unset, the build warns and uses `http://localhost:4173${BASE_PATH}` |
+
+Run `bun run seo:check` after a build, with the same variables, to verify the
+output. On a GitHub Pages project site, crawlers ignore `robots.txt` because it
+is not at the host root, so submit `<PUBLIC_SITE_URL>/sitemap.xml` in Google
+Search Console instead; with a custom domain, set the repository variable
+`PUBLIC_SITE_URL` and an empty `BASE_PATH`.
 
 ## Adding a locale
 
@@ -128,11 +167,29 @@ and 8; **C** = 6 and 7. See each change's proposal under
 | 1  | `project-bootstrap` | Docs, config, repository hygiene, toolchain pin                                               | Done        |
 | 2  | `core-detection`    | Rust crate with synthetic-image tests, Cargo workspace, CI Rust job                           | Done        |
 | 3  | `web-scaffold`      | SvelteKit app, Tailwind, Paraglide, adapter-static, localized routes, `i18n:check`, CI, GitHub Pages deploy | Done        |
-| 4  | `design-tokens`     | shadcn-svelte, theme tokens, `@lucide/svelte` icons, checkerboard, ThemeToggle, LanguageSwitcher, `/_design` route | Planned |
-| 5  | `wasm-worker`       | Comlink worker, detector API + mock; local sample image yields 17 stickers                    | Planned     |
+| 4  | `design-tokens`     | shadcn-svelte, theme tokens, `@lucide/svelte` icons, checkerboard, ThemeToggle, LanguageSwitcher, `/_design` route | Implemented and CI verified; integration pending |
+| 5  | `wasm-worker`       | Comlink worker, detector API + mock; local sample image yields 17 stickers                    | Implemented and CI verified; fresh setup verified; integration pending |
 | 6  | `tool-ui`           | DropZone, Preview, Controls, Grid, editor state                                               | Planned     |
 | 7  | `whatsapp-export`   | WEBP up to about 100 KB, packs of 3 to 30 stickers, 96×96 tray icon, `.zip`                   | Planned     |
-| 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Planned     |
+| 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Implemented and CI verified; integration and release verification pending |
+
+Roadmap status distinguishes feature-branch work from integration: changes 4,
+5, and 8 live in separate worktrees and have not yet been merged into
+`develop`. Complete and verify wave B before integrating it; then start wave
+C (`tool-ui` and `whatsapp-export`) from the updated `develop` branch. PWA
+offline detection must also be checked with the worker's built wasm asset
+after integration. `web-scaffold` still has an open deployment verification
+task; its "Done" status above describes the integrated app shell.
+
+The Windows local-package install failure is resolved by the isolated Bun
+linker configured in `web/bunfig.toml` on the worker branch. A fresh worktree
+successfully builds and installs wasm without a manual copy; the generated
+and installed wasm hashes match. The private sample yields 17 stickers.
+Combined validation passes the unit tests and production build, including
+one wasm asset in the offline precache. Browser checks cover all localized
+pages, accessible controls, worker detection, and a fresh worker initialized
+offline. The combined implementation and CI evidence are available in
+[integration PR #9](https://github.com/LucasReSilva/Rusticker/pull/9).
 
 The site is hosted on GitHub Pages at
 <https://lucasresilva.github.io/Rusticker/>. The deploy workflow builds it with
