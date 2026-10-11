@@ -1,4 +1,4 @@
-# DESIGN.md
+﻿# DESIGN.md
 
 The design-system and internationalization (i18n) guide for Rusticker.
 
@@ -17,7 +17,7 @@ The design-system and internationalization (i18n) guide for Rusticker.
 
 - **shadcn-svelte** (Svelte 5), built on **Bits UI** (accessible primitives)
   and **Tailwind CSS v4**.
-- Setup (done once, in `web-scaffold`):
+- Setup: Tailwind is installed in `web-scaffold`; shadcn-svelte initialization is completed in `design-tokens` (CLI 1.7.0):
 
   ```sh
   bunx sv add tailwindcss
@@ -27,6 +27,7 @@ The design-system and internationalization (i18n) guide for Rusticker.
 - Add a component: `bunx shadcn-svelte@latest add <component>`.
 - Components are copied into `src/lib/components/ui/`. They are **our code**:
   edit them freely, but keep them token-driven and text-free (see i18n).
+- Assistive defaults are localized: Dialog `closeLabel` uses `m.a11y_close()`; Sonner container and close labels use `m.a11y_notifications()` and `m.a11y_close()`. Callers may override them.
 - Icons: `@lucide/svelte`. Decorative icons get `aria-hidden="true"`;
   icon-only buttons get a translated `aria-label`.
 
@@ -55,32 +56,66 @@ following the shadcn-svelte pattern: variants declared with
 
 ### Tokens
 
-All tokens are CSS variables defined in the theme (`src/app.css`) and exposed
-to Tailwind v4 through `@theme inline`, with a light set on `:root` and a dark
-set on `.dark`.
+Tokens in `src/app.css` are mapped through Tailwind v4 `@theme inline`.
+The light palette applies to `:root, .light`; `.dark` defines the dark palette.
+OKLCH values are the source of truth; approximate sRGB hex values below are reference only.
+| Token | Light (`:root`, `.light`) | ≈ hex | Dark (`.dark`) | ≈ hex |
+|---|---|---|---|---|
+| `background` | `oklch(0.99 0.004 300)` | `#fcfbfe` | `oklch(0.17 0.025 295)` | `#100d19` |
+| `foreground` | `oklch(0.2 0.03 295)` | `#171322` | `oklch(0.97 0.008 300)` | `#f6f4fa` |
+| `card` / `popover` | `oklch(1 0 0)` | `#ffffff` | `oklch(0.21 0.03 295)` | `#191525` |
+| `card-foreground` / `popover-foreground` | = `foreground` | | = `foreground` | |
+| `primary` | `oklch(0.52 0.24 300)` | `#822dda` | `oklch(0.74 0.15 305)` | `#c190f6` |
+| `primary-foreground` | `oklch(0.99 0.004 300)` | `#fcfbfe` | `oklch(0.17 0.025 295)` | `#100d19` |
+| `secondary` | `oklch(0.95 0.025 300)` | `#f1ebfd` | `oklch(0.3 0.05 300)` | `#322843` |
+| `secondary-foreground` | `oklch(0.3 0.08 300)` | `#34234f` | `oklch(0.95 0.02 300)` | `#f0ecfa` |
+| `muted` | `oklch(0.96 0.01 300)` | `#f3f0f8` | `oklch(0.26 0.03 295)` | `#252131` |
+| `muted-foreground` | `oklch(0.48 0.03 295)` | `#5e5b6d` | `oklch(0.74 0.03 300)` | `#ada7bb` |
+| `accent` (hover surfaces) | `oklch(0.94 0.03 300)` | `#eee7fd` | `oklch(0.32 0.06 300)` | `#382b4d` |
+| `accent-foreground` | `oklch(0.28 0.08 300)` | `#2f1d4a` | `oklch(0.97 0.008 300)` | `#f6f4fa` |
+| `destructive` | `oklch(0.55 0.22 27)` | `#d40c1a` | `oklch(0.68 0.19 25)` | `#f75d59` |
+| `destructive-foreground` | `oklch(0.99 0.004 300)` | `#fcfbfe` | `oklch(0.17 0.025 295)` | `#100d19` |
+| `border` (decorative) | `oklch(0.9 0.015 300)` | `#dfdce7` | `oklch(0.32 0.03 295)` | `#343041` |
+| `input` (control borders) | `oklch(0.62 0.03 300)` | `#898296` | `oklch(0.5 0.03 300)` | `#666072` |
+| `ring` | = `primary` | `#822dda` | = `primary` | `#c190f6` |
+| `checkerboard-a` | `oklch(0.97 0.004 300)` | `#f5f4f7` | `oklch(0.3 0.015 295)` | `#2e2c35` |
+| `checkerboard-b` | `oklch(0.88 0.008 300)` | `#d8d6dc` | `oklch(0.24 0.015 295)` | `#201e26` |
 
-| Group      | Tokens (shadcn-svelte names, extended as needed)                     |
-|------------|----------------------------------------------------------------------|
-| Colors     | `background`, `foreground`, `card`, `popover`, `primary`, `secondary`, `muted`, `accent`, `destructive`, `border`, `input`, `ring` (each with `-foreground` where relevant) |
-| Radius     | `--radius` and its derived `sm` / `md` / `lg` / `xl` steps          |
-| Fonts      | `--font-sans`, `--font-mono`                                        |
-| Shadows    | `--shadow-*` scale                                                   |
-| Checkerboard | two colors and a cell size for the transparency background (e.g. `--checkerboard-a`, `--checkerboard-b`, `--checkerboard-size`), exposed as a utility such as `bg-checkerboard` |
+Contrast ratios (WCAG 2.x), computed from these values:
 
-- **Primary color:** Rusticker has its own primary color (not shadcn's
-  default neutral) with WCAG AA contrast against `primary-foreground` and
-  the page background in both themes. The exact value is defined in
-  `design-tokens`.
-- The checkerboard token is the only way to show transparency (Grid cards,
-  Preview), so it adapts to light and dark themes.
+| Pair | Light | Dark | Threshold |
+|---|---|---|---|
+| foreground / background | 17.66 | 17.56 | 4.5 |
+| foreground / card | 18.19 | 16.30 | 4.5 |
+| muted-foreground / background | 6.41 | 8.25 | 4.5 |
+| muted-foreground / muted | 5.86 | 6.73 | 4.5 |
+| primary-foreground / primary | 6.09 | 7.87 | 4.5 |
+| primary / background (links, indicators) | 6.09 | 7.87 | 4.5 |
+| secondary-foreground / secondary | 12.05 | 11.92 | 4.5 |
+| accent-foreground / accent | 12.48 | 11.85 | 4.5 |
+| destructive-foreground / destructive | 5.28 | 6.10 | 4.5 |
+| destructive / background | 5.28 | 6.10 | 4.5 |
+| ring / background | 6.09 | 7.87 | 3.0 |
+| input / background | 3.57 | 3.16 | 3.0 |
+| foreground / checkerboard-b | 12.65 | 15.10 | 4.5 |
+
+
+Decorative `border` is intentionally subtle; meaningful control boundaries use `input`.
+`bun run test` checks all contrast pairs and sRGB gamut. `bun run lint:design`
+rejects raw colors, physical direction utilities, and arbitrary pixel sizes outside the UI kit.
+
+- Radius: `--radius: 0.75rem`; sm/md/lg/xl/2xl/3xl/4xl multiply it by 0.6/0.8/1/1.4/1.8/2.2/2.6.
+- Fonts: `--font-sans` uses the system UI stack; `--font-mono` uses SFMono-Regular, Menlo, Consolas; `--font-display` uses rounded system fonts with the sans stack as fallback. Fonts require no download.
+- Shadows: `--shadow-2xs/xs/sm/md/lg/xl` use violet-tinted shadow tokens in light and deeper black in dark. `--shadow-sticker` combines a small contact shadow with a soft lifted shadow.
+- Transparency: `--checkerboard-a`, `--checkerboard-b`, and `--checkerboard-size: 0.75rem` power `bg-checkerboard`, a repeating conic gradient that recolors with the theme.
 
 ### Theme
 
-- Light/dark via **mode-watcher** (`<ModeWatcher />` in the root layout).
-- Follows the system preference by default.
-- `ThemeToggle` lets the user switch; the choice is persisted by mode-watcher
-  (localStorage) and restored on load without a flash.
-
+- `AppHeader` mounts `<ModeWatcher />` once in the root layout.
+- The default follows the system, including live preference changes.
+- `ThemeToggle` offers light, dark, and system radio choices. The override is stored in localStorage and restored by a blocking head script before the first paint; choosing system clears the override.
+- Forced `.light` and `.dark` panels share the same tokens in the dev-only `/_design` showcase. Portaled overlays follow the page theme.
+- Global reduced-motion durations are near zero so closing menus and dialogs still emit animation events and unmount.
 ### Planned design-system components
 
 | Component                 | Used for                                              |

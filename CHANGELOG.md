@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- Design system with grape-violet theme tokens, accessible UI components, a shared header with theme and language switchers, and a development-only `/_design` showcase.
 
 - Project documentation: `README.md`, `ARCHITECTURE.md`, `DESIGN.md`, `AGENTS.md` / `CLAUDE.md`, `CONTRIBUTING.md`, `SECURITY.md`, and community files (`CODE_OF_CONDUCT.md`, `AUTHORS.md`, `CONTRIBUTORS.md`, `CHANGELOG.md`).
 - OpenSpec configuration with project context and rules.

@@ -30,9 +30,7 @@ if (wants('pages')) {
 		url: `http://localhost:${pagesPort}${base}/`,
 		reuseExistingServer: !process.env.CI,
 		timeout: 180_000,
-		// VITE_E2E_HOOKS exposes window.__rusticker_e2e (see src/hooks.client.ts);
-		// normal builds compile it out.
-		env: { BASE_PATH: base, VITE_E2E_HOOKS: 'true' }
+		env: { BASE_PATH: base }
 	});
 }
 if (wants('dev')) {
