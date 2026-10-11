@@ -29,7 +29,7 @@ The web app SHALL provide exactly three public pages: the tool page, a how-to-us
 - **THEN** the page lists, in that locale, the steps from preparing the image to importing the pack into WhatsApp
 
 ### Requirement: Shared navigation header
-Every page SHALL show a header with the app name and links to the tool page, the how-to-use page, and the about page. Each link SHALL point to that page in the active locale.
+Every page SHALL show a header with the official application logo, app name, and links to the tool page, the how-to-use page, and the about page. Each link SHALL point to that page in the active locale.
 
 #### Scenario: Navigation keeps the locale
 - **WHEN** a user on the English about page activates the how-to-use link in the header
@@ -37,7 +37,7 @@ Every page SHALL show a header with the app name and links to the tool page, the
 
 #### Scenario: Header on every page
 - **WHEN** a user opens any of the three pages in any supported locale
-- **THEN** the header with the three navigation links is present
+- **THEN** the header with the official logo and navigation links is present
 
 ### Requirement: Prerendered content pages
 The how-to-use and about pages SHALL be generated at build time as complete HTML documents, one for each supported locale, so their content is readable without running scripts.
