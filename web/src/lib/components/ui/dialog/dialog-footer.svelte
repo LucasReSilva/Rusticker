@@ -3,15 +3,19 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { cn, type WithElementRef } from '$lib/utils.js';
 	import type { HTMLAttributes } from 'svelte/elements';
+	import { m } from '$lib/paraglide/messages';
 
 	let {
 		ref = $bindable(null),
 		class: className,
 		children,
 		showCloseButton = false,
+		closeLabel = m.a11y_close(),
 		...restProps
 	}: WithElementRef<HTMLAttributes<HTMLDivElement>> & {
 		showCloseButton?: boolean;
+		/** Text of the close button; defaults to the localized "Close". */
+		closeLabel?: string;
 	} = $props();
 </script>
 
@@ -25,7 +29,7 @@
 	{#if showCloseButton}
 		<DialogPrimitive.Close>
 			{#snippet child({ props })}
-				<Button variant="outline" {...props}>Close</Button>
+				<Button variant="outline" {...props}>{closeLabel}</Button>
 			{/snippet}
 		</DialogPrimitive.Close>
 	{/if}
