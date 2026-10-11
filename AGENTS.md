@@ -73,6 +73,10 @@ fix(web): keep locale prefix when switching theme
   with a `vX.Y.Z` tag and back into `develop`); urgent fixes through
   `hotfix/<x.y.z>` from `main`. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+- **Release readiness:** do not create or publish a release until the app can
+  load an image, detect and curate stickers, and download a valid sticker pack
+  end to end. Verify that functional flow before starting a release branch.
+
 ## Workflow: OpenSpec
 
 Non-trivial work goes through [OpenSpec](https://github.com/Fission-AI/OpenSpec):
