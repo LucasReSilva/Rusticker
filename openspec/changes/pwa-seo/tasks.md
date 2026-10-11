@@ -6,7 +6,7 @@
 
 ## 2. Messages
 
-- [ ] 2.1 Add `pwa_name`, `pwa_short_name` (<= 12 characters), `pwa_description` to `web/messages/pt-BR.json`, `en.json`, `es.json` with real translations. Verify: `bun run i18n:check` passes and `bun run check` has no type errors for `m.pwa_*`.
+- [x] 2.1 Add `pwa_name`, `pwa_short_name` (<= 12 characters), `pwa_description` to `web/messages/pt-BR.json`, `en.json`, `es.json` with real translations. Verify: `bun run i18n:check` passes and `bun run check` has no type errors for `m.pwa_*`.
 
 ## 3. URL and site helpers (`web/src/lib/seo/`)
 
