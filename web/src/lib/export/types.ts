@@ -1,4 +1,6 @@
 import type { Sticker } from '$lib/detection/types';
+import type { StickerSizeInfo } from '$lib/tool/size';
+export type { StickerSizeInfo } from '$lib/tool/size';
 
 export interface Encoder {
 	webp(pixels: ImageData, quality: number): Promise<Blob>;
@@ -12,11 +14,6 @@ export interface EncodedSticker {
 	bytes: number;
 	overLimit: boolean;
 }
-
-export type StickerSizeInfo =
-	| { status: 'pending' }
-	| { status: 'ready'; bytes: number; overLimit: boolean }
-	| { status: 'error' };
 
 export interface StickerSizes {
 	sync(stickers: Sticker[]): void;

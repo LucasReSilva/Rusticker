@@ -32,7 +32,7 @@ export function createExportController(deps: ControllerDependencies) {
 	const initialTotal = initialResult ? initialResult.stickerCount + initialResult.packCount : 0;
 	let progress = $state<ExportProgress>({ done: initialTotal, total: initialTotal });
 	let archives = $state.raw<PackArchive[]>(initialResult?.archives ?? []);
-	let saved: Snapshot | undefined = initialResult ? initialInput : undefined;
+	let saved = $state.raw<Snapshot | undefined>(initialResult ? initialInput : undefined);
 	let active: Snapshot | undefined;
 	let invalidated = false;
 	const matches = (value: Snapshot): boolean => {

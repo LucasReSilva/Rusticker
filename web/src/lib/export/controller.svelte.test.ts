@@ -118,6 +118,23 @@ it('blocks fewer than three stickers and detection, and plans balanced packs', a
 	expect(controller.canExport).toBe(false);
 });
 
+it('publishes ready archives to an effect that initially observes an empty list', async () => {
+	const { controller } = await setup(31);
+	const counts: number[] = [];
+	cleanups.push(
+		$effect.root(() => {
+			$effect(() => {
+				counts.push(controller.archives.length);
+			});
+		})
+	);
+	flushSync();
+	expect(counts).toEqual([0]);
+	await controller.exportAll();
+	flushSync();
+	expect(counts.at(-1)).toBe(2);
+});
+
 it('downloads each pack in order, blocks duplicate export, and re-downloads without re-encoding', async () => {
 	const encoder = fakeEncoder();
 	const spy = vi.spyOn(encoder, 'webp');

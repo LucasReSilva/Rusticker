@@ -43,6 +43,7 @@ Constraints: client-side only (no network with user data), Bun only, every user-
 | `canvas.ts` | `createCanvasEncoder(): Encoder` (WEBP, PNG, 96x96 tray resample) via OffscreenCanvas | **yes** |
 | `download.ts` | `downloadBlob(blob, fileName)` (blob URL + anchor click + revoke) | **yes** |
 | `controller.svelte.ts` | `createExportController(...)`: runes state for `Export.svelte` (phase, progress, packs, last result) | no |
+| `session.ts` | ready archive cache shared across localized view instances | no |
 | `index.ts` | public re-exports | - |
 
 The encoder seam:
