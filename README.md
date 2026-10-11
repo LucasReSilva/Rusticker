@@ -128,11 +128,25 @@ and 8; **C** = 6 and 7. See each change's proposal under
 | 1  | `project-bootstrap` | Docs, config, repository hygiene, toolchain pin                                               | Done        |
 | 2  | `core-detection`    | Rust crate with synthetic-image tests, Cargo workspace, CI Rust job                           | Done        |
 | 3  | `web-scaffold`      | SvelteKit app, Tailwind, Paraglide, adapter-static, localized routes, `i18n:check`, CI, GitHub Pages deploy | Done        |
-| 4  | `design-tokens`     | shadcn-svelte, theme tokens, `@lucide/svelte` icons, checkerboard, ThemeToggle, LanguageSwitcher, `/_design` route | Planned |
-| 5  | `wasm-worker`       | Comlink worker, detector API + mock; local sample image yields 17 stickers                    | Planned     |
+| 4  | `design-tokens`     | shadcn-svelte, theme tokens, `@lucide/svelte` icons, checkerboard, ThemeToggle, LanguageSwitcher, `/_design` route | Local implementation complete; CI verification pending |
+| 5  | `wasm-worker`       | Comlink worker, detector API + mock; local sample image yields 17 stickers                    | In progress |
 | 6  | `tool-ui`           | DropZone, Preview, Controls, Grid, editor state                                               | Planned     |
 | 7  | `whatsapp-export`   | WEBP up to about 100 KB, packs of 3 to 30 stickers, 96×96 tray icon, `.zip`                   | Planned     |
-| 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Planned     |
+| 8  | `pwa-seo`           | PWA manifest and offline support, `hreflang`, sitemap, robots                                 | Local implementation complete; CI and release verification pending |
+
+Roadmap status distinguishes feature-branch work from integration: changes 4,
+5, and 8 live in separate worktrees and have not yet been merged into
+`develop`. Complete and verify wave B before integrating it; then start wave
+C (`tool-ui` and `whatsapp-export`) from the updated `develop` branch. PWA
+offline detection must also be checked with the worker's built wasm asset
+after integration. `web-scaffold` still has an open deployment verification
+task; its "Done" status above describes the integrated app shell.
+
+Local validation of `wasm-worker` passes with the generated package in place,
+including the private sample's 17 stickers. Its setup checks remain open:
+Bun 1.3.14 reports `EPERM` while copying the local wasm package on Windows.
+Resolve the install and frozen-lockfile checks before treating that change
+as complete; a manual copy used for runtime validation does not verify setup.
 
 The site is hosted on GitHub Pages at
 <https://lucasresilva.github.io/Rusticker/>. The deploy workflow builds it with
