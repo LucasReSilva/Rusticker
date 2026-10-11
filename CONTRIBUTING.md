@@ -123,6 +123,17 @@ bunx playwright install chromium   # first time only
 bun run test:e2e
 ```
 
+The suite has two Playwright projects:
+
+- `pages` runs every `*.spec.ts` file against the built site, served like
+  GitHub Pages. Use it for public pages.
+- `dev` runs only `*.dev.spec.ts` files, against the Vite dev server at
+  `http://localhost:5173/`. Use it for dev-only routes that are never built,
+  such as `/_design` and `/_detection`.
+
+Run one project with `bun run test:e2e --project=pages` (or `--project=dev`);
+only that project's server starts.
+
 On Windows with Git Bash, prefix commands that set or pass `/Rusticker`
 paths with `MSYS_NO_PATHCONV=1` (for example
 `MSYS_NO_PATHCONV=1 bun run test:e2e`), so Git Bash does not rewrite them
