@@ -7,8 +7,13 @@
 	import Preview from '$lib/components/Preview.svelte';
 	import Controls from '$lib/components/Controls.svelte';
 	import Grid from '$lib/components/Grid.svelte';
+	import Export from '$lib/components/Export.svelte';
+	import { stickerSizes } from '$lib/export';
 	import { m } from '$lib/paraglide/messages';
 	const editor = getEditor();
+	$effect(() => {
+		stickerSizes.sync(editor.stickers);
+	});
 	let seenError = 0;
 	$effect(() => {
 		if (!editor.lastError || editor.errorSequence === seenError) return;
@@ -84,6 +89,7 @@
 				</p>
 				<Grid
 					stickers={editor.stickers}
+					sizeOf={stickerSizes.get}
 					trayIconId={editor.trayIconId}
 					busy={editor.isProcessing}
 					pending={editor.isProcessing && !editor.detected.length}
@@ -91,7 +97,11 @@
 					onSetTrayIcon={(id) => editor.setTrayIcon(id)}
 				/>
 				<section data-slot="export" aria-label={m.tool_export_region_label()}>
-					<!-- @whatsapp-export:mount -->
+					<Export
+						stickers={editor.stickers}
+						trayIconId={editor.trayIconId}
+						detecting={editor.isProcessing}
+					/>
 				</section>
 			</div>
 		</div>
@@ -105,6 +115,7 @@
 		/>
 		<Grid
 			stickers={editor.stickers}
+			sizeOf={stickerSizes.get}
 			trayIconId={editor.trayIconId}
 			busy={true}
 			pending={true}
