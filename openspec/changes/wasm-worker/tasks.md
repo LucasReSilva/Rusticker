@@ -22,8 +22,8 @@
 
 ## 4. Local integration test (sample image, never committed)
 
-- [ ] 4.1 Write `web/src/lib/detection/detection.integration.test.ts` per design D8: `describe.skipIf(!process.env.RUSTICKER_SAMPLE_IMAGE)`, decode the JPEG from that absolute path with `jpeg-js`, init the wasm from the installed package bytes, call `runDetect` with background `0x00B140` and tolerance 50, assert 17 stickers in reading order (rows of 5/6/6) with 512*512*4-byte buffers; verify `bun run test` reports the suite as skipped without the variable, and passes locally with `RUSTICKER_SAMPLE_IMAGE=<abs path to image/...jpg> bun run test`
-- [ ] 4.2 Confirm the sample image was not copied anywhere: verify `git status --porcelain` lists no `.jpg`/`.jpeg` file and `web/static/` has no example image
+- [x] 4.1 Write `web/src/lib/detection/detection.integration.test.ts` per design D8: `describe.skipIf(!process.env.RUSTICKER_SAMPLE_IMAGE)`, decode the JPEG from that absolute path with `jpeg-js`, init the wasm from the installed package bytes, call `runDetect` with background `0x00B140` and tolerance 50, assert 17 stickers in reading order (rows of 5/6/6) with 512*512*4-byte buffers; verify `bun run test` reports the suite as skipped without the variable, and passes locally with `RUSTICKER_SAMPLE_IMAGE=<abs path to image/...jpg> bun run test`
+- [x] 4.2 Confirm the sample image was not copied anywhere: verify `git status --porcelain` lists no `.jpg`/`.jpeg` file and `web/static/` has no example image
 
 ## 5. Dev-only browser check
 
