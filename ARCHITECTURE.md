@@ -96,7 +96,7 @@ The pipeline was validated in a Python/OpenCV prototype and is ported to Rust
 with `image` + `imageproc`.
 
 The exact rules live in the
-[`sticker-detection` spec](openspec/changes/core-detection/specs/sticker-detection/spec.md)
+[`sticker-detection` spec](openspec/specs/sticker-detection/spec.md)
 (moved to `openspec/specs/sticker-detection/` when the change is archived).
 
 1. **Background mask (HSV).** Convert to HSV; a pixel is background if it is
