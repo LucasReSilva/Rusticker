@@ -120,7 +120,7 @@ Cancellation is signalled by rejecting with a `DOMException` whose `name` is `'A
 
 `web/src/routes/_detection/+page.ts` sets `ssr = false`, `prerender = false`, and its `load` throws `error(404)` unless `dev` (`$app/environment`). `+page.svelte` contains only a native file input (browser-localized), the elapsed time and sticker count as numbers, and the sticker images on canvases; it logs codes and bboxes to the console. No hardcoded copy, so no catalog keys are needed. It uses `createImageBitmap` + `OffscreenCanvas` only to obtain `ImageData` for testing; the real file pipeline belongs to `tool-ui`. It is unlinked and can be deleted once `tool-ui` exists.
 
-**E2E (Playwright, dev project).** `web/e2e/wasm-worker/detection.spec.ts` runs against `bun run dev`, the only place `/_detection` exists. Playwright gets a separate `dev` project (its own `webServer: bun run dev`, `BASE_PATH` unset) next to web-scaffold's default build-and-preview project; this change adds that one entry to `web/playwright.config.ts` and changes nothing else there. The spec draws its synthetic images in the test, so it runs in CI. The sample-image spec is skipped unless `RUSTICKER_SAMPLE_IMAGE` is set.
+**E2E (Playwright, pre-wired dev project).** `web/e2e/wasm-worker/detection.dev.spec.ts` runs against `bun run dev`, the only place `/_detection` exists. It uses the `dev` project that web-scaffold pre-wires in `web/playwright.config.ts` (it runs every `*.dev.spec.ts`); this change does not touch the Playwright config. The spec draws its synthetic images in the test, so it runs in CI. The sample-image spec is skipped unless `RUSTICKER_SAMPLE_IMAGE` is set.
 
 ### D10. CI and deploy workflows (no edits; verify the pre-wired steps)
 

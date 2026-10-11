@@ -27,7 +27,7 @@
 
 ## 5. Dev-only browser check
 
-- [ ] 5.1 Add `web/src/routes/_detection/+page.ts` (`ssr = false`, `prerender = false`, `load` throws 404 unless `dev`) and `+page.svelte` (native file input, `createImageBitmap` + `OffscreenCanvas` to `ImageData`, `createDetector().detect` with green background and tolerance 50, renders the count, elapsed ms and sticker canvases, logs codes/bboxes; no hardcoded copy) per design D9; verify with the Playwright spec `web/e2e/wasm-worker/detection.spec.ts` (task 6.4, `dev` project): a synthetic image gives the expected count, the page stays responsive during detection, and the wasm is requested once across repeated runs
+- [ ] 5.1 Add `web/src/routes/_detection/+page.ts` (`ssr = false`, `prerender = false`, `load` throws 404 unless `dev`) and `+page.svelte` (native file input, `createImageBitmap` + `OffscreenCanvas` to `ImageData`, `createDetector().detect` with green background and tolerance 50, renders the count, elapsed ms and sticker canvases, logs codes/bboxes; no hardcoded copy) per design D9; verify with the Playwright spec `web/e2e/wasm-worker/detection.dev.spec.ts` (task 6.4, pre-wired `dev` project): a synthetic image gives the expected count, the page stays responsive during detection, and the wasm is requested once across repeated runs
 - [ ] 5.2 Verify error and stale-result paths in the same page: choosing an image with no stickers logs `NoStickers`; triggering several detections quickly logs cancelled results for all but the last; and `/_detection` returns 404 after `bun run build` and `bun run preview` (both automated in task 6.4)
 
 ## 6. CI, deploy, and base path
@@ -36,7 +36,7 @@
 - [ ] 6.2 Verify the base path: `BASE_PATH=/Rusticker bun run build` then serve `web/build` under `/Rusticker` (e.g. `bun run preview`), confirm `web/build` holds the wasm as a hashed file (so `pwa-seo` can precache it), and that no same-origin request leaves the base path (automated in task 6.4, `base-path.spec.ts`).
 - [ ] 6.3 Run the full web pipeline locally: `bun run check`, `bun run lint`, `bun run test`, `bun run build`, `bun run i18n:check` in `web/`; verify all pass
 
-- [ ] 6.4 Add Playwright specs under `web/e2e/wasm-worker/`: `detection.spec.ts` (`dev` project: a synthetic image drawn in the test gives the expected count, no main-thread gap over 200 ms during detection, `NoStickers` and cancelled-result logs, one wasm request across three runs); `sample-image.spec.ts` (`dev` project: 17 stickers from `RUSTICKER_SAMPLE_IMAGE`, skipped when unset); `production.spec.ts` (default project: `/_detection` is 404); `base-path.spec.ts` (default project, `BASE_PATH=/Rusticker`: same-origin requests stay under the base path). Verify `bun run test:e2e` passes locally and in the pre-wired CI step.
+- [ ] 6.4 Add Playwright specs under `web/e2e/wasm-worker/`, using the `dev` project that web-scaffold pre-wires (no config change): `detection.dev.spec.ts` (dev project: a synthetic image drawn in the test gives the expected count, no main-thread gap over 200 ms during detection, `NoStickers` and cancelled-result logs, one wasm request across three runs); `sample-image.dev.spec.ts` (dev project: 17 stickers from `RUSTICKER_SAMPLE_IMAGE`, skipped when unset); `production.spec.ts` (default project: `/_detection` is 404); `base-path.spec.ts` (default project, `BASE_PATH=/Rusticker`: same-origin requests stay under the base path). Verify `bun run test:e2e` passes locally and in the pre-wired CI step.
 
 ## 7. Documentation
 
