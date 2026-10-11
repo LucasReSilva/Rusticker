@@ -32,11 +32,17 @@ Rusticker/
 +-- openspec/             specs (source of truth) and changes
 ```
 
-- **`core/`** - crate `rusticker-core`, built with
+- **`core/`** - crate `rusticker-core` (implemented by `core-detection`),
+  the only member of the root Cargo workspace, built with
   `wasm-pack build core --target web` and `wasm-bindgen`.
-  - `image`: decoding and resizing (Lanczos3).
+  - `image`: pixel buffers and resizing (Lanczos3); no codecs in the library.
   - `imageproc`: connected components and morphology.
   - No OpenCV.
+  - Modules: `color` (HSV thresholds), `mask` (foreground + opening),
+    `components` (labelling, size filter), `alpha` (crop + alpha), `order`
+    (reading order), `frame` (512x512 framing), `wasm` (bindings), `error`.
+  - Tests: `core/tests/synthetic.rs` (images painted in code) and
+    `core/tests/sample_image.rs` (local only, see section 10).
   - Output goes to `core/pkg/`, which is git-ignored.
 - **`web/`** - SvelteKit 2, Svelte 5 (runes), TypeScript, Vite, managed with Bun.
   - Depends on the wasm package as `"rusticker-core": "file:../core/pkg"`.
@@ -89,11 +95,21 @@ Rusticker/
 The pipeline was validated in a Python/OpenCV prototype and is ported to Rust
 with `image` + `imageproc`.
 
+The exact rules live in the
+[`sticker-detection` spec](openspec/changes/core-detection/specs/sticker-detection/spec.md)
+(moved to `openspec/specs/sticker-detection/` when the change is archived).
+
 1. **Background mask (HSV).** Convert to HSV; a pixel is background if it is
    close to the background color. For chroma-key green the working range is
    **hue 70°-170°, saturation >= 47%, value >= 24%**. The background color is
    configurable: the user picks it with an eyedropper on the preview and
-   adjusts a tolerance slider.
+   adjusts a tolerance slider (0-100, default 50). With tolerance `t` and the
+   picked color's hue `h_bg`, saturation `s_bg`, and value `v_bg`, a pixel is
+   background iff its circular hue distance to `h_bg` is at most `t` degrees,
+   its saturation is at least `min(0.94 * (1 - t/100), s_bg)`, and its value
+   is at least `min(0.48 * (1 - t/100), v_bg)`. Tolerance 50 on `0x00FF00`
+   reproduces the green range above; the picked color is always background,
+   and raising the tolerance never brings background back.
 2. **Mask cleanup.** Morphological **opening with a 3x3** kernel on the
    foreground mask, to remove JPEG noise.
 3. **Components.** Connected components with **8-connectivity** on the
@@ -102,24 +118,34 @@ with `image` + `imageproc`.
    where the pixel is **inside the component and not background-colored**, so
    interior gaps of background (e.g. between an arm and a weapon) also become
    transparent. Apply a light **3x3 blur to the alpha** channel to smooth edges.
-5. **Ordering.** Sort into rows (grouping components by vertical center), then
-   left to right within each row.
+5. **Ordering.** Sort into rows, then left to right within each row. Rows:
+   sort by vertical center; the first sticker opens a row, and each next
+   sticker joins it iff its vertical center is strictly above the
+   lowest point (largest `y + height`) of the stickers already in the row, otherwise it opens a new
+   row. Within a row, order by horizontal center (ties by top). This keeps a
+   short sticker in the row of taller neighbors whose extent covers its center,
+   with no pixel threshold.
 6. **Framing.** Resize preserving aspect ratio to fit **480 px** (Lanczos3) and
    center in a transparent **512x512** frame (16 px margin on the long side).
 
 ## 5. Errors and warnings
 
 The core exposes an `ErrorCode` enum; the frontend maps each code to a
-localized message and shows it as a toast. Provisional variants:
+localized message and shows it as a toast. In the browser, `detect` throws
+the code name as a string. The codes are:
 
 | Code              | Meaning                                                  |
 |-------------------|----------------------------------------------------------|
-| `NoStickers`      | No component survived detection.                         |
-| `ImageTooLarge`   | Input dimensions exceed the supported limit.             |
-| `InvalidInput`    | Buffer length does not match `width * height * 4`, or a dimension is 0. |
+| `NoStickers`      | No component survived noise removal and the 0.4% size filter. |
+| `ImageTooLarge`   | Width or height above 8192, or more than 40,000,000 pixels. |
+| `InvalidInput`    | A dimension is 0, the buffer length is not `width * height * 4`, the tolerance is above 100, the background is above `0xFFFFFF`, or `bbox(i)`/`rgba(i)` got `i >= count`. |
+
+Checks run in that order (zero dimension, size limits, buffer length,
+parameters); the first failure decides the code.
 
 Splitting more than 30 stickers into several packs is **not** a core error:
-it is handled by the frontend export as an informational notice.
+`TooManyStickers` is an informational notice produced by the frontend export,
+never by Rust.
 
 ## 6. Worker
 
@@ -175,13 +201,19 @@ it is handled by the frontend export as an informational notice.
 
 ## 10. Testing strategy (planned)
 
-- **Rust unit tests** with a synthetic image: green background with three
-  rectangles of different colors must yield exactly 3 components, in the
-  correct row-then-column order.
+- **Rust unit tests** (in each `core/src` module) and **synthetic-image
+  tests** (`core/tests/synthetic.rs`): images painted in code, no fixture
+  files. They cover every `sticker-detection` scenario, for example a green
+  background with three rectangles of different colors yielding exactly 3
+  stickers in row-then-column order, interior gaps, soft edges, framing, the
+  size filter, and every error code. Run with `cargo test`; CI runs them in
+  `.github/workflows/rust.yml` together with fmt, clippy, and the wasm build.
 - **Integration check (local only):** a private sample image (never
   committed; kept in the git-ignored `image/` folder) is expected to yield
-  **17 stickers**. Tests read its absolute path from `RUSTICKER_SAMPLE_IMAGE`
-  and are skipped when the variable is unset, so CI never runs them.
+  **17 stickers** in rows of 5, 6, and 6. `core/tests/sample_image.rs` reads
+  its absolute path from `RUSTICKER_SAMPLE_IMAGE` and is skipped when the
+  variable is unset, so CI never runs it:
+  `RUSTICKER_SAMPLE_IMAGE=<abs path> cargo test --release -p rusticker-core --test sample_image -- --nocapture`.
 - **i18n check** (`i18n:check`): fails when any locale is missing a key that
   exists in the base locale `pt-BR`.
 
