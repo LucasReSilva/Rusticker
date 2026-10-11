@@ -14,4 +14,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Repository hygiene: `.gitignore`, `.gitattributes` with LF line-ending normalization, and `.editorconfig`.
 - Pinned Rust toolchain (`rust-toolchain.toml`): Rust 1.98 with `rustfmt`, `clippy`, and the `wasm32-unknown-unknown` target.
 - Git hooks via [prek](https://github.com/j178/prek): `cargo fmt`, `cargo clippy`, and `cargo check` checks, plus Conventional Commits validation for commit messages.
+- `rusticker-core` crate (`core/`) in a Cargo workspace: detects stickers on a uniform-color background (HSV tolerance, 3x3 noise opening, 8-connected components, transparent interior gaps, reading order, 512x512 framing), exposed to the browser through `wasm-bindgen`; reports only the codes `NoStickers`, `ImageTooLarge`, and `InvalidInput`. Rust CI workflow (format, clippy, tests, `wasm-pack` build).
 - Static SvelteKit web app shell with localized routes (pt-BR, en, es), catalog check, CI, and GitHub Pages deployment.
