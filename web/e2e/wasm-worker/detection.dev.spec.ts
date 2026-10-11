@@ -99,6 +99,9 @@ test('detection keeps working offline once the engine is loaded', async ({ page,
 });
 
 test('the wasm engine is fetched once across several runs', async ({ page }) => {
+	// Finish initialization from beforeEach before observing a fresh document.
+	// Otherwise its late wasm request can be counted alongside the new worker.
+	expect(await runSynthetic(page, grid(2, 2, 400, 200))).toEqual({ status: 'done', count: 2 });
 	const wasmRequests: string[] = [];
 	page.on('request', (request) => {
 		const url = new URL(request.url());
