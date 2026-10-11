@@ -244,7 +244,8 @@ On this change's branch `core/` does not exist yet, so all three are skipped. Th
   7. `bun run test`, `bun run i18n:check`;
   8. build with `BASE_PATH=/Rusticker`, which exercises a non-empty base;
   9. `bun run --if-present seo:check` (a no-op until `pwa-seo` defines it);
-  10. `BASE_PATH=/Rusticker bun run verify:build`.
+  10. `BASE_PATH=/Rusticker bun run verify:build`;
+  11. the Playwright e2e suite (D13): read the `@playwright/test` version, restore `~/.cache/ms-playwright` from a cache keyed on it, `bunx playwright install --with-deps chromium`, `bun run --if-present test:e2e`, and upload `web/playwright-report/` as an artifact when the job fails. `deploy.yml` does not run e2e.
 
 **`.github/workflows/deploy.yml`**
 
@@ -305,6 +306,18 @@ Nothing in this change can send user data off the device.
 Dev dependencies: `jsdom`, `@testing-library/svelte`, `@testing-library/jest-dom`.
 
 One smoke test proves the client project works: `src/lib/i18n/switch.svelte.test.ts` (D11). Later changes only add test files that follow these naming rules.
+
+### D13. Playwright e2e against a Pages-like server (approved scope addition)
+
+Unit tests cannot show what only a real browser and a real static host do: the client `init` redirect, `<html lang>` after hydration, `switchLocale` without a document reload, the `404.html` fallback, the `/en` → `/en/` redirect, and pages readable without JavaScript. These run as a Playwright suite.
+
+- **Setup:** `bunx sv add playwright` (then normalized: the demo route removed, `test` stays Vitest-only, `test:e2e` = `playwright test`). Chromium only for now; `bunx playwright install chromium` once per machine.
+- **Server:** `playwright.config.ts` has a `webServer` that runs `bun run build` with `BASE_PATH=/Rusticker`, then `bun scripts/serve-pages.ts`. That script reproduces the GitHub Pages rules the app depends on: everything under the base path, `/x` → `x.html`, `/x/` → `x/index.html`, a directory without the slash → 301 to `/x/`, and anything else → `404.html` with status 404. `vite preview` is not used because it falls back to SvelteKit's server rendering for unknown URLs, which GitHub Pages never does. `baseURL` is `http://localhost:4173/Rusticker/`, traces are kept on the first retry, and CI retries once.
+- **Specs** (`web/e2e/web-scaffold/`): entry redirect (saved preference via `storageState`, browser language via the context `locale`), `switchLocale` (no extra `document` request, a `window` marker survives, and URL, text, header, `<html lang>`, and storage update), `/en` → `/en/`, the localized not-found page and its link back, the Spanish about page with JavaScript disabled, and same-origin requests only.
+- **Triggering `switchLocale`:** there is no language switcher UI until `design-tokens`. A build-time flag, `VITE_E2E_HOOKS=true`, which only the e2e `webServer` sets, makes `src/hooks.client.ts` expose `window.__rusticker_e2e.switchLocale`. Vite replaces the flag at build time, so normal and deploy builds compile the block out (checked: no `__rusticker_e2e` in a normal build). Once `LanguageSwitcher` exists, the spec can click it instead.
+- **CI:** see D9 step 11. Deploy does not run e2e.
+
+*Alternative:* keep the ad-hoc puppeteer-core script used during implementation. Rejected: it lived outside the repo, drove an installed desktop browser, had no runner, assertions, retries, traces, or reports, and could not run in CI. Playwright provides all of these, ships its own browser builds, and is the upstream `sv` add-on.
 
 ## Risks / Trade-offs
 

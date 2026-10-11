@@ -104,11 +104,30 @@ Then, from the `web/` directory:
 | `bun run build` | Builds the static site (set `BASE_PATH=/Rusticker` to build for GitHub Pages) |
 | `bun run check` | Compiles the messages and type-checks the app |
 | `bun run lint` / `bun run format` | Checks / applies Prettier formatting and ESLint |
-| `bun run test` | Runs the unit tests |
+| `bun run test` | Runs the unit tests (Vitest) |
+| `bun run test:e2e` | Builds the site with `BASE_PATH=/Rusticker`, serves it like GitHub Pages, and runs the Playwright end-to-end tests (see below) |
 | `bun run i18n:check` | Fails if any locale is missing a key that exists in `pt-BR`, has an extra key, or has an empty value |
 | `bun run verify:build` | Checks the built site (run after `bun run build`, with the same `BASE_PATH`) |
 | `bun run build:wasm` | Rebuilds the Rust core with wasm-pack and reinstalls the local `rusticker-core` package *(after `wasm-worker`)* |
 | `bun run dev:all` | Builds the wasm package, then starts the dev server *(after `wasm-worker`)* |
+
+### End-to-end tests
+
+The Playwright suite in `web/e2e/` runs against the production build, served
+by `web/scripts/serve-pages.ts` with the same rules as GitHub Pages (under
+`/Rusticker`). Download the browser once per machine, then run the suite:
+
+```sh
+cd web
+bunx playwright install chromium   # first time only
+bun run test:e2e
+```
+
+On Windows with Git Bash, prefix commands that set or pass `/Rusticker`
+paths with `MSYS_NO_PATHCONV=1` (for example
+`MSYS_NO_PATHCONV=1 bun run test:e2e`), so Git Bash does not rewrite them
+into Windows paths. A failed run leaves a report in `web/playwright-report/`
+(`bunx playwright show-report`).
 
 Run the Rust tests from the repository root *(after `core-detection`)*:
 

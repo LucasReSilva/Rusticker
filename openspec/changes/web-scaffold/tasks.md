@@ -40,7 +40,7 @@
 
   Verify with `bun run test`.
 - [x] 3.3 Wire Paraglide into the app:
-  - in `vite.config.ts`, pass the strategy `['url','localStorage','baseLocale']` and `urlPatterns: buildUrlPatterns(process.env.BASE_PATH ?? '')` to the Paraglide plugin, inside a clearly delimited `// paraglide` block;
+  - in `vite.config.ts`, pass the strategy `['url','baseLocale']` (not `localStorage`: Paraglide would persist the URL locale and overwrite the saved preference, see design D3) and `urlPatterns: buildUrlPatterns(process.env.BASE_PATH ?? '')` to the Paraglide plugin, inside a clearly delimited `// paraglide` block;
   - in `src/hooks.ts`, add `reroute` using `deLocalizeUrl`;
   - in `src/hooks.server.ts`, export `handle = sequence(paraglideHandle, /* @pwa-seo:handle */)`, where `paraglideHandle` is the middleware plus the `%paraglide.lang%` replacement (design D3, addendum R3);
   - in `src/app.html`, set `<html lang="%paraglide.lang%">`;
@@ -135,3 +135,17 @@
   Verify that `grep -n "slugs to be finalized\|undecided" README.md DESIGN.md ARCHITECTURE.md` shows no stale web-scaffold wording in the edited sections.
 - [x] 8.2 Add one CHANGELOG bullet under `Unreleased` / `Added`, for example "Static SvelteKit web app shell with localized routes (pt-BR, en, es), catalog check, CI, and GitHub Pages deployment". Verify that `git diff CHANGELOG.md` shows exactly one added bullet.
 - [x] 8.3 Final validation. Verify that `openspec validate web-scaffold --strict` passes and that the full gate from 6.2 still exits 0.
+
+## 9. End-to-end tests (approved scope addition, design D13)
+
+- [x] 9.1 Add Playwright with `bunx sv add playwright` and normalize the result: remove the demo route, keep `test` as Vitest only, set `test:e2e` to `playwright test`, and ignore `test-results/`, `playwright-report/`, and `blob-report/` in `web/.gitignore` and `.prettierignore`. Run `bunx playwright install chromium`. Verify that `bun run lint`, `bun run check`, and `bun run test` still pass.
+- [x] 9.2 Add `web/scripts/serve-pages.ts` (the GitHub Pages rules: base path, `<path>.html`, directory index, `/en` → `/en/` redirect, `404.html` with status 404) and `web/playwright.config.ts` (`testDir: 'e2e'`, Chromium, `webServer` that builds with `BASE_PATH=/Rusticker` and `VITE_E2E_HOOKS=true` and then serves `build/`, `baseURL` `http://localhost:4173/Rusticker/`, traces on the first retry, one retry on CI). Add the `VITE_E2E_HOOKS` hook in `src/hooks.client.ts`. Verify that a normal `BASE_PATH=/Rusticker bun run build` contains no `__rusticker_e2e`.
+- [x] 9.3 Write the specs under `web/e2e/web-scaffold/`:
+  - entry redirect by saved preference and by browser language, including "prefix wins without overwriting the preference" and query/hash preservation;
+  - `switchLocale` without a document reload (no extra document request; URL, text, header, `<html lang>`, and preference updated);
+  - `/en` → `/en/`, the localized not-found page with its link back, and an untranslated slug under a prefix;
+  - the Spanish about page with JavaScript disabled;
+  - same-origin requests only.
+
+  Verify with `MSYS_NO_PATHCONV=1 bun run test:e2e`: every test passes.
+- [x] 9.4 CI and docs: in `.github/workflows/web.yml`, after `verify:build`, cache `~/.cache/ms-playwright` keyed on the Playwright version, run `bunx playwright install --with-deps chromium` and `bun run --if-present test:e2e`, and upload `web/playwright-report/` on failure (not in `deploy.yml`). Document `bun run test:e2e` in CONTRIBUTING. Verify that the YAML parses (`bunx yaml-lint .github/workflows/web.yml`) and that `openspec validate web-scaffold --strict` passes.

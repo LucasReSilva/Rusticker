@@ -87,6 +87,7 @@ Scripts in `web/package.json`:
 | `bun run lint`          | Checks formatting (Prettier) and lints (ESLint)                 | `web-scaffold`  |
 | `bun run format`        | Formats every file with Prettier                                | `web-scaffold`  |
 | `bun run test`          | Runs the unit tests (Vitest `server` and `client` projects)     | `web-scaffold`  |
+| `bun run test:e2e`      | Runs the Playwright end-to-end tests against a GitHub Pages-like build | `web-scaffold` |
 | `bun run i18n:compile`  | Compiles the Paraglide catalogs into `src/lib/paraglide/`       | `web-scaffold`  |
 | `bun run i18n:check`    | Fails if a locale is missing a key that exists in `pt-BR`, has an extra key, or has an empty value | `web-scaffold` |
 | `bun run verify:build`  | Checks the built site: the 9 localized pages, `404.html`, `lang`, and `BASE_PATH` links | `web-scaffold` |
