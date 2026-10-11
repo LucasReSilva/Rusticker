@@ -182,6 +182,16 @@
       },
       "problemMatcher": [],
       "detail": "Verify that web and core versions match"
+    },
+    {
+      "label": "demo:record",
+      "type": "shell",
+      "command": "bun run demo:record",
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
+      "problemMatcher": [],
+      "detail": "Record automated demo with Playwright and generate assets/demo.gif"
     }
   ]
 }
