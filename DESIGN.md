@@ -131,23 +131,35 @@ rejects raw colors, physical direction utilities, and arbitrary pixel sizes outs
 | Progress, Skeleton        | Feedback while processing                             |
 | Separator                 | Visual grouping                                       |
 
-### Feature components (*provisional names*)
+### Feature components
 
 Live in `src/lib/components/`, compose only `ui/` components, and take all
 text from Paraglide.
 
-- **DropZone** — a Card accepting drag-and-drop, click-to-choose, and paste
-  (Ctrl+V); has hover and dragging states.
+- **DropZone** — a keyboard-operable Card accepting drag-and-drop and
+  click-to-choose; the tool page owns paste (Ctrl/Cmd+V). Has hover and dragging states.
 - **Preview** — the original image with detected boxes drawn over it, plus an
-  eyedropper to pick the background color, explained by a Tooltip.
+  eyedropper to pick the background color, explained by a Tooltip. In picker mode,
+  arrows move a source-pixel crosshair, Shift accelerates, Enter/Space samples a
+  clipped 3×3 neighborhood, and Escape cancels. Picking or cancelling returns
+  focus to the toggle; a picked color is announced.
 - **Controls** — the tolerance Slider; results update live (debounced) and show
   Progress/Skeleton while processing.
-- **Grid** — cut-out stickers in Cards on the checkerboard, each with a size
-  Badge, a remove button (Dialog confirmation), and a "use as tray icon" option.
+- **Grid** and **StickerCard** — cut-out stickers in Cards on the checkerboard,
+  an optional export-provided size Badge, a remove button (Dialog confirmation),
+  and a "use as tray icon" option. The non-tabular list uses roving focus: Tab
+  enters the last active card, then its actions; arrows follow visual columns,
+  Home/End select the first/last card, and Delete/Backspace opens confirmation.
+  Removal focuses the next card, the previous card at the end, or the heading
+  when empty. Cancelling focuses the remove action.
 - **Export** — the primary "Download pack (.zip)" Button (WEBP stickers, PNGs,
   tray icon); shows a success toast.
 - **LanguageSwitcher** — header DropdownMenu to change locale (see Part 2).
 - **ThemeToggle** — header button switching light/dark.
+
+The background swatch in **Controls** is the color selected from the user's
+image. Its `--swatch: rgb(r g b)` custom property is the documented exception to
+token-only styling; its border, size and radius still use theme utilities.
 
 ### Accessibility baseline
 
@@ -231,7 +243,7 @@ Nothing else should need to change.
   Plural forms (e.g. "1 sticker" vs "{count} stickers") use Paraglide's
   variant/plural syntax so each locale applies its own rules.
 - **Key naming (convention):** `snake_case`, prefixed by area —
-  `dropzone_*`, `preview_*`, `controls_*`, `grid_*`, `export_*`, `nav_*`,
+  `tool_*` (editor labels, actions, announcements and errors), `export_*`, `nav_*`,
   `meta_*`, `error_*`, `toast_*`, `a11y_*`. Examples: `dropzone_title`,
   `error_no_stickers`, `meta_home_description`.
 
@@ -308,7 +320,9 @@ directly, because it reloads the page.
 
 Numbers, file sizes (KB), and percentages use `Intl.NumberFormat` with the
 active locale (e.g. `style: 'percent'`, or `style: 'unit', unit: 'kilobyte'`).
-Never format numbers by hand.
+Never format numbers by hand. The shared `src/lib/format.ts` helpers cache locale
+formatters. Kilobytes use 1000 bytes, at most one fractional digit below 100 KB
+and none at or above it; percentages have no fractional digits.
 
 ### Errors from the Rust core
 
