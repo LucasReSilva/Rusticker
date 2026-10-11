@@ -73,4 +73,3 @@ if (import.meta.main || process.argv[1]?.endsWith('sync-version.ts')) {
 		process.exit(1);
 	}
 }
-
