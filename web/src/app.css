@@ -2,110 +2,116 @@
 @import 'tw-animate-css';
 @import 'shadcn-svelte/tailwind.css';
 
-@custom-variant dark (&:is(.dark *));
+/*
+ * Rusticker theme (design-tokens D1-D5). This file is the only place in
+ * web/src where raw color values are allowed; everything else uses tokens.
+ * Contrast pairs are checked by src/lib/theme/contrast.test.ts.
+ */
 
-:root {
-	--background: oklch(1 0 0);
-	--foreground: oklch(0.145 0 0);
+/* Nestable themes (D3): `.dark` and `.light` work on any element, so a forced
+   light or dark panel can sit inside a page of the other theme. */
+@custom-variant dark (&:where(.dark, .dark *):not(:where(.light, .light *)));
+
+:root,
+.light {
+	color-scheme: light;
+
+	--background: oklch(0.99 0.004 300);
+	--foreground: oklch(0.2 0.03 295);
 	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.145 0 0);
+	--card-foreground: var(--foreground);
 	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.145 0 0);
-	--primary: oklch(0.205 0 0);
-	--primary-foreground: oklch(0.985 0 0);
-	--secondary: oklch(0.97 0 0);
-	--secondary-foreground: oklch(0.205 0 0);
-	--muted: oklch(0.97 0 0);
-	--muted-foreground: oklch(0.556 0 0);
-	--accent: oklch(0.97 0 0);
-	--accent-foreground: oklch(0.205 0 0);
-	--destructive: oklch(0.577 0.245 27.325);
-	--border: oklch(0.922 0 0);
-	--input: oklch(0.922 0 0);
-	--ring: oklch(0.708 0 0);
-	--chart-1: oklch(0.87 0 0);
-	--chart-2: oklch(0.556 0 0);
-	--chart-3: oklch(0.439 0 0);
-	--chart-4: oklch(0.371 0 0);
-	--chart-5: oklch(0.269 0 0);
-	--radius: 0.625rem;
-	--sidebar: oklch(0.985 0 0);
-	--sidebar-foreground: oklch(0.145 0 0);
-	--sidebar-primary: oklch(0.205 0 0);
-	--sidebar-primary-foreground: oklch(0.985 0 0);
-	--sidebar-accent: oklch(0.97 0 0);
-	--sidebar-accent-foreground: oklch(0.205 0 0);
-	--sidebar-border: oklch(0.922 0 0);
-	--sidebar-ring: oklch(0.708 0 0);
+	--popover-foreground: var(--foreground);
+	--primary: oklch(0.52 0.24 300);
+	--primary-foreground: oklch(0.99 0.004 300);
+	--secondary: oklch(0.95 0.025 300);
+	--secondary-foreground: oklch(0.3 0.08 300);
+	--muted: oklch(0.96 0.01 300);
+	--muted-foreground: oklch(0.48 0.03 295);
+	--accent: oklch(0.94 0.03 300);
+	--accent-foreground: oklch(0.28 0.08 300);
+	--destructive: oklch(0.55 0.22 27);
+	--destructive-foreground: oklch(0.99 0.004 300);
+	--border: oklch(0.9 0.015 300);
+	--input: oklch(0.62 0.03 300);
+	--ring: var(--primary);
+
+	--checkerboard-a: oklch(0.97 0.004 300);
+	--checkerboard-b: oklch(0.88 0.008 300);
+
+	--shadow-tint-weak: oklch(0.2 0.03 295 / 0.06);
+	--shadow-tint: oklch(0.2 0.03 295 / 0.1);
+	--shadow-tint-strong: oklch(0.2 0.03 295 / 0.16);
+
+	--radius: 0.75rem;
+	--checkerboard-size: 0.75rem;
 }
 
 .dark {
-	--background: oklch(0.145 0 0);
-	--foreground: oklch(0.985 0 0);
-	--card: oklch(0.205 0 0);
-	--card-foreground: oklch(0.985 0 0);
-	--popover: oklch(0.205 0 0);
-	--popover-foreground: oklch(0.985 0 0);
-	--primary: oklch(0.922 0 0);
-	--primary-foreground: oklch(0.205 0 0);
-	--secondary: oklch(0.269 0 0);
-	--secondary-foreground: oklch(0.985 0 0);
-	--muted: oklch(0.269 0 0);
-	--muted-foreground: oklch(0.708 0 0);
-	--accent: oklch(0.269 0 0);
-	--accent-foreground: oklch(0.985 0 0);
-	--destructive: oklch(0.704 0.191 22.216);
-	--border: oklch(1 0 0 / 10%);
-	--input: oklch(1 0 0 / 15%);
-	--ring: oklch(0.556 0 0);
-	--chart-1: oklch(0.87 0 0);
-	--chart-2: oklch(0.556 0 0);
-	--chart-3: oklch(0.439 0 0);
-	--chart-4: oklch(0.371 0 0);
-	--chart-5: oklch(0.269 0 0);
-	--sidebar: oklch(0.205 0 0);
-	--sidebar-foreground: oklch(0.985 0 0);
-	--sidebar-primary: oklch(0.488 0.243 264.376);
-	--sidebar-primary-foreground: oklch(0.985 0 0);
-	--sidebar-accent: oklch(0.269 0 0);
-	--sidebar-accent-foreground: oklch(0.985 0 0);
-	--sidebar-border: oklch(1 0 0 / 10%);
-	--sidebar-ring: oklch(0.556 0 0);
+	color-scheme: dark;
+
+	--background: oklch(0.17 0.025 295);
+	--foreground: oklch(0.97 0.008 300);
+	--card: oklch(0.21 0.03 295);
+	--card-foreground: var(--foreground);
+	--popover: oklch(0.21 0.03 295);
+	--popover-foreground: var(--foreground);
+	--primary: oklch(0.74 0.15 305);
+	--primary-foreground: oklch(0.17 0.025 295);
+	--secondary: oklch(0.3 0.05 300);
+	--secondary-foreground: oklch(0.95 0.02 300);
+	--muted: oklch(0.26 0.03 295);
+	--muted-foreground: oklch(0.74 0.03 300);
+	--accent: oklch(0.32 0.06 300);
+	--accent-foreground: oklch(0.97 0.008 300);
+	--destructive: oklch(0.68 0.19 25);
+	--destructive-foreground: oklch(0.17 0.025 295);
+	--border: oklch(0.32 0.03 295);
+	--input: oklch(0.5 0.03 300);
+	--ring: var(--primary);
+
+	--checkerboard-a: oklch(0.3 0.015 295);
+	--checkerboard-b: oklch(0.24 0.015 295);
+
+	--shadow-tint-weak: oklch(0 0 0 / 0.3);
+	--shadow-tint: oklch(0 0 0 / 0.45);
+	--shadow-tint-strong: oklch(0 0 0 / 0.6);
+}
+
+/* Theme-independent tokens (D2): system font stacks only, no web-font download. */
+@theme {
+	--font-sans:
+		ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif,
+		'Apple Color Emoji', 'Segoe UI Emoji';
+	--font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	--font-display:
+		ui-rounded, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans',
+		sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
 }
 
 @theme inline {
-	--font-sans: 'Inter Variable', sans-serif;
-	--color-sidebar-ring: var(--sidebar-ring);
-	--color-sidebar-border: var(--sidebar-border);
-	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-	--color-sidebar-accent: var(--sidebar-accent);
-	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-	--color-sidebar-primary: var(--sidebar-primary);
-	--color-sidebar-foreground: var(--sidebar-foreground);
-	--color-sidebar: var(--sidebar);
-	--color-chart-5: var(--chart-5);
-	--color-chart-4: var(--chart-4);
-	--color-chart-3: var(--chart-3);
-	--color-chart-2: var(--chart-2);
-	--color-chart-1: var(--chart-1);
-	--color-ring: var(--ring);
-	--color-input: var(--input);
-	--color-border: var(--border);
-	--color-destructive: var(--destructive);
-	--color-accent-foreground: var(--accent-foreground);
-	--color-accent: var(--accent);
-	--color-muted-foreground: var(--muted-foreground);
-	--color-muted: var(--muted);
-	--color-secondary-foreground: var(--secondary-foreground);
-	--color-secondary: var(--secondary);
-	--color-primary-foreground: var(--primary-foreground);
-	--color-primary: var(--primary);
-	--color-popover-foreground: var(--popover-foreground);
-	--color-popover: var(--popover);
-	--color-card-foreground: var(--card-foreground);
-	--color-card: var(--card);
-	--color-foreground: var(--foreground);
 	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-checkerboard-a: var(--checkerboard-a);
+	--color-checkerboard-b: var(--checkerboard-b);
+
 	--radius-sm: calc(var(--radius) * 0.6);
 	--radius-md: calc(var(--radius) * 0.8);
 	--radius-lg: var(--radius);
@@ -113,6 +119,24 @@
 	--radius-2xl: calc(var(--radius) * 1.8);
 	--radius-3xl: calc(var(--radius) * 2.2);
 	--radius-4xl: calc(var(--radius) * 2.6);
+
+	--shadow-2xs: 0 1px 0 0 var(--shadow-tint-weak);
+	--shadow-xs: 0 1px 2px 0 var(--shadow-tint-weak);
+	--shadow-sm: 0 1px 3px 0 var(--shadow-tint), 0 1px 2px -1px var(--shadow-tint);
+	--shadow-md: 0 4px 6px -1px var(--shadow-tint), 0 2px 4px -2px var(--shadow-tint);
+	--shadow-lg: 0 10px 15px -3px var(--shadow-tint), 0 4px 6px -4px var(--shadow-tint);
+	--shadow-xl: 0 20px 25px -5px var(--shadow-tint), 0 8px 10px -6px var(--shadow-tint);
+	--shadow-sticker: 0 2px 4px -1px var(--shadow-tint), 0 8px 16px -4px var(--shadow-tint-strong);
+}
+
+/* Transparency checkerboard (D2): recolors with the theme, cell size is a token. */
+@utility bg-checkerboard {
+	background-color: var(--checkerboard-a);
+	background-image: repeating-conic-gradient(
+		var(--checkerboard-b) 0 25%,
+		var(--checkerboard-a) 0 50%
+	);
+	background-size: calc(var(--checkerboard-size) * 2) calc(var(--checkerboard-size) * 2);
 }
 
 @layer base {
@@ -124,5 +148,18 @@
 	}
 	html {
 		@apply font-sans;
+	}
+}
+
+/* Reduced motion (D5): near-zero durations (not `none`) so `animationend`
+   still fires and closing dialogs and menus are removed from the DOM. */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	::before,
+	::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
 	}
 }
