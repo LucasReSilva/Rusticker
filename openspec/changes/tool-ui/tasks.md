@@ -7,7 +7,7 @@
 ## 2. Shared helpers
 
 - [ ] 2.1 Write `web/src/lib/format.ts` (`formatNumber`, `formatKilobytes` with 1 KB = 1000 bytes, `formatPercent`, locale defaulting to the active Paraglide locale, cached formatters) per design D11, plus `format.test.ts` covering pt-BR, en and es separators, KB rounding (e.g. 99_500 bytes, 1_234_500 bytes) and percent; verify `bun run test` and `bun run check` pass
-- [ ] 2.2 Write `web/src/lib/tool/decode.ts` (`decodeImage(blob)` via `createImageBitmap` + `OffscreenCanvas`, orientation from image, `bitmap.close()`, failure mapped to `DecodeFailed`) per design D3; verify `bun run check` passes (exercised in the browser in task 7.2)
+- [ ] 2.2 Write `web/src/lib/tool/decode.ts` (`decodeImage(blob)` via `createImageBitmap` + `OffscreenCanvas`, orientation from image, `bitmap.close()`, failure mapped to `DecodeFailed`) per design D3; verify `bun run check` passes (exercised in the browser in task 7.3)
 - [ ] 2.3 Write `web/src/lib/tool/eyedropper.ts` (`moveCrosshair` with step `max(1, round(min(w,h)/100))`, Shift x10, clamped; `sampleColor` 3x3 average clipped at edges; `toHex`) plus `eyedropper.test.ts` (corners, edges, step sizes, averaging); verify `bun run test` passes
 - [ ] 2.4 Write `web/src/lib/tool/size.ts` exporting exactly `StickerSizeInfo` from contract addendum R6 (`pending` | `ready` with `bytes` and `overLimit` | `error`) and nothing else; verify `bun run check` passes
 - [ ] 2.5 Write `web/src/lib/tool/grid-nav.ts` (`nextIndex(current, key, count, columns, rtl)` for Left/Right/Up/Down/Home/End) plus `grid-nav.test.ts` (first/last clamping, partial last row, RTL swap, 1 column); verify `bun run test` passes
@@ -38,7 +38,9 @@
 ## 7. End-to-end verification
 
 - [ ] 7.1 Run the full web pipeline from `web/`: `bun run check`, `bun run lint`, `bun run test`, `bun run i18n:check`, `bun run build`; verify all pass and `git status --porcelain` shows only files owned by this change and no image files
-- [ ] 7.2 Manual browser check with `bun run dev:all` and the local sample image (path from `RUSTICKER_SAMPLE_IMAGE`, never copied into the repo): load by drop, by Enter on the drop area, and by Ctrl/Cmd+V; 17 boxes and 17 cards appear; pick the background with the keyboard eyedropper; tolerance changes update after a pause; remove a sticker with Delete + confirm; change the tray icon; navigate the grid with arrows/Home/End; switch language with the header switcher after curating and confirm no reload and that image, removals and tray choice are kept; repeat in `/en/` and `/es/`, in dark theme, at a narrow mobile width, and with reduced motion enabled; verify no network request other than the app's own assets in the Network panel
+- [ ] 7.2 Optional manual visual check with `bun run dev:all` and the local sample image (path from `RUSTICKER_SAMPLE_IMAGE`, never copied into the repo): look and layout in dark theme, narrow width and reduced motion. Every behavior is automated by task 7.3.
+
+- [ ] 7.3 Add Playwright specs under `web/e2e/tool-ui/` covering: drop, click and paste upload of a synthetic image (`setInputFiles`, dispatched drop and paste events); boxes drawn at the detected count; keyboard eyedropper sets the background; a tolerance change re-detects once after the pause; Delete then confirm removes a sticker and cancel keeps it; tray icon toggle with `aria-pressed`; roving-tabindex arrow/Home/End navigation; curated state kept across a language switch without reload; no request outside the app origin; no horizontal overflow at 375px in dark theme. Verify `bun run test:e2e` passes locally and in the pre-wired CI step.
 
 ## 8. Docs
 

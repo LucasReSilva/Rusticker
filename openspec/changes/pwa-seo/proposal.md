@@ -46,6 +46,7 @@ Out of scope (even though the brief mentions them nearby):
   - `web/src/lib/pwa/**` (service-worker registration component and update signal) — new directory, not claimed by any other change.
   - Generation routes: `web/src/routes/sitemap.xml/+server.ts`, `web/src/routes/robots.txt/+server.ts`, `web/src/routes/manifest-[locale].webmanifest/+server.ts`.
   - `web/scripts/seo-check.ts` and unit tests under `web/src/lib/seo/`.
+  - Playwright specs `web/e2e/pwa-seo/**`.
   - Keys `pwa_*` in `web/messages/{pt-BR,en,es}.json`.
   - Root layout: replace only the `<!-- @pwa-seo:registration -->` anchor in `src/routes/+layout.svelte` with `<PwaRegistration />` (plus its import).
 - **Anchor-based edits to files created by `web-scaffold`:**

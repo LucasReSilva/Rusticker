@@ -187,6 +187,10 @@ The single-pack button reads `export_download_button`; with several packs the pr
 
 Until the integration task, this change imports only from `$lib/detection` (types, mock) and `$lib/components/ui`. Per contract addendum R6, `tool-ui` exposes `editor.isProcessing` (boolean getter) and leaves the marked block `<!-- @whatsapp-export:mount -->` inside `<section data-slot="export">` in the tool page. The integration task (after `tool-ui` is merged, on a branch rebased on `develop`) edits the tool page only: it replaces that marker with `<Export stickers={editor.stickers} trayIconId={editor.trayIconId} detecting={editor.isProcessing} />`, calls `stickerSizes.sync(editor.stickers)` in an `$effect`, and passes `sizeOf={stickerSizes.get}` to `<Grid>`; it also switches `StickerSizeInfo` to the import from `$lib/tool/size` (Decision 6).
 
+### 10. E2E tests (Playwright)
+
+Vitest covers the pure library and the controller (above). `web/e2e/whatsapp-export/export.spec.ts` (default project, built app) covers what only a browser proves: the download events, the archives read back in the test with `jszip` (names, WEBP and PNG dimensions, byte budget), and the multi-pack case with 31 synthetic stickers. Images are synthetic and drawn in the test, so the spec runs in CI.
+
 ## Risks / Trade-offs
 
 - [Safari / WebKit cannot encode WEBP via canvas (returns PNG)] -> detected by blob type, `WebpUnsupported` error with a localized message and no partial download; a wasm WEBP encoder fallback is a possible later change.

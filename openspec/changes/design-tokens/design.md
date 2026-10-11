@@ -159,6 +159,10 @@ A Vitest test reads `web/src/app.css` as text, extracts the token values from th
 
 The exact `design_section_*` / `design_sample_*` set is finalized while building the showcase; every key is added to all three catalogs in the same commit and `bun run i18n:check` must pass.
 
+### D12. E2E tests (Playwright) for browser behavior
+
+Playwright specs live in `web/e2e/design-tokens/` and cover what only a real browser proves: theme persistence and system follow (`colorScheme` emulation), language switching without reload, focus rings, reduced motion, the header on all 9 URLs, the 320px overflow check, and `/_design` returning 404 in production. Specs run in the default project (build plus preview under `BASE_PATH=/Rusticker`), except the `/_design` specs, which are named `*.dev.spec.ts` and run in the pre-wired `dev` project (`bun run dev`). Locale switching in e2e goes through the real LanguageSwitcher: the locale-switch specs that web-scaffold wrote against the build-time hook `window.__rusticker_e2e.switchLocale` (enabled by `VITE_E2E_HOOKS`) are moved to clicking the switcher, and the hook and the flag are removed from `web/src/hooks.client.ts` and `web/playwright.config.ts`. Vitest keeps the contrast math, the token parser and the lint rules. Only synthetic data; no fixtures are committed.
+
 ## Risks / Trade-offs
 
 - [Re-render on locale change (the layout's `{#key locale}`) remounts the header, so focus on the language trigger is lost] → After `switchLocale` resolves, LanguageSwitcher moves focus back to its (new) trigger. Task 6.2 verifies the keyboard path.
