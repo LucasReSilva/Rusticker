@@ -1,0 +1,11 @@
+[workspace]
+publish = false
+changelog_config = "cliff.toml"
+git_only = true
+git_tag_name = "v{{ version }}"
+pr_name = "chore: release v{{ version }}"
+
+[[package]]
+name = "rusticker-core"
+publish = false
+
