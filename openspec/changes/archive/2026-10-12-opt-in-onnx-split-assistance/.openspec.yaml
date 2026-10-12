@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-10-12
+goal: Evaluate and, only if the model passes explicit compatibility and quality
+  gates, implement a user-reviewed ONNX-assisted sticker split.
