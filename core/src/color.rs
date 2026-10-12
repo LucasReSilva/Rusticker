@@ -42,6 +42,8 @@ pub(crate) fn hue_distance(a: f32, b: f32) -> f32 {
 /// Precomputed background thresholds for one background color and tolerance.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct Thresholds {
+    background_rgb: [u8; 3],
+    tolerance: u8,
     hue: f32,
     hue_half_width: f32,
     min_saturation: f32,
@@ -55,6 +57,8 @@ impl Thresholds {
         let t = f32::from(tolerance.min(100));
         let loosen = 1.0 - t / 100.0;
         Self {
+            background_rgb: background.0,
+            tolerance,
             hue: bg.h,
             hue_half_width: t,
             min_saturation: (0.94 * loosen).min(bg.s),
@@ -71,6 +75,9 @@ impl Thresholds {
 
     /// Whether an RGB pixel counts as background.
     pub(crate) fn is_background(&self, r: u8, g: u8, b: u8) -> bool {
+        if self.tolerance == 0 {
+            return [r, g, b] == self.background_rgb;
+        }
         self.is_background_hsv(rgb_to_hsv(r, g, b))
     }
 }
@@ -202,6 +209,17 @@ mod tests {
             let t = Thresholds::new(Rgb(c), 0);
             assert!(t.is_background(c[0], c[1], c[2]), "{c:?}");
         }
+    }
+
+    #[test]
+    fn color_zero_tolerance_matches_exact_rgb_only() {
+        for background in [[0u8, 255, 0], [128, 128, 128], [255, 0, 255]] {
+            let thresholds = Thresholds::new(Rgb(background), 0);
+            assert!(thresholds.is_background(background[0], background[1], background[2]));
+        }
+
+        assert!(!Thresholds::new(GREEN, 0).is_background(0, 200, 0));
+        assert!(!Thresholds::new(Rgb([128, 128, 128]), 0).is_background(255, 0, 0));
     }
 
     #[test]

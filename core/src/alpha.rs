@@ -6,10 +6,10 @@ use crate::components::{Component, Labels};
 
 /// Crops `component`'s bounding box out of the straight RGBA source.
 ///
-/// Raw alpha is opaque exactly where a pixel carries the component's label, so
-/// interior background gaps and other stickers' pixels are transparent. The
-/// alpha is then softened with a 3x3 box average (pixels outside the bounding
-/// box count as transparent), and color is zeroed wherever alpha ends up 0.
+/// Component membership is softened with a 3x3 box average (pixels outside the
+/// bounding box count as transparent). Each source pixel's alpha is multiplied
+/// by that coverage, preserving source opacity and transparency. Color is
+/// zeroed wherever alpha ends up 0.
 pub(crate) fn extract(
     rgba: &[u8],
     width: u32,
@@ -40,13 +40,13 @@ pub(crate) fn extract(
             for row in raw[y * pw..(y + 3) * pw].chunks_exact(pw) {
                 sum += row[x] + row[x + 1] + row[x + 2];
             }
-            let alpha = ((u32::from(sum) * 255 + 4) / 9) as u8;
-            if alpha == 0 {
-                continue;
-            }
             let sx = component.min_x as usize + x;
             let sy = component.min_y as usize + y;
             let offset = (sy * width as usize + sx) * 4;
+            let alpha = ((u32::from(sum) * u32::from(rgba[offset + 3]) + 4) / 9) as u8;
+            if alpha == 0 {
+                continue;
+            }
             let p = &rgba[offset..offset + 3];
             out.put_pixel(x as u32, y as u32, Rgba([p[0], p[1], p[2], alpha]));
         }
@@ -87,6 +87,63 @@ mod tests {
         assert_eq!(out.get_pixel(0, 5)[3], 170);
         assert_eq!(out.get_pixel(0, 0)[3], 113);
         assert_eq!(out.get_pixel(19, 9)[3], 113);
+    }
+
+    #[test]
+    fn alpha_preserves_source_opacity_and_rounds_coverage() {
+        for (source_alpha, edge_alpha, corner_alpha) in [
+            (1, 1, 0),
+            (127, 85, 56),
+            (128, 85, 57),
+            (254, 169, 113),
+            (255, 170, 113),
+        ] {
+            let (mut rgba, mask) = scene(10, 10, &[(2, 2, 5, 5)]);
+            for pixel in rgba.as_chunks_mut::<4>().0 {
+                pixel[3] = source_alpha;
+            }
+            let (labels, comps) = find_components(&mask).unwrap();
+            let out = extract(&rgba, 10, &labels, &comps[0]);
+
+            assert_eq!(out.get_pixel(2, 2), &Rgba([200, 10, 20, source_alpha]));
+            assert_eq!(out.get_pixel(2, 0)[3], edge_alpha);
+            assert_eq!(out.get_pixel(0, 0)[3], corner_alpha);
+            if corner_alpha == 0 {
+                assert_eq!(out.get_pixel(0, 0), &Rgba([0, 0, 0, 0]));
+            }
+            assert!(out.pixels().all(|pixel| pixel[3] <= source_alpha));
+        }
+    }
+
+    #[test]
+    fn alpha_transparent_source_stays_zero_near_foreground() {
+        let (mut rgba, mut mask) = scene(10, 10, &[(2, 2, 5, 5)]);
+        let offset = (4 * 10 + 4) * 4;
+        rgba[offset..offset + 4].copy_from_slice(&[13, 97, 241, 0]);
+        mask.put_pixel(4, 4, Luma([0]));
+        let (labels, comps) = find_components(&mask).unwrap();
+        let out = extract(&rgba, 10, &labels, &comps[0]);
+
+        assert_eq!(out.get_pixel(2, 2), &Rgba([0, 0, 0, 0]));
+        assert!(out.get_pixel(2, 1)[3] > 0);
+        assert!(
+            out.pixels()
+                .filter(|pixel| pixel[3] == 0)
+                .all(|pixel| pixel.0 == [0, 0, 0, 0])
+        );
+    }
+
+    #[test]
+    fn alpha_coverage_does_not_average_neighbor_opacity() {
+        let (mut rgba, mask) = scene(10, 10, &[(2, 2, 5, 5)]);
+        for (index, pixel) in rgba.as_chunks_mut::<4>().0.iter_mut().enumerate() {
+            pixel[3] = if index % 2 == 0 { 1 } else { 255 };
+        }
+        rgba[(4 * 10 + 4) * 4 + 3] = 128;
+        let (labels, comps) = find_components(&mask).unwrap();
+        let out = extract(&rgba, 10, &labels, &comps[0]);
+
+        assert_eq!(out.get_pixel(2, 2), &Rgba([200, 10, 20, 128]));
     }
 
     #[test]
