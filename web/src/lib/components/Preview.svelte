@@ -14,6 +14,7 @@
 		boxes,
 		background,
 		busy,
+		advanced = false,
 		onPick
 	}: {
 		src: string;
@@ -23,6 +24,7 @@
 		boxes: BBox[];
 		background: Rgb;
 		busy: boolean;
+		advanced?: boolean;
 		onPick: (color: Rgb) => void;
 	} = $props();
 	const hintId = $props.id();
@@ -75,25 +77,25 @@
 <section aria-busy={busy} class="flex min-w-0 flex-col gap-3">
 	<div class="flex items-center justify-between gap-2">
 		<h2 class="font-display text-xl font-semibold">{m.tool_preview_heading()}</h2>
-		<Tooltip.Provider
-			><Tooltip.Root
-				><Tooltip.Trigger>
-					{#snippet child({ props })}
-						<Button
-							{...props}
-							bind:ref={toggle}
-							variant="outline"
-							size="icon"
-							aria-label={m.tool_eyedropper_label()}
-							aria-pressed={active}
-							disabled={busy}
-							onclick={activate}><Pipette aria-hidden="true" /></Button
-						>
-					{/snippet}
-				</Tooltip.Trigger><Tooltip.Content>{m.tool_eyedropper_tooltip()}</Tooltip.Content
-				></Tooltip.Root
-			></Tooltip.Provider
-		>
+		{#if advanced}<Tooltip.Provider
+				><Tooltip.Root
+					><Tooltip.Trigger>
+						{#snippet child({ props })}
+							<Button
+								{...props}
+								bind:ref={toggle}
+								variant="outline"
+								size="icon"
+								aria-label={m.tool_eyedropper_label()}
+								aria-pressed={active}
+								disabled={busy}
+								onclick={activate}><Pipette aria-hidden="true" /></Button
+							>
+						{/snippet}
+					</Tooltip.Trigger><Tooltip.Content>{m.tool_eyedropper_tooltip()}</Tooltip.Content
+					></Tooltip.Root
+				></Tooltip.Provider
+			>{/if}
 	</div>
 	<div class="relative overflow-hidden rounded-lg border border-border bg-checkerboard">
 		<img {src} {width} {height} alt={m.tool_preview_alt()} class="h-auto w-full" />

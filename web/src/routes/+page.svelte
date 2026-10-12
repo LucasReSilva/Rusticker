@@ -12,6 +12,7 @@
 	import { stickerSizes } from '$lib/export';
 	import { m } from '$lib/paraglide/messages';
 	const editor = getEditor();
+	let processingMode = $state<'automatic' | 'advanced'>('automatic');
 	$effect(() => {
 		stickerSizes.sync(editor.batchStickers);
 		editor.syncActiveBatch();
@@ -86,6 +87,7 @@
 					boxes={editor.stickers.map((sticker) => sticker.bbox)}
 					background={editor.background}
 					busy={editor.isProcessing}
+					advanced={processingMode === 'advanced'}
 					onPick={(color) => editor.setBackground(color)}
 				/>
 				<Controls
@@ -93,6 +95,8 @@
 					background={editor.background}
 					busy={editor.isProcessing}
 					hasImage={!!editor.source}
+					mode={processingMode}
+					onModeChange={(mode) => (processingMode = mode)}
 					onToleranceChange={(value) => editor.setTolerance(value)}
 				/>
 			</div>
@@ -114,6 +118,7 @@
 					splitBusyId={editor.splitBusyId}
 					noSplitProposalId={editor.noSplitProposalId}
 					undoableStickerIds={editor.undoableStickerIds}
+					allowSplitRequest={processingMode === 'advanced'}
 					onSplitRequest={(id) => void editor.requestSplit(id)}
 					onSplitAccept={() => editor.acceptSplit()}
 					onSplitDiscard={() => editor.discardSplit()}
@@ -134,6 +139,8 @@
 			background={editor.background}
 			busy={true}
 			hasImage={false}
+			mode={processingMode}
+			onModeChange={(mode) => (processingMode = mode)}
 			onToleranceChange={(value) => editor.setTolerance(value)}
 		/>
 		<Grid
@@ -148,6 +155,7 @@
 			splitBusyId={editor.splitBusyId}
 			noSplitProposalId={editor.noSplitProposalId}
 			undoableStickerIds={editor.undoableStickerIds}
+			allowSplitRequest={processingMode === 'advanced'}
 			onSplitRequest={(id) => void editor.requestSplit(id)}
 			onSplitAccept={() => editor.acceptSplit()}
 			onSplitDiscard={() => editor.discardSplit()}
