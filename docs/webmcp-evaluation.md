@@ -1,6 +1,6 @@
 # WebMCP feasibility and safe-tool evaluation
 
-**Decision:** conditional go for a small, opt-in, progressive enhancement; no-go for exposing image data, generated assets, or consequential export actions to agents. WebMCP is an experimental draft, not an interoperable baseline. The isolated adapter for issue #51 is implemented, but the editor page has not mounted it; the running application currently registers no WebMCP tools.
+**Decision:** conditional go for a small, opt-in, progressive enhancement; no-go for exposing image data, generated assets, or consequential export actions to agents. WebMCP is an experimental draft, not an interoperable baseline. The #51 adapter is mounted on the editor page and exposes only the reviewed picker and coarse-status tools when the browser API is present.
 
 ## Scope and date
 
@@ -10,7 +10,7 @@ This evaluation was completed on 2026-10-12 against the current WebMCP Community
 
 WebMCP exposes page functionality as tools with structured input schemas. It has imperative JavaScript registration and declarative HTML form annotations. Rusticker's Svelte editor has stateful, asynchronous actions, so a small imperative adapter is the better fit if the API stabilizes; declarative tools would only fit a conventional form workflow.
 
-The specification remains a W3C Web Machine Learning Community Group draft report and explicitly is not a W3C Standard or on the Standards Track. Chrome's documentation currently describes an Origin Trial (Chrome 149+) and a local-development flag. The API is therefore unsuitable as a required product path: use runtime feature detection, leave the normal interface fully functional when absent, and avoid claiming cross-browser support. The current draft and Chrome documentation expose the imperative API through `document.modelContext.registerTool(tool, { signal })`; an abort signal removes registrations as their owner is torn down. Rusticker isolates those calls in a small adapter so API changes do not spread through Svelte components. The adapter is not mounted by the editor page yet.
+The specification remains a W3C Web Machine Learning Community Group draft report and explicitly is not a W3C Standard or on the Standards Track. Chrome's documentation currently describes an Origin Trial (Chrome 149+) and a local-development flag. The API is therefore unsuitable as a required product path: use runtime feature detection, leave the normal interface fully functional when absent, and avoid claiming cross-browser support. The current draft and Chrome documentation expose the imperative API through `document.modelContext.registerTool(tool, { signal })`; an abort signal removes registrations as their owner is torn down. Rusticker isolates those calls in a small adapter so API changes do not spread through Svelte components. The editor page mounts the adapter, feature-detects support, and keeps the standard UI available in unsupported browsers.
 
 ## Privacy and security boundaries
 
@@ -39,6 +39,14 @@ Do not expose processing, sticker editing, reorder, or pack download in the firs
 4. Review each tool against prompt-injection and over-parameterization risks; tool metadata and results must remain application-authored and bounded.
 5. Confirm the normal upload, detection, review, and export flow works unchanged with WebMCP unavailable or disabled.
 6. Re-evaluate browser support and draft shape at implementation time. If useful operation requires an unsupported API, remote service, exporting private data, or bypassing user review, defer the feature rather than weakening the privacy contract.
+
+## Issue #51 implementation status
+
+The editor page now connects `open-image-picker` to the existing hidden file input through `showPicker()`, which reports unavailable when the browser denies activation or lacks the method. `get-editor-status` maps local editor state to `empty`, `image-loaded`, `reviewing-results`, or `ready-to-export`; counts and underlying state are never returned. Both tools use localized static metadata, require an empty input object, and register with an abort signal. The ordinary upload, detection, review, and export UI remains the fallback.
+
+Automated tests cover the adapter, bounded status mapping, and picker activation failure. A browser smoke test with Chrome's WebMCP Origin Trial or local testing flag remains environment-dependent; it must be run in a browser configured for the experimental API before claiming that browser integration was manually verified.
+
+On 2026-10-12, this development environment had Chrome 155 installed, but its normal profile was not modified to enable the WebMCP flag. An automated attempt to inspect `chrome://flags/#enable-webmcp-testing` with an isolated temporary profile did not reach the page evaluation and was stopped. Therefore, the Chrome API registration and end-to-end browser smoke remain unverified. Enable the documented local flag in a disposable Chrome profile or use an Origin Trial-enabled deployment, then verify tool discovery, both fixed outputs, picker activation failure, and the normal image-to-pack path.
 
 ## Primary references
 
