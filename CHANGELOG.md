@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2026-10-12
+
+### Bug Fixes
+
+#### Ci
+
+- Declare explicit job permissions and document repository settings
+
+### Miscellaneous Tasks
+
+#### Release
+
+- Merge release/0.2.0 back into develop
+
 ## [0.2.0] - 2026-10-11
 
 ### Bug Fixes
