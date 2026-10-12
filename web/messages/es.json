@@ -21,6 +21,7 @@
 	"tool_processing_mode_advanced": "Avanzado",
 	"tool_processing_mode_automatic_help": "Usa el fondo verde predeterminado (#00B140) y una tolerancia del 50 %. Elige Avanzado para ajustar la detección o refinar una separación.",
 	"tool_processing_label": "Procesando imagen",
+	"tool_bounds_open": "Ajustar recorte",
 	"tool_bounds_title": "Ajustar los límites del sticker",
 	"tool_bounds_help": "Mueve y cambia el tamaño del recorte en píxeles de la imagen original. Las zonas fuera del recorte actual permanecen transparentes.",
 	"tool_bounds_x": "Posición horizontal (X)",

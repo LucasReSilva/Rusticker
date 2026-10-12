@@ -1,4 +1,4 @@
 - [x] 1.1 Implement and test safe source-bounds validation and deterministic 512x512 crop transformation in isolated tool files; verify with `bun run test -- src/lib/tool/bounds.test.ts`.
 - [x] 1.2 Add a localized accessible bounds editor component with a live cut-out preview and apply/cancel/reset callbacks; verify with component tests and `bun run check`.
 - [x] 1.3 Add the adjustment messages to every supported locale and verify with `bun run i18n:check`.
-- [ ] 1.4 Connect the control to editor state, source preview outlines, and export so bounds and pixels update together; verify with `bun run test` and `bun run check`.
+- [x] 1.4 Mount the control in Advanced mode, apply edits through editor state, and verify the updated bounds reach the source preview and pixels reach export; verify with focused tests and `bun run check`.

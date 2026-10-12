@@ -21,6 +21,7 @@
 	"tool_processing_mode_advanced": "Advanced",
 	"tool_processing_mode_automatic_help": "Uses the default green background (#00B140) and 50% tolerance. Choose Advanced to adjust detection or refine a split.",
 	"tool_processing_label": "Processing image",
+	"tool_bounds_open": "Adjust crop",
 	"tool_bounds_title": "Adjust sticker bounds",
 	"tool_bounds_help": "Move and resize the crop in source-image pixels. Areas outside the current cut-out stay transparent.",
 	"tool_bounds_x": "Horizontal position (X)",
