@@ -7,7 +7,8 @@
 //!    background color and a 0-100 tolerance;
 //! 2. remove noise with a 3x3 morphological opening;
 //! 3. label 8-connected foreground regions and drop those below 0.4% of the image;
-//! 4. crop each region with source alpha multiplied by 3x3 component coverage;
+//! 4. crop each region with source alpha multiplied by 3x3 component coverage,
+//!    then conservatively decontaminate eligible opaque boundary colors;
 //! 5. sort into rows, then left to right;
 //! 6. fit each crop to 480 px and center it in a transparent 512x512 frame.
 //!
@@ -158,7 +159,7 @@ fn run(
         .collect();
     let crops: Vec<RgbaImage> = components
         .iter()
-        .map(|c| alpha::extract(rgba, width, &labels, c))
+        .map(|c| alpha::extract(rgba, width, &labels, c, background))
         .collect();
     drop(labels);
 
