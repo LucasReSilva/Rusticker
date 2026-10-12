@@ -8,8 +8,8 @@ import { createRequire } from 'node:module';
 import jpeg from 'jpeg-js';
 import init from 'rusticker-core';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { runDetect } from './engine';
-import type { RawSticker } from './protocol';
+import { runDetect, runSplit } from './engine';
+import type { RawSticker, SplitRequest } from './protocol';
 import { STICKER_SIZE } from './types';
 
 const samplePath = process.env.RUSTICKER_SAMPLE_IMAGE;
@@ -30,14 +30,12 @@ function sampleBackground(data: Uint8Array, width: number): number {
 const centerX = ({ bbox: [x, , width] }: RawSticker) => x + width / 2;
 const centerY = ({ bbox: [, y, , height] }: RawSticker) => y + height / 2;
 
-describe.skipIf(!samplePath)('sample image through the worker engine (local only)', () => {
-	beforeAll(async () => {
-		const wasmPath = createRequire(import.meta.url).resolve(
-			'rusticker-core/rusticker_core_bg.wasm'
-		);
-		await init({ module_or_path: readFileSync(wasmPath) });
-	});
+beforeAll(async () => {
+	const wasmPath = createRequire(import.meta.url).resolve('rusticker-core/rusticker_core_bg.wasm');
+	await init({ module_or_path: readFileSync(wasmPath) });
+});
 
+describe.skipIf(!samplePath)('sample image through the worker engine (local only)', () => {
 	it('detects 17 stickers in rows of 5, 6 and 6', () => {
 		const image = jpeg.decode(readFileSync(samplePath!), {
 			useTArray: true,
@@ -99,5 +97,35 @@ describe.skipIf(!samplePath)('sample image through the worker engine (local only
 				tolerance: 50
 			})
 		).toEqual({ ok: false, code: 'NoStickers' });
+	});
+});
+
+describe('split proposal through the real WASM engine', () => {
+	it('returns two deterministic proposals for connected overlapping lobes', () => {
+		const rgba = new Uint8Array(STICKER_SIZE * STICKER_SIZE * 4);
+		const paintDisk = (cx: number, cy: number, radius: number) => {
+			for (let y = 0; y < STICKER_SIZE; y++) {
+				for (let x = 0; x < STICKER_SIZE; x++) {
+					if ((x - cx) ** 2 + (y - cy) ** 2 <= radius ** 2) {
+						const offset = (y * STICKER_SIZE + x) * 4;
+						rgba.set([240, 50, 20, 255], offset);
+					}
+				}
+			}
+		};
+		paintDisk(220, 256, 90);
+		paintDisk(292, 256, 90);
+		for (let y = 255; y < 258; y++) {
+			for (let x = 220; x <= 292; x++) rgba.set([240, 50, 20, 255], (y * STICKER_SIZE + x) * 4);
+		}
+		const request: SplitRequest = { rgba: rgba.buffer };
+		const first = runSplit(request);
+		const second = runSplit({ rgba: rgba.slice().buffer });
+		expect(first.ok).toBe(true);
+		if (!first.ok || !second.ok) return;
+		expect(first.stickers).toHaveLength(2);
+		expect(first.stickers.map((sticker) => [...new Uint8Array(sticker.rgba)])).toEqual(
+			second.stickers.map((sticker) => [...new Uint8Array(sticker.rgba)])
+		);
 	});
 });

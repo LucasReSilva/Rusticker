@@ -16,7 +16,8 @@ export interface Job extends EngineOptions {
 /** Builds a `Detector` around `execute`; `onDispose` releases its resources. */
 export function createRuntime(
 	execute: (job: Job) => Promise<WorkerResult>,
-	onDispose: () => void = () => {}
+	onDispose: () => void = () => {},
+	propose: (image: DetectInput) => Promise<WorkerResult> = async () => ({ ok: true, stickers: [] })
 ): Detector {
 	const scheduler = createLatestWins<Job, WorkerResult>(execute);
 	let disposed = false;
@@ -25,6 +26,15 @@ export function createRuntime(
 		async detect(image, options) {
 			if (disposed) throw new DetectionError('WorkerFailed');
 			const result = await scheduler.run({ image, ...toEngineOptions(options) });
+			if (!result.ok) throw toDetectionError(result);
+			return toStickers(result.stickers);
+		},
+		async proposeSplit(image) {
+			if (disposed) throw new DetectionError('WorkerFailed');
+			if (image.width !== 512 || image.height !== 512 || image.data.length !== 512 * 512 * 4) {
+				throw new DetectionError('InvalidInput');
+			}
+			const result = await propose(image);
 			if (!result.ok) throw toDetectionError(result);
 			return toStickers(result.stickers);
 		},

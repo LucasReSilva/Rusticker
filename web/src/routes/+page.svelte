@@ -95,6 +95,14 @@
 					pending={editor.isProcessing && !editor.detected.length}
 					onRemove={(id) => editor.removeSticker(id)}
 					onSetTrayIcon={(id) => editor.setTrayIcon(id)}
+					splitPreview={editor.splitPreview}
+					splitBusyId={editor.splitBusyId}
+					noSplitProposalId={editor.noSplitProposalId}
+					undoableStickerIds={editor.undoableStickerIds}
+					onSplitRequest={(id) => void editor.requestSplit(id)}
+					onSplitAccept={() => editor.acceptSplit()}
+					onSplitDiscard={() => editor.discardSplit()}
+					onSplitUndo={(id) => editor.undoSplit(id)}
 				/>
 				<section data-slot="export" aria-label={m.tool_export_region_label()}>
 					<Export
@@ -121,6 +129,14 @@
 			pending={true}
 			onRemove={(id) => editor.removeSticker(id)}
 			onSetTrayIcon={(id) => editor.setTrayIcon(id)}
+			splitPreview={editor.splitPreview}
+			splitBusyId={editor.splitBusyId}
+			noSplitProposalId={editor.noSplitProposalId}
+			undoableStickerIds={editor.undoableStickerIds}
+			onSplitRequest={(id) => void editor.requestSplit(id)}
+			onSplitAccept={() => editor.acceptSplit()}
+			onSplitDiscard={() => editor.discardSplit()}
+			onSplitUndo={(id) => editor.undoSplit(id)}
 		/>
 	{/if}
 </div>

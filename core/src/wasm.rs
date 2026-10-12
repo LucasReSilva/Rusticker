@@ -5,7 +5,7 @@
 
 use wasm_bindgen::prelude::*;
 
-use crate::{ErrorCode, Sticker, detect_rgba};
+use crate::{ErrorCode, Sticker, detect_rgba, propose_sticker_split};
 
 /// Detects stickers in a straight RGBA buffer.
 ///
@@ -23,6 +23,17 @@ pub fn detect(
     detect_rgba(rgba, width, height, background, tolerance)
         .map(Detection::new)
         .map_err(to_js)
+}
+
+/// Proposes a split of one existing 512x512 straight RGBA sticker.
+///
+/// Returns an empty detection when no bounded proposal is available. This is
+/// intentionally separate from [`detect`], so standard detection is unchanged.
+#[wasm_bindgen]
+pub fn propose_split(rgba: &[u8]) -> Result<Detection, JsValue> {
+    let image = image::RgbaImage::from_raw(512, 512, rgba.to_vec())
+        .ok_or_else(|| to_js(ErrorCode::InvalidInput))?;
+    Ok(Detection::new(propose_sticker_split(&image)))
 }
 
 /// The stickers found by [`detect`], in reading order.
@@ -115,5 +126,12 @@ mod tests {
         assert_eq!(d.bbox_inner(3), Err(ErrorCode::InvalidInput));
         assert_eq!(d.rgba_inner(3), Err(ErrorCode::InvalidInput));
         assert_eq!(d.rgba_inner(u32::MAX), Err(ErrorCode::InvalidInput));
+    }
+
+    #[test]
+    fn split_proposal_accessor_keeps_empty_result_available() {
+        let d = Detection::new(Vec::new());
+        assert_eq!(d.count(), 0);
+        assert_eq!(d.rgba_inner(0), Err(ErrorCode::InvalidInput));
     }
 }
