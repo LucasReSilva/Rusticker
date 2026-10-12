@@ -34,6 +34,27 @@
 	"batch_select": "Editar imagen",
 	"batch_cancel": "Cancelar imágenes en espera",
 	"batch_clear": "Vaciar lote",
+	"batch_notifications_enable": "Activar notificaciones de finalización",
+	"batch_notifications_disable": "Desactivar notificaciones",
+	"batch_notifications_enabled": "Las notificaciones del navegador están activadas durante esta sesión.",
+	"batch_notifications_denied": "Se denegó el permiso del navegador. La finalización del lote se mostrará aquí.",
+	"batch_notifications_unsupported": "Las notificaciones del navegador no están disponibles. La finalización del lote se mostrará aquí.",
+	"batch_notifications_dismiss": "Descartar",
+	"batch_notification_title": "Lote completado en Rusticker",
+	"batch_notification_complete": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural",
+				"local countFormatted = count: number"
+			],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Se terminó de procesar 1 imagen.",
+				"countPlural=other": "Se terminaron de procesar {countFormatted} imágenes."
+			}
+		}
+	],
 	"tool_grid_heading": "Stickers",
 	"tool_grid_empty": "No hay stickers para mostrar. Ajusta el fondo o la tolerancia, o añade otra imagen.",
 	"tool_sticker_label": "Sticker {position} de {total}",
