@@ -73,7 +73,16 @@ describe('processing history storage boundary', () => {
 			fingerprint: expected
 		});
 		expect(Object.keys(record).sort()).toEqual(
-			['id', 'completedAt', 'width', 'height', 'background', 'tolerance', 'stickerCount', 'fingerprint'].sort()
+			[
+				'id',
+				'completedAt',
+				'width',
+				'height',
+				'background',
+				'tolerance',
+				'stickerCount',
+				'fingerprint'
+			].sort()
 		);
 		expect(JSON.stringify(record)).not.toContain('secret-name.png');
 		expect(JSON.stringify(record)).not.toContain('private image bytes');
