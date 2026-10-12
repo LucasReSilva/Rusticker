@@ -7,12 +7,14 @@
 	let {
 		compact = false,
 		disabled = false,
-		onFile,
+		multiple = false,
+		onFiles,
 		onReject
 	}: {
 		compact?: boolean;
 		disabled?: boolean;
-		onFile: (file: File) => void;
+		multiple?: boolean;
+		onFiles: (files: File[]) => void;
 		onReject: () => void;
 	} = $props();
 	let input: HTMLInputElement;
@@ -22,9 +24,10 @@
 	const dropState = $derived(depth > 0 ? 'dragging' : hovered ? 'hover' : 'idle');
 	function choose(files: FileList | File[] | null) {
 		if (disabled || !files?.length) return;
-		const image = Array.from(files).find((file) => file.type.startsWith('image/'));
-		if (image) onFile(image);
-		else onReject();
+		const selected = Array.from(files);
+		const images = selected.filter((file) => file.type.startsWith('image/'));
+		if (images.length) onFiles(multiple ? images : images.slice(0, 1));
+		if (!images.length || images.length !== selected.length) onReject();
 	}
 	function open() {
 		if (!disabled) input.click();
@@ -40,7 +43,7 @@
 			}
 			const blob = await res.blob();
 			const file = new File([blob], 'rust-stickers.png', { type: 'image/png' });
-			onFile(file);
+			onFiles([file]);
 		} catch {
 			onReject();
 		} finally {
@@ -85,6 +88,7 @@
 		bind:this={input}
 		type="file"
 		accept="image/*"
+		{multiple}
 		class="hidden"
 		tabindex="-1"
 		{disabled}

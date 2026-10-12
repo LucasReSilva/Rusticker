@@ -236,3 +236,74 @@ it('retains one injected singleton and can reset it without creating a worker', 
 	replacement.dispose();
 	setEditorForTesting(null);
 });
+
+it('processes several files sequentially and retains their sticker results', async () => {
+	editor.addBatchFiles([
+		new File([], 'first.png', { type: 'image/png' }),
+		new File([], 'second.png', { type: 'image/png' })
+	]);
+	await vi.waitFor(() =>
+		expect(editor.batchEntries.every((entry) => entry.status === 'done')).toBe(true)
+	);
+	expect(editor.batchEntries.map((entry) => entry.file.name)).toEqual(['first.png', 'second.png']);
+	expect(editor.batchStickers).toHaveLength(6);
+	expect(detector.detect).toHaveBeenCalledTimes(2);
+});
+
+it('keeps successful results when another image fails and retries only the failed row', async () => {
+	vi.mocked(detector.detect).mockRejectedValueOnce(new Error('temporary failure'));
+	editor.addBatchFiles([
+		new File([], 'recover.png', { type: 'image/png' }),
+		new File([], 'success.png', { type: 'image/png' })
+	]);
+	await vi.waitFor(() => expect(editor.batchEntries[1]?.status).toBe('done'));
+	expect(editor.batchEntries[0]?.status).toBe('error');
+	expect(editor.batchStickers).toHaveLength(3);
+	editor.retryBatchEntry(editor.batchEntries[0].id);
+	await vi.waitFor(() => expect(editor.batchEntries[0]?.status).toBe('done'));
+	expect(editor.batchStickers).toHaveLength(6);
+});
+
+it('cancels queued images after the current image and removes one image result independently', async () => {
+	editor.addBatchFiles([
+		new File([], 'current.png', { type: 'image/png' }),
+		new File([], 'pending.png', { type: 'image/png' })
+	]);
+	editor.cancelBatch();
+	await vi.waitFor(() => expect(editor.batchEntries[0]?.status).toBe('done'));
+	expect(editor.batchEntries[1]?.status).toBe('cancelled');
+	expect(editor.batchStickers).toHaveLength(3);
+	editor.removeBatchEntry(editor.batchEntries[0].id);
+	expect(editor.batchStickers).toHaveLength(0);
+});
+
+it('rejects a complete image result that would exceed the bounded sticker capacity', async () => {
+	editor.dispose();
+	detector = createMockDetector({ count: 7 });
+	vi.spyOn(detector, 'detect');
+	vi.spyOn(detector, 'dispose');
+	editor = createEditorState({ detector, decode });
+	editor.addBatchFiles(
+		Array.from(
+			{ length: 9 },
+			(_, index) => new File([], `sheet-${index + 1}.png`, { type: 'image/png' })
+		)
+	);
+	await vi.waitFor(() => expect(editor.batchEntries[8]?.status).toBe('error'));
+	expect(editor.batchEntries[8]?.error).toBe('BatchLimitExceeded');
+	expect(editor.batchStickers).toHaveLength(56);
+});
+
+it('caps the number of retained source files at ten', async () => {
+	editor.addBatchFiles(
+		Array.from(
+			{ length: 11 },
+			(_, index) => new File([], `sheet-${index + 1}.png`, { type: 'image/png' })
+		)
+	);
+	expect(editor.batchEntries).toHaveLength(10);
+	expect(editor.lastError).toBe('BatchLimitExceeded');
+	await vi.waitFor(() =>
+		expect(editor.batchEntries.every((entry) => entry.status === 'done')).toBe(true)
+	);
+});
