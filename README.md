@@ -92,8 +92,8 @@ items are planning candidates, not a release commitment.
 Telegram scope is limited to local static PNG/WEBP files; users continue in
 Telegram's editor or `@Stickers`. WhatsApp title/author work is gated on
 verifying a named importer's actual format support. ONNX and WebMCP work start
-with feasibility checks; ONNX would remain an opt-in local second step after
-the existing detector. User images remain on the device. See [the roadmap proposal](openspec/changes/post-release-agent-coordination/proposal.md)
+with feasibility checks; ONNX would preferably use Rust/WASM as an opt-in local
+second step after the existing detector. User images remain on the device. See [the roadmap proposal](openspec/changes/post-release-agent-coordination/proposal.md)
 for issue-level acceptance criteria.
 
 ## Repository layout (planned)
