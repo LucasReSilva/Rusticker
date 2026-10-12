@@ -21,6 +21,7 @@
 	"tool_processing_mode_advanced": "Avançado",
 	"tool_processing_mode_automatic_help": "Usa o fundo verde padrão (#00B140) e tolerância de 50%. Escolha Avançado para ajustar a detecção ou refinar uma separação.",
 	"tool_processing_label": "Processando imagem",
+	"tool_bounds_open": "Ajustar recorte",
 	"tool_bounds_title": "Ajustar os limites da figurinha",
 	"tool_bounds_help": "Mova e redimensione o recorte em pixels da imagem original. As áreas fora do recorte atual permanecem transparentes.",
 	"tool_bounds_x": "Posição horizontal (X)",
