@@ -31,6 +31,7 @@ afterEach(() => {
 
 it('loads through the chooser, renders the plural count and preserves curated state across page remount', async () => {
 	const first = render(Page);
+	expect(screen.getByTestId('batch-notifications')).toBeInTheDocument();
 	await fireEvent.change(first.container.querySelector('input')!, { target: { files: [file()] } });
 	await waitFor(() =>
 		expect(first.container.querySelectorAll('[data-sticker-card]')).toHaveLength(3)
