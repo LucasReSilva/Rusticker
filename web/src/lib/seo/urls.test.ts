@@ -16,14 +16,15 @@ const site = 'https://example.github.io/Rusticker';
 const table = {
 	'/': { 'pt-BR': '/', en: '/en/', es: '/es/' },
 	'/como-usar': { 'pt-BR': '/como-usar', en: '/en/how-to-use', es: '/es/como-usar' },
-	'/sobre': { 'pt-BR': '/sobre', en: '/en/about', es: '/es/acerca-de' }
+	'/sobre': { 'pt-BR': '/sobre', en: '/en/about', es: '/es/acerca-de' },
+	'/historico': { 'pt-BR': '/historico', en: '/en/history', es: '/es/historial' }
 } as const;
 
 type Page = keyof typeof table;
 const pageList = Object.keys(table) as Page[];
 
 describe('localized URLs', () => {
-	it('lists the three public pages', () => {
+	it('lists the public pages', () => {
 		expect([...PUBLIC_PAGES]).toEqual(pageList);
 	});
 

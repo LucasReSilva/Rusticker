@@ -7,7 +7,7 @@ const names = {
 	es: 'Rusticker: stickers para WhatsApp'
 };
 
-test('sitemap.xml lists the 9 public URLs', async ({ request }) => {
+test('sitemap.xml lists the 12 public URLs', async ({ request }) => {
 	const response = await request.get(`${base}/sitemap.xml`);
 	expect(response.status()).toBe(200);
 	const xml = await response.text();
@@ -15,8 +15,8 @@ test('sitemap.xml lists the 9 public URLs', async ({ request }) => {
 	expect(locs.sort()).toEqual(
 		pageIds.flatMap((id) => locales.map((locale) => `${site}${urls[id][locale]}`)).sort()
 	);
-	expect(xml.match(/<url>/g)).toHaveLength(9);
-	expect(xml.match(/hreflang="x-default"/g)).toHaveLength(9);
+	expect(xml.match(/<url>/g)).toHaveLength(12);
+	expect(xml.match(/hreflang="x-default"/g)).toHaveLength(12);
 	expect(xml).not.toContain(`${site}/_`);
 });
 
