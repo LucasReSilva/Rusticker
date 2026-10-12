@@ -22,6 +22,14 @@ fn fill(img: &mut RgbaImage, x: u32, y: u32, w: u32, h: u32, color: [u8; 3]) {
     }
 }
 
+fn fill_rgba(img: &mut RgbaImage, x: u32, y: u32, w: u32, h: u32, color: [u8; 4]) {
+    for yy in y..y + h {
+        for xx in x..x + w {
+            img.put_pixel(xx, yy, Rgba(color));
+        }
+    }
+}
+
 fn detect(img: &RgbaImage) -> Result<Vec<Sticker>, ErrorCode> {
     let stickers = detect_stickers(img, Rgb(GREEN), 50)?;
     for s in &stickers {
@@ -85,6 +93,86 @@ fn valid_input_is_processed() {
     assert!(matches!(result, Ok(_) | Err(ErrorCode::NoStickers)));
     let black = detect_rgba(&vec![0; 240_000], 300, 200, GREEN_HEX, 50);
     assert!(matches!(black, Ok(_) | Err(ErrorCode::NoStickers)));
+}
+
+#[test]
+fn transparent_hidden_rgb_black_merges_stickers_and_becomes_visible() {
+    let mut img = RgbaImage::from_pixel(320, 240, Rgba([0, 0, 0, 0]));
+    fill(&mut img, 40, 50, 60, 60, RED);
+    fill(&mut img, 220, 50, 60, 60, BLUE);
+
+    let stickers = detect_stickers(&img, Rgb(GREEN), 50).unwrap();
+
+    // Characterize today's RGB-only mask: hidden black fills the canvas as one
+    // foreground component, and generated alpha makes that source transparent.
+    assert_eq!(stickers.len(), 1);
+    assert_eq!(bbox(&stickers[0]), [0, 0, 320, 240]);
+    assert_eq!(stickers[0].image.get_pixel(256, 256)[3], 255);
+}
+
+#[test]
+fn transparent_hidden_rgb_matching_green_keeps_separate_stickers() {
+    let mut img = RgbaImage::from_pixel(320, 240, Rgba([0, 255, 0, 0]));
+    fill(&mut img, 40, 50, 60, 60, RED);
+    fill(&mut img, 220, 50, 60, 60, BLUE);
+
+    let stickers = detect_stickers(&img, Rgb(GREEN), 50).unwrap();
+
+    // This control demonstrates that current success depends on hidden RGB,
+    // even though both canvas variants are fully transparent.
+    assert_eq!(
+        stickers.iter().map(bbox).collect::<Vec<_>>(),
+        vec![[40, 50, 60, 60], [220, 50, 60, 60]]
+    );
+}
+
+#[test]
+fn partially_transparent_sticker_is_made_opaque() {
+    let mut img = canvas(240, 160);
+    fill_rgba(&mut img, 80, 40, 80, 80, [255, 0, 0, 128]);
+
+    let stickers = detect(&img).unwrap();
+
+    assert_eq!(stickers.len(), 1);
+    assert_eq!(bbox(&stickers[0]), [80, 40, 80, 80]);
+    assert_eq!(stickers[0].image.get_pixel(256, 256)[3], 255);
+}
+
+#[test]
+fn selected_chromatic_non_green_backgrounds_separate_stickers_at_zero_tolerance() {
+    for background in [[0, 0, 255], [255, 0, 255], [255, 128, 0]] {
+        let mut img = RgbaImage::from_pixel(
+            240,
+            160,
+            Rgba([background[0], background[1], background[2], 255]),
+        );
+        fill(&mut img, 20, 40, 60, 60, RED);
+        fill(&mut img, 160, 40, 60, 60, GREEN);
+
+        let stickers = detect_stickers(&img, Rgb(background), 0).unwrap();
+
+        assert_eq!(
+            stickers.iter().map(bbox).collect::<Vec<_>>(),
+            vec![[20, 40, 60, 60], [160, 40, 60, 60]],
+            "background {background:?}"
+        );
+    }
+}
+
+#[test]
+fn gray_background_at_zero_tolerance_removes_red_but_keeps_blue() {
+    let gray = [128, 128, 128];
+    let mut img = RgbaImage::from_pixel(240, 160, Rgba([gray[0], gray[1], gray[2], 255]));
+    fill(&mut img, 20, 40, 60, 60, RED);
+    fill(&mut img, 160, 40, 60, 60, BLUE);
+
+    let stickers = detect_stickers(&img, Rgb(gray), 0).unwrap();
+
+    // The current HSV rule gives achromatic gray and red the same hue (0°).
+    assert_eq!(
+        stickers.iter().map(bbox).collect::<Vec<_>>(),
+        vec![[160, 40, 60, 60]]
+    );
 }
 
 #[test]
