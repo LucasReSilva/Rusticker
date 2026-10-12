@@ -53,13 +53,13 @@ a vulnerability privately.
 
 ## Status
 
-Rusticker is in **early development**. The `core/` crate (`rusticker-core`)
+Rusticker is released as **v0.2.1**. The `core/` crate (`rusticker-core`)
 detects stickers and builds to WebAssembly, with native tests. The `web/` app
 has localized routes in Portuguese (Brazil), English and Spanish, and a browser
 editor for loading, detecting, adjusting, curating and exporting stickers.
 The complete flow is verified with synthetic images, including offline export.
-No release has been created for this integration; live deployment checks remain
-part of the release workflow.
+Release automation uses `release-plz` and `git-cliff`; release readiness still
+requires the end-to-end image-to-pack flow to work before a new release is made.
 
 ## Planned stack
 
@@ -77,6 +77,25 @@ part of the release workflow.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the data flow and the detection
 algorithm, and [DESIGN.md](DESIGN.md) for the design system and i18n rules.
+
+## Post-release roadmap
+
+The v0.2.1 implementation is documented in archived OpenSpec changes.
+Follow-up work is being planned in
+the existing GitHub Project as six epics and 23 child issues. The current top
+priorities are a technical documentation and code audit (P0), followed by the
+Rust orange/WhatsApp green palette (P1). In addition to sticker separation,
+WhatsApp metadata, editing, Telegram files, and agent coordination, the roadmap covers batch input, processing modes, theme colors,
+local history, notifications, WebMCP, and optional ONNX split assistance. The
+board's `Complexity` field orders relative effort from `S` through `XL`; these
+items are planning candidates, not a release commitment.
+
+Telegram scope is limited to local static PNG/WEBP files; users continue in
+Telegram's editor or `@Stickers`. WhatsApp title/author work is gated on
+verifying a named importer's actual format support. ONNX and WebMCP work start
+with feasibility checks; ONNX would preferably use Rust/WASM as an opt-in local
+second step after the existing detector. User images remain on the device. See [the roadmap proposal](openspec/changes/post-release-agent-coordination/proposal.md)
+for issue-level acceptance criteria.
 
 ## Repository layout (planned)
 
