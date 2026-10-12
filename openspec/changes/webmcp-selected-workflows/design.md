@@ -10,7 +10,7 @@ Rusticker is a static SvelteKit application. Its processing data stays in the br
 4. Tool metadata is localized. Result values are fixed enums/objects authored by Rusticker. Do not return user-controlled strings, file details, sticker counts, image-derived data, or arbitrary exception messages.
 5. Use a registration `AbortSignal` to remove tools when the component unmounts or locale-dependent metadata changes. Registration errors are swallowed after cleanup and never affect the human editor.
 6. Do not request or set cross-origin exposure, delegate the `tools` Permissions Policy, or expose these tools in third-party frames.
-7. The adapter takes narrow callbacks from the editor. The app-level integration is intentionally left to the caller so it can map existing state and picker behavior without duplicating editor logic.
+7. The editor page mounts the adapter with narrow callbacks backed by the existing picker and state. Status mapping emits only the four allowed workflow values and returns no image-derived details.
 
 ## Risks
 
@@ -19,6 +19,6 @@ Rusticker is a static SvelteKit application. Its processing data stays in the br
 - Exposing status can still reveal workflow activity. The status is restricted to four broad states and includes no counts, settings, file metadata, or content.
 - Tool descriptions may be consumed by remote agents. They are localized, static, application-authored, and do not contain image-derived information.
 
-## Integration point
+## Integration
 
-The consuming tool page should render `<WebMcpTools>` with callbacks backed by the existing picker and editor state. This change does not mount it in a route or modify global editor state. The page must map state to `empty`, `image-loaded`, `reviewing-results`, or `ready-to-export` and preserve normal UI behavior when the API is absent.
+The tool page renders `<WebMcpTools>` with callbacks backed by the existing picker and editor state. Its existing hidden file input exposes a narrow `openPicker()` method using `showPicker()` so browser activation failures can be reported. Status is derived from booleans and the export minimum only, then collapsed to one of `empty`, `image-loaded`, `reviewing-results`, or `ready-to-export`. Global editor state is unchanged, and normal UI behavior is preserved when the API is absent.

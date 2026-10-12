@@ -11,6 +11,28 @@ it.each(['Enter', ' '])('opens the chooser with %s', async (key) => {
 	expect(click).toHaveBeenCalledOnce();
 	click.mockRestore();
 });
+it('opens the existing picker through the agent action when browser activation permits it', () => {
+	const { component } = render(DropZone, { onFiles: vi.fn(), onReject: vi.fn() });
+	const input = document.querySelector('input[type="file"]');
+	const showPicker = vi.fn();
+	if (!input) throw new Error('Picker input not found');
+	Object.defineProperty(input, 'showPicker', { value: showPicker });
+
+	expect(component.openPicker()).toBe(true);
+	expect(showPicker).toHaveBeenCalledOnce();
+});
+it('reports picker activation failure without affecting the visible picker', () => {
+	const { component } = render(DropZone, { onFiles: vi.fn(), onReject: vi.fn() });
+	const input = document.querySelector('input[type="file"]');
+	if (!input) throw new Error('Picker input not found');
+	Object.defineProperty(input, 'showPicker', {
+		value: vi.fn(() => {
+			throw new DOMException('User activation is required.', 'NotAllowedError');
+		})
+	});
+
+	expect(component.openPicker()).toBe(false);
+});
 it('keeps the dragging state until all nested enters leave and selects the first image', async () => {
 	const onFile = vi.fn(),
 		onReject = vi.fn();
