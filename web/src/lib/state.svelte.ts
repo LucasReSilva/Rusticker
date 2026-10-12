@@ -11,7 +11,19 @@ import {
 import { decodeImage, type DecodedImage } from '$lib/tool/decode';
 
 export type EditorStatus = 'idle' | 'decoding' | 'detecting' | 'ready' | 'error';
-export type EditorErrorCode = DetectionErrorCode | 'UnsupportedFile' | 'DecodeFailed' | 'Unknown';
+export type EditorErrorCode =
+	DetectionErrorCode | 'UnsupportedFile' | 'DecodeFailed' | 'BatchLimitExceeded' | 'Unknown';
+export type BatchStatus = 'queued' | 'processing' | 'done' | 'error' | 'cancelled';
+export interface BatchEntry {
+	id: string;
+	file: File;
+	status: BatchStatus;
+	error: EditorErrorCode | null;
+	stickers: Sticker[];
+	trayIconId: string | null;
+}
+export const MAX_BATCH_IMAGES = 10;
+export const MAX_BATCH_STICKERS = 60;
 export interface SourceImage extends DecodedImage {
 	name: string;
 	url: string;
@@ -63,8 +75,20 @@ export class EditorState {
 	status = $state<EditorStatus>('idle');
 	lastError = $state<EditorErrorCode | null>(null);
 	errorSequence = $state(0);
+	batchEntries = $state.raw<BatchEntry[]>([]);
+	activeBatchId = $state<string | null>(null);
+	batchRunning = $state(false);
 	private pendingDebounce = $state(false);
 	readonly stickers = $derived(this.detected.filter((sticker) => !this.removedIds.has(sticker.id)));
+	readonly batchStickers = $derived(
+		this.batchEntries.length ? this.batchEntries.flatMap((entry) => entry.stickers) : this.stickers
+	);
+	readonly batchTrayIconId = $derived(
+		this.batchEntries.find((entry) => entry.id === this.activeBatchId)?.trayIconId ??
+			this.batchEntries.find((entry) => entry.status === 'done')?.trayIconId ??
+			this.batchStickers[0]?.id ??
+			null
+	);
 	readonly undoableStickerIds = $derived(
 		new SvelteSet(
 			this.splitUndo.flatMap((group) => group.replacements.map((sticker) => sticker.id))
@@ -76,6 +100,9 @@ export class EditorState {
 	private sequence = 0;
 	private timer: ReturnType<typeof setTimeout> | undefined;
 	private disposed = false;
+	private batchSequence = 0;
+	private batchCancelRequested = false;
+	private batchIdSequence = 0;
 	private readonly detector: Detector;
 	private readonly decode: (blob: Blob) => Promise<DecodedImage>;
 	private readonly debounceMs: number;
@@ -93,6 +120,161 @@ export class EditorState {
 	private reportError(code: EditorErrorCode): void {
 		this.lastError = code;
 		this.errorSequence++;
+	}
+
+	private updateBatchEntry(id: string, patch: Partial<BatchEntry>): void {
+		this.batchEntries = this.batchEntries.map((entry) =>
+			entry.id === id ? { ...entry, ...patch } : entry
+		);
+	}
+
+	addBatchFiles(files: File[]): void {
+		if (this.disposed || !files.length) return;
+		const images = files.filter((file) => file.type.startsWith('image/'));
+		if (images.length !== files.length) this.rejectFile();
+		const capacity = MAX_BATCH_IMAGES - this.batchEntries.length;
+		if (images.length > capacity) this.reportError('BatchLimitExceeded');
+		const accepted = images.slice(0, Math.max(0, capacity));
+		if (!accepted.length) return;
+		const additions = accepted.map((file) => ({
+			id: `batch-${++this.batchIdSequence}`,
+			file,
+			status: 'queued' as const,
+			error: null,
+			stickers: [],
+			trayIconId: null
+		}));
+		this.batchEntries = [...this.batchEntries, ...additions];
+		this.activeBatchId ??= additions[0]?.id ?? null;
+		void this.processBatchQueue();
+	}
+
+	private async processBatchQueue(): Promise<void> {
+		if (this.batchRunning || this.disposed) return;
+		this.batchRunning = true;
+		this.batchCancelRequested = false;
+		const run = ++this.batchSequence;
+		try {
+			while (run === this.batchSequence && !this.disposed) {
+				if (this.batchCancelRequested) {
+					this.batchEntries = this.batchEntries.map((entry) =>
+						entry.status === 'queued' ? { ...entry, status: 'cancelled' } : entry
+					);
+					break;
+				}
+				const entry = this.batchEntries.find((candidate) => candidate.status === 'queued');
+				if (!entry) break;
+				const previousStickers = entry.stickers;
+				const previousTrayIconId = entry.trayIconId;
+				this.activeBatchId = entry.id;
+				this.updateBatchEntry(entry.id, { status: 'processing', error: null });
+				await this.loadFile(entry.file);
+				if (run !== this.batchSequence || this.disposed) break;
+				if (this.status === 'ready') {
+					const previousCount = this.batchEntries
+						.filter((candidate) => candidate.id !== entry.id && candidate.status === 'done')
+						.reduce((total, candidate) => total + candidate.stickers.length, 0);
+					if (previousCount + this.stickers.length > MAX_BATCH_STICKERS) {
+						this.detected = [];
+						this.status = 'error';
+						this.reportError('BatchLimitExceeded');
+						this.updateBatchEntry(entry.id, {
+							status: 'error',
+							error: 'BatchLimitExceeded',
+							stickers: previousStickers,
+							trayIconId: previousTrayIconId
+						});
+					} else {
+						this.updateBatchEntry(entry.id, {
+							status: 'done',
+							error: null,
+							stickers: [...this.stickers],
+							trayIconId: this.trayIconId
+						});
+					}
+				} else {
+					this.updateBatchEntry(entry.id, {
+						status: 'error',
+						error: this.lastError ?? 'Unknown',
+						stickers: previousStickers,
+						trayIconId: previousTrayIconId
+					});
+				}
+			}
+		} finally {
+			if (run === this.batchSequence) this.batchRunning = false;
+		}
+	}
+
+	retryBatchEntry(id: string): void {
+		const entry = this.batchEntries.find((candidate) => candidate.id === id);
+		if (!entry || !['error', 'cancelled'].includes(entry.status) || this.batchRunning) return;
+		this.updateBatchEntry(id, { status: 'queued', error: null });
+		void this.processBatchQueue();
+	}
+
+	activateBatchEntry(id: string): void {
+		const entry = this.batchEntries.find((candidate) => candidate.id === id);
+		if (!entry || entry.status !== 'done' || this.batchRunning) return;
+		this.activeBatchId = id;
+		this.updateBatchEntry(id, { status: 'queued' });
+		void this.processBatchQueue();
+	}
+
+	cancelBatch(): void {
+		if (!this.batchRunning) return;
+		this.batchCancelRequested = true;
+		this.batchEntries = this.batchEntries.map((entry) =>
+			entry.status === 'queued' ? { ...entry, status: 'cancelled' } : entry
+		);
+	}
+
+	removeBatchEntry(id: string): void {
+		if (!this.batchEntries.some((entry) => entry.id === id)) return;
+		this.batchEntries = this.batchEntries.filter((entry) => entry.id !== id);
+		if (this.activeBatchId === id && !this.batchRunning) {
+			const next = this.batchEntries.find((entry) => entry.status === 'done');
+			this.activeBatchId = next?.id ?? null;
+			this.clearActiveImage();
+			if (next) this.activateBatchEntry(next.id);
+		}
+	}
+
+	clearBatch(): void {
+		this.cancelBatch();
+		this.batchSequence++;
+		this.batchRunning = false;
+		this.batchEntries = [];
+		this.activeBatchId = null;
+		this.clearActiveImage();
+	}
+
+	syncActiveBatch(): void {
+		const active = this.batchEntries.find((entry) => entry.id === this.activeBatchId);
+		if (!active || active.status !== 'done' || this.status !== 'ready') return;
+		const stickersChanged =
+			active.stickers.length !== this.stickers.length ||
+			active.stickers.some(
+				(sticker, index) =>
+					sticker.id !== this.stickers[index]?.id || sticker.pixels !== this.stickers[index]?.pixels
+			);
+		if (!stickersChanged && active.trayIconId === this.trayIconId) return;
+		this.updateBatchEntry(active.id, { stickers: [...this.stickers], trayIconId: this.trayIconId });
+	}
+
+	private clearActiveImage(): void {
+		++this.sequence;
+		this.clearDebounce();
+		if (this.source) URL.revokeObjectURL(this.source.url);
+		this.source = null;
+		this.detected = [];
+		this.removedIds.clear();
+		this.trayIconId = null;
+		this.splitPreview = null;
+		this.splitBusyId = null;
+		this.noSplitProposalId = null;
+		this.splitUndo = [];
+		this.status = 'idle';
 	}
 
 	private clearDebounce(): void {
@@ -298,6 +480,8 @@ export class EditorState {
 	dispose(): void {
 		this.disposed = true;
 		++this.sequence;
+		this.batchSequence++;
+		this.batchSequence++;
 		this.clearDebounce();
 		if (this.source) URL.revokeObjectURL(this.source.url);
 		this.source = null;
