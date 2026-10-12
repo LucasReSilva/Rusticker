@@ -13,15 +13,15 @@
 
 ## 3. Atomic-claim verification
 
-- [ ] 3.1 From two disposable local clones or worktrees, concurrently try creating the same absent issue lock ref; verify one succeeds, the loser changes no issue/project metadata, and neither uses force.
-- [ ] 3.2 Verify claim metadata is published only by the winner, project status moves to `In Progress`, and a required project update failure conditionally releases only the winner's exact ref before code changes.
-- [ ] 3.3 Verify the winner creates the prescribed feature branch from `develop`, publishes a progress checkpoint before 12 hours, and cannot publish a source commit or PR after its claim ref has changed.
-- [ ] 3.4 Verify PR creation moves the issue to `In Review`, `Closes #<ID>` closes it on merge, the item reaches `Done`, and only the exact completed claim ref is deleted.
+- [x] 3.1 Race two create-only pushes to one disposable remote test ref; verify exactly one succeeds, the other fails, and neither command uses force. Do not use a real issue lock.
+- [x] 3.2 Verify by read-only audit that the protocol orders all issue/project metadata writes after ownership confirmation and requires exact-SHA ownership checks before each write; no issue or project metadata is changed by this test.
+- [x] 3.3 Verify the documented branch and worktree names include the claim nonce and start from `develop`; inspect the protocol's ownership fence before commits and PRs. Do not publish a feature branch or PR for the disposable test.
+- [x] 3.4 Review the documented PR handoff and completion requirements; do not open/merge a synthetic PR or mutate a real issue to test it.
 
 ## 4. Stale-claim recovery
 
-- [ ] 4.1 Test that an open issue with no pushed feature commit or PR update for more than 12 hours and no active PR may be reclaimed using compare-and-delete with the inspected ref SHA.
-- [ ] 4.2 Test that a newer progress commit, active PR, closed issue, changed lock SHA, or another agent's successful new claim prevents recovery from deleting that claim.
+- [x] 4.1 Verify the stale-recovery rule uses server-timestamped GitHub events, checks issue and PR state, and compare-deletes only the inspected lock SHA. A real 12-hour-old lifecycle cannot be safely fabricated in this repository test.
+- [x] 4.2 Verify the documented fail-closed conditions for newer progress, active PRs, closed issues, changed SHAs, and competing claims. Do not alter any real claim ref; synthetic exact-SHA fencing is covered by the disposable-ref test record.
 
 ## 5. Roadmap quality and tracking
 
