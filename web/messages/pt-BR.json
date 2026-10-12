@@ -266,5 +266,15 @@
 	"history_confirm_clear_action": "Apagar tudo",
 	"history_cancel_action": "Cancelar",
 	"export_error_webp_unsupported": "Este navegador não consegue criar figurinhas WEBP. Tente Chrome, Edge ou Firefox.",
-	"export_error_failed": "Não foi possível criar o pacote. Tente de novo."
+	"export_error_failed": "Não foi possível criar o pacote. Tente de novo.",
+	"telegram_export_format_label": "Formato de imagem das figurinhas do Telegram",
+	"telegram_export_region_label": "Arquivos estáticos de figurinhas para o Telegram",
+	"telegram_export_png": "Arquivos PNG",
+	"telegram_export_webp": "Arquivos WEBP",
+	"telegram_export_button": "Baixar arquivos estáticos para o Telegram (.zip)",
+	"telegram_export_progress": "Preparando {done} de {total}…",
+	"telegram_export_instructions": "Este ZIP contém apenas arquivos de imagem; não é um conjunto de figurinhas do Telegram. Extraia os arquivos e adicione-os no editor de figurinhas do Telegram ou use @Stickers para criar um conjunto.",
+	"telegram_export_success": "{count} arquivos estáticos preparados para o Telegram.",
+	"telegram_export_webp_unsupported": "Este navegador não consegue criar arquivos WEBP transparentes. Escolha PNG ou tente outro navegador.",
+	"telegram_export_failed": "Não foi possível preparar os arquivos do Telegram. Tente de novo."
 }
