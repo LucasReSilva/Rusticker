@@ -19,7 +19,7 @@ struct Fixture {
 
 #[derive(Debug, Clone, Copy)]
 struct FloodPixel {
-    height: u32,
+    priority: u32,
     order: usize,
     index: usize,
     label: u32,
@@ -27,8 +27,8 @@ struct FloodPixel {
 
 impl PartialEq for FloodPixel {
     fn eq(&self, other: &Self) -> bool {
-        (self.height, self.order, self.index, self.label)
-            == (other.height, other.order, other.index, other.label)
+        (self.priority, self.order, self.index, self.label)
+            == (other.priority, other.order, other.index, other.label)
     }
 }
 
@@ -42,8 +42,8 @@ impl PartialOrd for FloodPixel {
 
 impl Ord for FloodPixel {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.height
-            .cmp(&other.height)
+        self.priority
+            .cmp(&other.priority)
             .then_with(|| other.order.cmp(&self.order))
             .then_with(|| other.index.cmp(&self.index))
             .then_with(|| other.label.cmp(&self.label))
@@ -210,6 +210,11 @@ fn fixtures() -> Vec<Fixture> {
             instances: vec![disk(48, 40, 20)],
         },
         Fixture {
+            name: "single-disk-at-left-edge",
+            mask: disk(8, 40, 15),
+            instances: vec![disk(8, 40, 15)],
+        },
+        Fixture {
             name: "single-rectangle",
             mask: rectangle(24, 25, 72, 55),
             instances: vec![rectangle(24, 25, 72, 55)],
@@ -266,27 +271,15 @@ fn watershed_candidate(mask: &GrayImage, min_peak_separation: u32) -> GrayImage 
         if pixels.is_empty() {
             continue;
         }
-        let min_x = pixels.iter().map(|p| p.0).min().unwrap().saturating_sub(1);
-        let min_y = pixels.iter().map(|p| p.1).min().unwrap().saturating_sub(1);
-        let max_x = pixels
-            .iter()
-            .map(|p| p.0)
-            .max()
-            .unwrap()
-            .min(mask.width() - 1)
-            + 1;
-        let max_y = pixels
-            .iter()
-            .map(|p| p.1)
-            .max()
-            .unwrap()
-            .min(mask.height() - 1)
-            + 1;
-        let width = max_x - min_x + 1;
-        let height = max_y - min_y + 1;
+        let min_x = pixels.iter().map(|p| p.0).min().unwrap();
+        let min_y = pixels.iter().map(|p| p.1).min().unwrap();
+        let max_x = pixels.iter().map(|p| p.0).max().unwrap();
+        let max_y = pixels.iter().map(|p| p.1).max().unwrap();
+        let width = max_x - min_x + 3;
+        let height = max_y - min_y + 3;
         let mut inverted = GrayImage::from_pixel(width, height, Luma([FOREGROUND]));
         for &(x, y) in &pixels {
-            inverted.put_pixel(x - min_x, y - min_y, Luma([0]));
+            inverted.put_pixel(x - min_x + 1, y - min_y + 1, Luma([0]));
         }
         let distance = euclidean_squared_distance_transform(&inverted);
         let mut seen = vec![false; (width * height) as usize];
@@ -356,9 +349,11 @@ fn watershed_candidate(mask: &GrayImage, min_peak_separation: u32) -> GrayImage 
         let mut queue = BinaryHeap::new();
         let mut sequence = 0usize;
         for (marker_id, &(_, x, y)) in markers.iter().enumerate() {
+            let x = x + 1;
+            let y = y + 1;
             local_labels[(y * width + x) as usize] = marker_id as u32 + next_label;
             queue.push(FloodPixel {
-                height: distance.get_pixel(x, y)[0] as u32,
+                priority: distance.get_pixel(x, y)[0] as u32,
                 order: sequence,
                 index: (y * width + x) as usize,
                 label: marker_id as u32 + next_label,
@@ -376,7 +371,7 @@ fn watershed_candidate(mask: &GrayImage, min_peak_separation: u32) -> GrayImage 
                     }
                     local_labels[index] = item.label;
                     queue.push(FloodPixel {
-                        height: distance.get_pixel(nx, ny)[0] as u32,
+                        priority: item.priority.min(distance.get_pixel(nx, ny)[0] as u32),
                         order: sequence,
                         index,
                         label: item.label,
@@ -387,7 +382,7 @@ fn watershed_candidate(mask: &GrayImage, min_peak_separation: u32) -> GrayImage 
         }
         let labels_in_component = markers.len() as u32;
         for &(x, y) in &pixels {
-            let local = ((y - min_y) * width + (x - min_x)) as usize;
+            let local = ((y - min_y + 1) * width + (x - min_x + 1)) as usize;
             result.put_pixel(x, y, Luma([local_labels[local] as u8]));
         }
         next_label += labels_in_component;
@@ -432,10 +427,10 @@ fn mean_matched_iou(predicted: &GrayImage, instances: &[GrayImage]) -> f64 {
             scores.push(iou);
         }
     }
-    if scores.is_empty() {
+    if instances.is_empty() {
         0.0
     } else {
-        scores.iter().sum::<f64>() / scores.len() as f64
+        scores.iter().sum::<f64>() / instances.len() as f64
     }
 }
 
@@ -477,7 +472,9 @@ fn assert_deterministic_and_report() {
             "single-ring" => (1, 7),
             "single-star" => (1, 5),
             "ambiguous-dumbbell-as-one" | "ambiguous-dumbbell-as-two" => (1, 2),
-            "single-disk" | "single-rectangle" | "single-l-shape" => (1, 1),
+            "single-disk" | "single-disk-at-left-edge" | "single-rectangle" | "single-l-shape" => {
+                (1, 1)
+            }
             "edge-touching-disks" | "close-separated-disks" | "one-pixel-bridge" => (2, 2),
             _ => panic!("unexpected fixture {}", fixture.name),
         };
