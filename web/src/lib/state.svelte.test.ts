@@ -56,6 +56,67 @@ it('loads locally, defaults the tray icon, curates and falls back when the tray 
 	editor.setTrayIcon('missing');
 	expect(editor.trayIconId).toBe(editor.stickers[0].id);
 });
+it('keeps split proposals separate until accepted and supports undo', async () => {
+	editor.dispose();
+	detector = createMockDetector({ count: 1, splitCount: 2 });
+	editor = createEditorState({ detector, decode });
+	await editor.loadFile(file());
+	const original = editor.stickers[0];
+	await editor.requestSplit(original.id);
+	expect(editor.stickers).toEqual([original]);
+	expect(editor.splitPreview?.candidates).toHaveLength(2);
+	editor.acceptSplit();
+	expect(editor.stickers).toHaveLength(2);
+	for (const sticker of editor.stickers) {
+		expect(sticker.bbox.x).toBeGreaterThanOrEqual(original.bbox.x);
+		expect(sticker.bbox.y).toBeGreaterThanOrEqual(original.bbox.y);
+		expect(sticker.bbox.x + sticker.bbox.width).toBeLessThanOrEqual(
+			original.bbox.x + original.bbox.width
+		);
+		expect(sticker.bbox.y + sticker.bbox.height).toBeLessThanOrEqual(
+			original.bbox.y + original.bbox.height
+		);
+	}
+	expect(editor.undoableStickerIds.size).toBe(2);
+	editor.undoSplit(editor.stickers[0].id);
+	expect(editor.stickers).toEqual([original]);
+	expect(editor.undoableStickerIds.size).toBe(0);
+});
+it('undoes nested splits with their descendants when restoring an ancestor', async () => {
+	editor.dispose();
+	detector = createMockDetector({ count: 1, splitCount: 2 });
+	editor = createEditorState({ detector, decode });
+	await editor.loadFile(file());
+	const original = editor.stickers[0];
+	await editor.requestSplit(original.id);
+	editor.acceptSplit();
+	const [firstChild, sibling] = editor.stickers;
+	await editor.requestSplit(firstChild.id);
+	editor.acceptSplit();
+	expect(editor.stickers).toHaveLength(3);
+	expect(editor.undoableStickerIds.size).toBe(4);
+
+	editor.undoSplit(sibling.id);
+
+	expect(editor.stickers).toEqual([original]);
+	expect(editor.undoableStickerIds.size).toBe(0);
+	expect(editor.splitPreview).toBeNull();
+});
+it('keeps the original unchanged when no split proposal is available or discarded', async () => {
+	await editor.loadFile(file());
+	const original = editor.stickers[0];
+	await editor.requestSplit(original.id);
+	expect(editor.noSplitProposalId).toBe(original.id);
+	expect(editor.stickers).toContainEqual(original);
+	editor.dispose();
+	detector = createMockDetector({ count: 1, splitCount: 2 });
+	editor = createEditorState({ detector, decode });
+	await editor.loadFile(file());
+	const candidateSource = editor.stickers[0];
+	await editor.requestSplit(candidateSource.id);
+	editor.discardSplit();
+	expect(editor.stickers).toEqual([candidateSource]);
+});
 it('keeps the previous source and results after an unsupported file or decode failure, including repeated errors', async () => {
 	await editor.loadFile(file());
 	const source = editor.source;

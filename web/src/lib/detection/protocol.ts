@@ -13,6 +13,12 @@ export interface WorkerRequest {
 	tolerance: number;
 }
 
+/** One explicit split-proposal request for an existing 512x512 sticker. */
+export interface SplitRequest {
+	/** Private copy of the sticker pixels, transferred to the worker. */
+	rgba: ArrayBuffer;
+}
+
 /** A sticker as produced by the engine: `[x, y, width, height]` + 512x512 RGBA. */
 export interface RawSticker {
 	bbox: [number, number, number, number];
@@ -32,4 +38,5 @@ export type WorkerResult = { ok: true; stickers: RawSticker[] } | WorkerFailure;
 /** The API the worker exposes through Comlink. */
 export interface WorkerApi {
 	detect(request: WorkerRequest): Promise<WorkerResult>;
+	split(request: SplitRequest): Promise<WorkerResult>;
 }

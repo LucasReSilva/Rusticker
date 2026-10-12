@@ -16,7 +16,15 @@
 		busy,
 		pending,
 		onRemove,
-		onSetTrayIcon
+		onSetTrayIcon,
+		splitPreview = null,
+		splitBusyId = null,
+		noSplitProposalId = null,
+		undoableStickerIds = new Set<string>(),
+		onSplitRequest = () => {},
+		onSplitAccept = () => {},
+		onSplitDiscard = () => {},
+		onSplitUndo = () => {}
 	}: {
 		stickers: Sticker[];
 		trayIconId: string | null;
@@ -25,6 +33,14 @@
 		pending: boolean;
 		onRemove: (id: string) => void;
 		onSetTrayIcon: (id: string) => void;
+		splitPreview?: { source: Sticker; candidates: Sticker[] } | null;
+		splitBusyId?: string | null;
+		noSplitProposalId?: string | null;
+		undoableStickerIds?: ReadonlySet<string>;
+		onSplitRequest?: (id: string) => void;
+		onSplitAccept?: () => void;
+		onSplitDiscard?: () => void;
+		onSplitUndo?: (id: string) => void;
 	} = $props();
 	let activeId = $state<string | null>(null);
 	const activeIndex = $derived(
@@ -138,6 +154,14 @@
 						onFocus={() => (activeId = sticker.id)}
 						onRemoveRequest={() => requestRemove(index)}
 						onSetTrayIcon={() => onSetTrayIcon(sticker.id)}
+						splitPreview={splitPreview?.source.id === sticker.id ? splitPreview.candidates : null}
+						splitBusy={splitBusyId === sticker.id}
+						noSplitProposal={noSplitProposalId === sticker.id}
+						undoable={undoableStickerIds.has(sticker.id)}
+						onSplitRequest={() => onSplitRequest(sticker.id)}
+						{onSplitAccept}
+						{onSplitDiscard}
+						onSplitUndo={() => onSplitUndo(sticker.id)}
 					/>
 				</li>{/each}
 		{/if}

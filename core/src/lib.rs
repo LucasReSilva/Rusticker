@@ -21,6 +21,7 @@ mod error;
 mod frame;
 mod mask;
 mod order;
+mod split;
 mod wasm;
 
 use image::{Rgb, RgbaImage};
@@ -28,6 +29,12 @@ use image::{Rgb, RgbaImage};
 pub use error::ErrorCode;
 pub use frame::{CONTENT_SIZE, FRAME_SIZE};
 pub use wasm::{Detection, detect};
+
+/// Proposes reviewed sub-stickers from a 512x512 sticker returned by detection.
+/// An empty result means the bounded candidate operation found no split.
+pub fn propose_sticker_split(image: &RgbaImage) -> Vec<Sticker> {
+    split::propose(image)
+}
 
 /// Longest accepted side, in pixels.
 pub const MAX_SIDE: u32 = 8192;
