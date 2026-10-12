@@ -30,3 +30,8 @@ The application SHALL let the user export the current selection of stickers as s
 
 - **WHEN** no stickers are selected
 - **THEN** the export action is unavailable
+
+#### Scenario: Export the current batch selection
+
+- **WHEN** the Telegram export controls are shown in the editor
+- **THEN** the exporter receives the current combined batch sticker selection

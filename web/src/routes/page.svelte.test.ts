@@ -36,6 +36,7 @@ it('loads through the chooser, renders the plural count and preserves curated st
 	await waitFor(() =>
 		expect(first.container.querySelectorAll('[data-sticker-card]')).toHaveLength(3)
 	);
+	expect(screen.getByRole('group', { name: m.telegram_export_format_label() })).toBeInTheDocument();
 	expect(first.container.querySelector('[data-detected-count]')).toHaveTextContent(
 		m.tool_detected_count({ count: 3 })
 	);

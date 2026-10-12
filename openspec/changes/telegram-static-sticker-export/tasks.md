@@ -8,9 +8,9 @@
 
 - [x] 2.1 Add a standalone Telegram export component with format selection, progress, localized Telegram editor/`@Stickers` handoff instructions, and safe ZIP labeling.
 - [x] 2.2 Add all user-visible strings to pt-BR, en, and es catalogs and validate localization.
-- [ ] 2.3 Integrate `<TelegramExport>` into the tool page with the current batch sticker selection after the concurrent #46 mode controls are ready; coordinate this narrow page integration with the parent agent.
+- [x] 2.3 Integrate `<TelegramExport>` into the tool page with the current batch sticker selection and verify the route exposes its format controls.
 
 ## 3. Verification
 
 - [x] 3.1 Run focused export tests, web checks, localization checks, and the appropriate build/design checks.
-- [x] 3.2 Validate the OpenSpec change and report the page integration handoff clearly.
+- [x] 3.2 Validate the OpenSpec change and the integrated tool page.
