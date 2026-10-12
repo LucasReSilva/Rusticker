@@ -142,4 +142,47 @@ it('marks processing busy and shows six placeholders before the first result', (
 	expect(container.querySelector('[aria-busy]')).toHaveAttribute('aria-busy', 'true');
 	expect(container.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(6);
 });
+
+it('shows candidate review and wires explicit accept and discard actions', async () => {
+	const source = stickers(1)[0];
+	const candidates = stickers(2);
+	const onSplitAccept = vi.fn();
+	const onSplitDiscard = vi.fn();
+	const onSplitRequest = vi.fn();
+	render(Grid, {
+		stickers: [source],
+		trayIconId: null,
+		busy: false,
+		pending: false,
+		onRemove: vi.fn(),
+		onSetTrayIcon: vi.fn(),
+		splitPreview: { source, candidates },
+		onSplitRequest,
+		onSplitAccept,
+		onSplitDiscard
+	});
+	expect(screen.getByText(m.tool_split_review())).toBeInTheDocument();
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_split_discard() }));
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_split_accept() }));
+	expect(onSplitDiscard).toHaveBeenCalledOnce();
+	expect(onSplitAccept).toHaveBeenCalledOnce();
+});
+
+it('offers an explicit action to request split assistance', async () => {
+	const source = stickers(1)[0];
+	const onSplitRequest = vi.fn();
+	render(Grid, {
+		stickers: [source],
+		trayIconId: null,
+		busy: false,
+		pending: false,
+		onRemove: vi.fn(),
+		onSetTrayIcon: vi.fn(),
+		onSplitRequest
+	});
+	const action = screen.getByRole('button', { name: m.tool_split_request() });
+	expect(action).toHaveAttribute('tabindex', '0');
+	await fireEvent.click(action);
+	expect(onSplitRequest).toHaveBeenCalledWith(source.id);
+});
 import '@testing-library/jest-dom/vitest';

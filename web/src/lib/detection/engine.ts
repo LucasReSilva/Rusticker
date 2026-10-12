@@ -1,8 +1,8 @@
 // The worker's pure handler around the wasm `detect` (design D2). Kept apart
 // from worker.ts so the local integration test can call it in Node.
-import { detect } from 'rusticker-core';
+import { detect, propose_split } from 'rusticker-core';
 import { failureFromThrown } from './errors';
-import type { RawSticker, WorkerRequest, WorkerResult } from './protocol';
+import type { RawSticker, SplitRequest, WorkerRequest, WorkerResult } from './protocol';
 
 /** An `ArrayBuffer` holding exactly `bytes`, without copying when possible. */
 function ownBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -40,6 +40,25 @@ export function runDetect(request: WorkerRequest): WorkerResult {
 			return { ok: true, stickers };
 		} finally {
 			detection.free();
+		}
+	} catch (thrown) {
+		return failureFromThrown(thrown);
+	}
+}
+
+/** Runs an explicit bounded split proposal for one already detected sticker. */
+export function runSplit(request: SplitRequest): WorkerResult {
+	try {
+		const proposal = propose_split(new Uint8Array(request.rgba));
+		try {
+			const stickers: RawSticker[] = [];
+			for (let index = 0; index < proposal.count; index++) {
+				const [x, y, width, height] = proposal.bbox(index);
+				stickers.push({ bbox: [x, y, width, height], rgba: ownBuffer(proposal.rgba(index)) });
+			}
+			return { ok: true, stickers };
+		} finally {
+			proposal.free();
 		}
 	} catch (thrown) {
 		return failureFromThrown(thrown);
