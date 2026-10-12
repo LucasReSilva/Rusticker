@@ -144,6 +144,34 @@ unit and synthetic tests. The authoritative current contract is
 These limitations are tracked by separate roadmap work. Do not read a future
 candidate or comparison paper as a claim that the technique is already present.
 
+### ONNX split assistance: feasibility only
+
+The proposed flow keeps the standard Rust/WASM detector first. An optional
+advanced action could lazily run a promptable model in the worker only after the
+user requests it, then return a proposal for review. The image and prompts stay
+local; only versioned model/runtime assets may be fetched. The original result
+must remain available if download, initialization, or inference fails. This is
+roadmap design, not implemented behavior.
+
+```mermaid
+flowchart LR
+    A["Selected image"] --> B["Current Rust/WASM detection"]
+    B --> C["Original sticker results"]
+    C -. "explicit advanced action" .-> D["On-demand model/runtime load"]
+    D --> E["Promptable inference in worker"]
+    E --> F["Assisted split proposal"]
+    F --> G{"User accepts?"}
+    G -- yes --> H["Use reviewed result"]
+    G -- no --> C
+    D -. "unavailable or canceled" .-> C
+```
+
+The [ONNX split-assistance evaluation](docs/onnx-split-evaluation.md) recommends
+`tract` as the first pure-Rust/WASM runtime proof of concept and ONNX Runtime
+Web only as a measured compatibility fallback. No ONNX model has been tested
+against Rusticker's sticker fixtures, so neither model-assisted behavior nor
+runtime compatibility is claimed today.
+
 ## Browser, worker, WebAssembly, and export flow
 
 The editor decodes selected, pasted, or dropped image bytes locally. The
