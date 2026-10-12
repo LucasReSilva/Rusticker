@@ -266,5 +266,9 @@
 	"history_confirm_clear_action": "Delete all",
 	"history_cancel_action": "Cancel",
 	"export_error_webp_unsupported": "This browser can't create WEBP stickers. Try Chrome, Edge, or Firefox.",
-	"export_error_failed": "Couldn't create the pack. Please try again."
+	"export_error_failed": "Couldn't create the pack. Please try again.",
+	"webmcp_open_picker_title": "Choose an image",
+	"webmcp_open_picker_description": "Open the image picker so the person can choose an image. Does not read or provide image contents.",
+	"webmcp_status_title": "Check editor status",
+	"webmcp_status_description": "Return only the current coarse workflow state: empty, image loaded, reviewing results, or ready to export."
 }

@@ -266,5 +266,9 @@
 	"history_confirm_clear_action": "Apagar tudo",
 	"history_cancel_action": "Cancelar",
 	"export_error_webp_unsupported": "Este navegador não consegue criar figurinhas WEBP. Tente Chrome, Edge ou Firefox.",
-	"export_error_failed": "Não foi possível criar o pacote. Tente de novo."
+	"export_error_failed": "Não foi possível criar o pacote. Tente de novo.",
+	"webmcp_open_picker_title": "Escolher uma imagem",
+	"webmcp_open_picker_description": "Abrir o seletor para que a pessoa escolha uma imagem. Não lê nem fornece o conteúdo da imagem.",
+	"webmcp_status_title": "Verificar o estado do editor",
+	"webmcp_status_description": "Retornar apenas o estado geral atual: vazio, imagem carregada, revisando resultados ou pronto para exportar."
 }

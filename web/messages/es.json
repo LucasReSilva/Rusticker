@@ -266,5 +266,9 @@
 	"history_confirm_clear_action": "Borrar todo",
 	"history_cancel_action": "Cancelar",
 	"export_error_webp_unsupported": "Este navegador no puede crear stickers WEBP. Prueba Chrome, Edge o Firefox.",
-	"export_error_failed": "No se pudo crear el paquete. Inténtalo de nuevo."
+	"export_error_failed": "No se pudo crear el paquete. Inténtalo de nuevo.",
+	"webmcp_open_picker_title": "Elegir una imagen",
+	"webmcp_open_picker_description": "Abrir el selector para que la persona elija una imagen. No lee ni proporciona el contenido de la imagen.",
+	"webmcp_status_title": "Consultar el estado del editor",
+	"webmcp_status_description": "Devolver solo el estado general actual: vacío, imagen cargada, revisando resultados o listo para exportar."
 }
