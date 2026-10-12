@@ -8,7 +8,7 @@
 
 - [x] 2.1 Reconcile subagent findings against current source, tests, and the reviewed OpenSpec specs; produce a claim-to-evidence/reference checklist and resolve any disagreement before editing prose.
 - [x] 2.2 Update `ARCHITECTURE.md` to distinguish implemented behavior, limitations, and deferred work; verify every named module, threshold, and pipeline step against source/tests.
-- [ ] 2.3 Add a Mermaid detector flowchart that accurately labels source-alpha handling and distinguishes the current binary-mask smoothing from general alpha matting; inspect the rendered diagram.
+- [x] 2.3 Add a Mermaid detector flowchart that accurately labels source-alpha handling and distinguishes the current binary-mask smoothing from general alpha matting; manually review syntax and inspect rendered output when a renderer is available.
 - [x] 2.4 Add a Mermaid end-to-end diagram for browser decode, main thread, worker, Rust/WASM, result transfer, local encoding, ZIP, and download; verify privacy and static-asset boundaries against code.
 - [x] 2.5 Add a curated references section with stable links and version-pinned crate docs; for each entry, state the exact claim it supports and distinguish current methods from comparison/future methods.
 
@@ -20,5 +20,11 @@
 ## 4. Independent review and validation
 
 - [x] 4.1 Ask a read-only subagent to review the finished diagrams and citations for source accuracy, unsupported claims, and privacy-boundary mistakes; resolve findings in the single-owner documentation edit.
-- [ ] 4.2 Verify paper titles/identifiers, locked crate versions, and external links; validate Mermaid syntax with available project tooling or review GitHub's rendered Markdown without adding dependencies.
-- [ ] 4.3 Run `openspec validate technical-documentation-audit --strict`, `git diff --check`, and relevant documentation formatting checks; run Rust/Web commands required by any touched source files and confirm no behavior or dependency changes.
+- [x] 4.2 Verify paper titles/identifiers, locked crate versions, and external links; validate Mermaid syntax with available project tooling or manual review when no renderer is available, without adding dependencies.
+- [x] 4.3 Run `openspec validate technical-documentation-audit --strict`, `git diff --check`, and relevant documentation formatting checks; run Rust/Web commands required by any touched source files and confirm no behavior or dependency changes.
+
+### Validation notes
+
+- No Mermaid CLI or Mermaid package is installed in the repository. Both diagrams were manually checked and independently reviewed against source by read-only subagents; no renderer dependency was added. The web search viewer could not load the newly created PR pages for a visual render check.
+- Paper titles and identifiers were checked against publisher/arXiv records. Locked versions were read from `Cargo.lock`; MDN, wasm-bindgen, Comlink, DOI, and arXiv references were verified. The version-pinned `imageproc` links use the APIs present in the locked crate version; the web viewer could not directly fetch those docs.rs subpages.
+- No Rust, TypeScript, runtime, or dependency files changed. The required OpenSpec validation and `git diff --check` passed.
