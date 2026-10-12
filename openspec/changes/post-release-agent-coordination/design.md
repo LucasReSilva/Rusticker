@@ -28,7 +28,7 @@ A lock is eligible for recovery only if the issue is open, has no active PR, and
 
 ### Make project setup inspect-first
 
-Use the repository owner's existing project, verify it is linked to `LucasReSilva/Rusticker`, inspect its status field and options, and add issues as native sub-issues of epic parents. Create only missing labels (`epic`, `roadmap`, `agent:claimed`) and only add a project status option if it is genuinely absent and project administration is authorized. The proposal contains five parent epics, ten children, priorities, acceptance criteria, and explicit research gates. Do not create issues until the board can represent `Todo`, `In Progress`, `In Review`, and `Done`; preserve existing options and stop if no unambiguous status mapping is available. All open issues start in `Todo`; the agent protocol controls later transitions. GitHub Project writes require a valid token with the `project` scope.
+Use the repository owner's existing project, verify it is linked to `LucasReSilva/Rusticker`, inspect its status field and options, and add issues as native sub-issues of epic parents. Create only missing labels (`epic`, `roadmap`, `agent:claimed`) and only add a project status option if it is genuinely absent and project administration is authorized. The proposal tracks six parent epics and 22 children, with acceptance criteria, research gates, and relative complexity. The board uses `S`, `M`, `L`, and `XL` as relative effort sizes. Do not create issues until the board can represent `Todo`, `In Progress`, `In Review`, and `Done`; preserve existing options and stop if no unambiguous status mapping is available. All open issues start in `Todo`; the agent protocol controls later transitions. GitHub Project writes require a valid token with the `project` scope.
 
 ### Refine platform exports around verified contracts
 
@@ -47,3 +47,5 @@ Keep WhatsApp metadata as a research-gated pair of issues. First identify and te
 ## Migration Plan
 
 First enable and review the new agent-claim protocol on `develop`. Create parent epics and child issues in the existing GitHub Project with status `Todo`. Agents adopt the protocol issue by issue. No production migration or release action is required.
+
+The board currently contains six epics and 22 child issues. The `Complexity` field is a relative estimate (`S` through `XL`), not a delivery schedule. New feature requests include visual theme colors, batch input, processing modes, local history, opt-in notifications, background handling, WebMCP, and opt-in ONNX assistance. Diagnosis and feasibility issues gate the corresponding implementation work. The current detector remains the first processing step; ONNX is offered only as an explicit local second-stage action after evaluation.
