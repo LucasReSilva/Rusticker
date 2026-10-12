@@ -44,37 +44,39 @@ and `imageproc` crates; OpenCV is not a runtime dependency.
 ## Detection pipeline
 
 `core/src/lib.rs::detect_rgba` validates the input and calls the private `run`
-pipeline. The image is a straight RGBA
-buffer, but the current classifier uses only RGB. In particular, it ignores
-the source alpha channel during both classification and sticker extraction.
-For transparent pixels, their stored RGB values can therefore affect the
-result; support for transparent inputs is a known investigation, not current
-behavior.
+pipeline. The image is a straight RGBA buffer. Fully transparent pixels are
+always background, independent of their stored RGB values. At tolerance zero,
+classification uses exact RGB equality with the picked color; tolerances 1-100
+retain the HSV rule described below. Extraction multiplies source alpha by the
+existing 3x3 component coverage. This preserves transparency and softens
+component edges; it is not alpha matting or background-color decontamination.
 
 ```mermaid
 flowchart TD
-    A["Straight RGBA input<br/>width × height × 4"] --> B["Classify RGB in HSV<br/>picked background + tolerance"]
-    B --> C["Binary foreground mask<br/>source alpha ignored"]
-    C --> D["3 × 3 square morphological opening"]
+    A["Straight RGBA input<br/>width x height x 4"] --> B["Alpha zero is background; zero tolerance uses exact RGB; otherwise HSV"]
+    B --> C["Binary foreground mask<br/>alpha zero is background"]
+    C --> D["3x3 square morphological opening"]
     D --> E["Connected components<br/>8-connectivity"]
-    E --> F["Keep area ≥ 0.4% of input image"]
+    E --> F["Keep area at least 0.4% of input image"]
     F --> G["Component bounding boxes<br/>and pixel labels"]
-    G --> H["Crop original RGB<br/>alpha from component membership"]
-    H --> I["3 × 3 neighborhood average<br/>softens binary mask edges"]
+    G --> H["Crop source RGBA<br/>alpha x component coverage"]
+    H --> I["3x3 neighborhood average<br/>softens binary mask edges"]
     I --> J["Reading order<br/>rows top-to-bottom, then left-to-right"]
     J --> K["Lanczos3 resize on premultiplied colors<br/>longest side 480 px"]
-    K --> L["Centered transparent<br/>512 × 512 RGBA stickers"]
+    K --> L["Centered transparent<br/>512x512 RGBA stickers"]
 ```
 
-1. **Background classification** (`color.rs`, `mask.rs`). RGB is converted to
-   HSV and compared with the user-picked background and tolerance. With green
-   `0x00FF00` and tolerance 50, the resulting accepted range corresponds to
-   hue 70°–170°, saturation at least 47%, and value at least 24%. This is a
-   configurable color rule, not a learned or general-purpose segmentation
-   model. The conversion between RGB and HSV is described by Smith's color
-   transform paper [1]; that paper does not validate Rusticker's thresholds.
-2. **Mask cleanup** (`mask.rs`). A 3 × 3 square opening removes foreground
-   features that cannot contain a full 3 × 3 block. It never adds foreground.
+1. **Background classification** (`color.rs`, `mask.rs`). Fully transparent
+   pixels are excluded from the foreground mask. At tolerance zero, visible
+   pixels match only when their RGB exactly equals the selected color. At
+   tolerances 1-100, RGB is converted to HSV and compared with the selected
+   background. With green `0x00FF00` and tolerance 50, the accepted range
+   corresponds to hue 70-170 degrees, saturation at least 47%, and value at
+   least 24%. This configurable color rule is not a learned or general-purpose
+   segmentation model. Smith [1] describes the RGB/HSV transform but does not
+   validate Rusticker's thresholds.
+2. **Mask cleanup** (`mask.rs`). A 3x3 square opening removes foreground
+   features that cannot contain a full 3x3 block. It never adds foreground.
    The operation is `imageproc::morphology::open` with `Norm::LInf` and radius
    1 [2].
 3. **Components and size filter** (`components.rs`). Foreground is labeled
@@ -84,14 +86,13 @@ flowchart TD
    The connectivity API is supplied by `imageproc` [3]; the project-specific
    cutoff comes from the implementation, tests, and detection spec, not from
    that library or a paper.
-4. **Crop and transparency** (`alpha.rs`). Each crop uses the source RGB where
-   its component label matches. Alpha is calculated from the component's
-   binary membership using a 3 × 3 neighborhood average; transparent output
-   pixels are zeroed. The original alpha channel is not included. This local
-   averaging produces fractional alpha from the proportion of nearby mask
-   pixels, but it does not infer true per-pixel opacity from image content or
-   decontaminate background colors. The matting survey [10] covers
-   a different family of techniques and is listed for comparison only.
+4. **Crop and transparency** (`alpha.rs`). Each crop uses source RGB where
+   its component label matches. Output alpha is source alpha multiplied by
+   component coverage in a 3x3 neighborhood. Fully transparent source pixels
+   remain transparent. This preserves source opacity and softens mask edges,
+   but does not infer opacity from image content or decontaminate background
+   colors. The matting survey [10] covers a different technique family and is
+   listed for comparison only.
 5. **Ordering and framing** (`order.rs`, `frame.rs`). Boxes are grouped into
    rows by vertical center: a box joins the current row only while its center
    is strictly above that row's lowest bottom edge. Each row is sorted by
@@ -104,15 +105,14 @@ The deterministic pipeline rules are covered by unit and synthetic tests in
 `core/src/*` and `core/tests/synthetic.rs`. The integration test in
 `core/tests/sample_image.rs` uses its bundled public fixture by default and
 can use a private local image when `RUSTICKER_SAMPLE_IMAGE` is set; private
-images are not included in CI. Input-alpha behavior is confirmed by code
-inspection and is not covered by a dedicated test. The authoritative current contract is
+images are not included in CI. Input-alpha behavior is covered by deterministic
+unit and synthetic tests. The authoritative current contract is
 [`sticker-detection`](openspec/specs/sticker-detection/spec.md).
 
 ### Known detection limits
 
-- Transparency in the input is ignored, including partially transparent
-  pixels. The stored RGB values of fully transparent pixels may still affect
-  HSV classification.
+- Fully transparent input pixels are excluded from foreground. Partial alpha
+  is preserved during extraction and multiplied by component coverage.
 - The mask assumes one mostly uniform background color selected by the user.
   A substantially different or non-uniform background is not segmented
   automatically.
