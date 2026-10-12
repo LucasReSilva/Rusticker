@@ -5,7 +5,7 @@
 // English and locale-neutral; localized slugs exist only here.
 
 /** @typedef {'pt-BR' | 'en' | 'es'} RouteLocale */
-/** @typedef {'tool' | 'howToUse' | 'about'} PageId */
+/** @typedef {'tool' | 'howToUse' | 'about' | 'history'} PageId */
 /** @typedef {{ pattern: string, localized: Array<[RouteLocale, string]> }} UrlPattern */
 
 /** The base locale is served without a URL prefix. */
@@ -20,7 +20,8 @@ export const baseLocale = /** @type {const} */ ('pt-BR');
 export const pages = {
 	tool: { 'pt-BR': '/', en: '/en/', es: '/es/' },
 	howToUse: { 'pt-BR': '/como-usar', en: '/en/how-to-use', es: '/es/como-usar' },
-	about: { 'pt-BR': '/sobre', en: '/en/about', es: '/es/acerca-de' }
+	about: { 'pt-BR': '/sobre', en: '/en/about', es: '/es/acerca-de' },
+	history: { 'pt-BR': '/historico', en: '/en/history', es: '/es/historial' }
 };
 
 /**
@@ -30,7 +31,8 @@ export const pages = {
 export const internalPath = {
 	tool: '/',
 	howToUse: '/how-to-use',
-	about: '/about'
+	about: '/about',
+	history: '/history'
 };
 
 /** @type {PageId[]} */

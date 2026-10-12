@@ -27,6 +27,7 @@ export const MAX_BATCH_STICKERS = 60;
 export interface SourceImage extends DecodedImage {
 	name: string;
 	url: string;
+	file: Blob;
 }
 
 function mapSplitBox(candidate: Sticker['bbox'], source: Sticker['bbox']): Sticker['bbox'] {
@@ -73,6 +74,7 @@ export class EditorState {
 	noSplitProposalId = $state<string | null>(null);
 	splitUndo = $state.raw<Array<{ original: Sticker; replacements: Sticker[] }>>([]);
 	status = $state<EditorStatus>('idle');
+	completedRunSequence = $state(0);
 	lastError = $state<EditorErrorCode | null>(null);
 	errorSequence = $state(0);
 	batchEntries = $state.raw<BatchEntry[]>([]);
@@ -306,6 +308,7 @@ export class EditorState {
 		this.source = {
 			...decoded,
 			name: blob instanceof File ? blob.name : '',
+			file: blob,
 			url: URL.createObjectURL(blob)
 		};
 		this.detected = [];
@@ -357,6 +360,7 @@ export class EditorState {
 			this.removedIds.clear();
 			this.trayIconId = result[0]?.id ?? null;
 			this.status = 'ready';
+			this.completedRunSequence++;
 		} catch (error) {
 			if (sequence !== this.sequence || this.disposed || isCancelled(error)) return;
 			this.detected = [];

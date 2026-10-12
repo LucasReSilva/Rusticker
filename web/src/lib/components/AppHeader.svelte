@@ -12,12 +12,17 @@
 	const opts = $derived({ locale: locale.current });
 
 	// Route directories are English and locale-neutral (see routes.js).
-	const routeIds: Record<string, PageId> = { '/how-to-use': 'howToUse', '/about': 'about' };
+	const routeIds: Record<string, PageId> = {
+		'/how-to-use': 'howToUse',
+		'/about': 'about',
+		'/history': 'history'
+	};
 	const active = $derived(page.route.id ? routeIds[page.route.id] : undefined);
 
 	const links = $derived<Array<{ id: PageId; label: string }>>([
 		{ id: 'howToUse', label: m.nav_how_to_use({}, opts) },
-		{ id: 'about', label: m.nav_about({}, opts) }
+		{ id: 'about', label: m.nav_about({}, opts) },
+		{ id: 'history', label: m.nav_history({}, opts) }
 	]);
 
 	/** Moves focus to the main landmark (a plain fragment link would only scroll). */
