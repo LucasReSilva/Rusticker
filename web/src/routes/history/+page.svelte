@@ -128,24 +128,32 @@
 				<Card.Description>{m.history_privacy_explanation()}</Card.Description>
 			</Card.Header>
 			<Card.Footer class="flex flex-wrap gap-2">
-				<Button.Root variant="outline" onclick={beginDisable}>{m.history_disable_action()}</Button.Root>
+				<Button.Root variant="outline" onclick={beginDisable}
+					>{m.history_disable_action()}</Button.Root
+				>
 			</Card.Footer>
 		</Card.Root>
 
 		{#if disablePrompt}
-			<section class="flex flex-col gap-3 rounded-md border border-border bg-muted p-4" aria-live="polite">
+			<section
+				class="flex flex-col gap-3 rounded-md border border-border bg-muted p-4"
+				aria-live="polite"
+			>
 				<p>{m.history_disable_prompt()}</p>
 				<div class="flex flex-wrap gap-2">
 					<Button.Root variant="outline" onclick={disableAndKeep}>
 						{m.history_disable_keep_action()}
 					</Button.Root>
-					<Button.Root variant="destructive" disabled={pendingAction} onclick={() => void disableAndClear()}>
+					<Button.Root
+						variant="destructive"
+						disabled={pendingAction}
+						onclick={() => void disableAndClear()}
+					>
 						{m.history_disable_clear_action()}
 					</Button.Root>
 				</div>
 			</section>
 		{/if}
-
 	{/if}
 
 	{#if loading}
@@ -177,7 +185,11 @@
 						<Button.Root variant="outline" onclick={() => (clearDialogOpen = false)}>
 							{m.history_cancel_action()}
 						</Button.Root>
-						<Button.Root variant="destructive" disabled={pendingAction} onclick={() => void clearAll()}>
+						<Button.Root
+							variant="destructive"
+							disabled={pendingAction}
+							onclick={() => void clearAll()}
+						>
 							{m.history_confirm_clear_action()}
 						</Button.Root>
 					</Dialog.Footer>

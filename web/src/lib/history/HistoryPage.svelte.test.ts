@@ -56,7 +56,9 @@ describe('processing history page', () => {
 		expect(document.body.textContent).not.toContain('private-hash-must-not-render');
 		expect(document.body.textContent).not.toContain('private-file-name.png');
 
-		await fireEvent.click(screen.getByRole('button', { name: /Excluir o processamento concluído/ }));
+		await fireEvent.click(
+			screen.getByRole('button', { name: /Excluir o processamento concluído/ })
+		);
 		await waitFor(() => expect(history.deleteProcessingHistoryEntry).toHaveBeenCalledWith('run-1'));
 	});
 
@@ -66,7 +68,9 @@ describe('processing history page', () => {
 		render(HistoryPage);
 
 		await fireEvent.click(await screen.findByRole('button', { name: 'Apagar todo o histórico' }));
-		expect(await screen.findByRole('heading', { name: 'Apagar todo o histórico de processamento?' })).toBeTruthy();
+		expect(
+			await screen.findByRole('heading', { name: 'Apagar todo o histórico de processamento?' })
+		).toBeTruthy();
 		expect(history.clearProcessingHistory).not.toHaveBeenCalled();
 		await fireEvent.click(screen.getByRole('button', { name: 'Apagar tudo' }));
 		await waitFor(() => expect(history.clearProcessingHistory).toHaveBeenCalledOnce());

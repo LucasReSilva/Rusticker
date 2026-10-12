@@ -26,12 +26,17 @@
 			<Card.Root>
 				<Card.Content class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 					<div class="flex flex-col gap-1">
-						<p class="font-medium">{m.history_completed_at({ date: dateLabel(entry.completedAt) })}</p>
+						<p class="font-medium">
+							{m.history_completed_at({ date: dateLabel(entry.completedAt) })}
+						</p>
 						<p class="text-sm text-muted-foreground">
 							{m.history_dimensions({ width: entry.width, height: entry.height })}
 						</p>
 						<p class="text-sm text-muted-foreground">
-							{m.history_options({ color: colorLabel(entry.background), tolerance: entry.tolerance })}
+							{m.history_options({
+								color: colorLabel(entry.background),
+								tolerance: entry.tolerance
+							})}
 						</p>
 						<p class="text-sm text-muted-foreground">
 							{m.history_sticker_count({ count: entry.stickerCount })}

@@ -58,11 +58,7 @@ function requestValue<T>(request: IDBRequest<T>): Promise<T> {
 	});
 }
 
-async function prune(
-	store: IDBObjectStore,
-	now: number,
-	limit = maximumEntries
-): Promise<void> {
+async function prune(store: IDBObjectStore, now: number, limit = maximumEntries): Promise<void> {
 	const rows = (await requestValue(store.getAll())) as ProcessingHistoryRecord[];
 	const keep = new Set(retainedHistoryRows(rows, now, limit).map((row) => row.id));
 	for (const row of rows) {
@@ -78,7 +74,7 @@ export function retainedHistoryRows(
 	return rows
 		.filter((row) => row.completedAt >= now - retentionMs)
 		.sort((left, right) => right.completedAt - left.completedAt)
-	.slice(0, limit);
+		.slice(0, limit);
 }
 
 export function annotatePreviousRuns(rows: ProcessingHistoryRecord[]): ProcessingHistoryEntry[] {
@@ -97,14 +93,18 @@ export async function fingerprint(file: Blob): Promise<string | undefined> {
 	if (file.size > maximumHashBytes || !globalThis.crypto?.subtle) return undefined;
 	try {
 		const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
-		return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+		return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join(
+			''
+		);
 	} catch {
 		return undefined;
 	}
 }
 
 function createId(): string {
-	return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+	return (
+		globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`
+	);
 }
 
 export function createProcessingHistoryRecord(
