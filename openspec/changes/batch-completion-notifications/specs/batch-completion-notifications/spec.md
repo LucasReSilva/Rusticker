@@ -33,7 +33,7 @@ The application SHALL report a completed batch using either a browser notificati
 - **THEN** no success completion notification is emitted
 
 ### Requirement: Localized notification controls
-Notification controls and fallback feedback SHALL be available in every supported locale and SHALL remain usable with keyboard and assistive technology.
+The tool page SHALL expose notification controls beside batch processing. Notification controls and fallback feedback SHALL be available in every supported locale and SHALL remain usable with keyboard and assistive technology.
 
 #### Scenario: Use controls in each supported locale
 - **WHEN** the user opens the notification controls in any supported locale
