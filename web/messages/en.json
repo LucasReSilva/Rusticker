@@ -34,6 +34,27 @@
 	"batch_select": "Edit image",
 	"batch_cancel": "Cancel queued images",
 	"batch_clear": "Clear batch",
+	"batch_notifications_enable": "Enable completion notifications",
+	"batch_notifications_disable": "Disable notifications",
+	"batch_notifications_enabled": "Browser notifications are enabled for this session.",
+	"batch_notifications_denied": "Browser permission was denied. Batch completion will be shown here.",
+	"batch_notifications_unsupported": "Browser notifications are unavailable. Batch completion will be shown here.",
+	"batch_notifications_dismiss": "Dismiss",
+	"batch_notification_title": "Rusticker batch complete",
+	"batch_notification_complete": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural",
+				"local countFormatted = count: number"
+			],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 image finished processing.",
+				"countPlural=other": "{countFormatted} images finished processing."
+			}
+		}
+	],
 	"tool_grid_heading": "Stickers",
 	"tool_grid_empty": "No stickers to show. Adjust the background or tolerance, or add another image.",
 	"tool_sticker_label": "Sticker {position} of {total}",
