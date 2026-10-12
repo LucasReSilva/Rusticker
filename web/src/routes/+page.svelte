@@ -4,6 +4,7 @@
 	import { getEditor } from '$lib/state.svelte';
 	import { detectionErrorMessage } from '$lib/detection';
 	import DropZone from '$lib/components/DropZone.svelte';
+	import BatchQueue from '$lib/components/BatchQueue.svelte';
 	import Preview from '$lib/components/Preview.svelte';
 	import Controls from '$lib/components/Controls.svelte';
 	import Grid from '$lib/components/Grid.svelte';
@@ -12,7 +13,8 @@
 	import { m } from '$lib/paraglide/messages';
 	const editor = getEditor();
 	$effect(() => {
-		stickerSizes.sync(editor.stickers);
+		stickerSizes.sync(editor.batchStickers);
+		editor.syncActiveBatch();
 	});
 	let seenError = 0;
 	$effect(() => {
@@ -24,9 +26,11 @@
 				? m.tool_error_unsupported_file()
 				: code === 'DecodeFailed'
 					? m.tool_error_decode_failed()
-					: code === 'Unknown'
-						? m.tool_error_unknown()
-						: detectionErrorMessage(code)
+					: code === 'BatchLimitExceeded'
+						? m.tool_error_batch_limit()
+						: code === 'Unknown'
+							? m.tool_error_unknown()
+							: detectionErrorMessage(code)
 		);
 	});
 	onMount(() => {
@@ -40,7 +44,7 @@
 				?.getAsFile();
 			if (image) {
 				event.preventDefault();
-				void editor.loadFile(image);
+				editor.addBatchFiles([image]);
 			} else if (items.some((item) => item.kind === 'file')) editor.rejectFile();
 		}
 		window.addEventListener('paste', paste);
@@ -57,8 +61,19 @@
 	<h1 class="font-display text-3xl font-bold">{m.app_tool_heading()}</h1>
 	<DropZone
 		compact={!!editor.source}
-		onFile={(file) => void editor.loadFile(file)}
+		multiple={true}
+		onFiles={(files) => editor.addBatchFiles(files)}
 		onReject={() => editor.rejectFile()}
+	/>
+	<BatchQueue
+		entries={editor.batchEntries}
+		activeId={editor.activeBatchId}
+		running={editor.batchRunning}
+		onActivate={(id) => editor.activateBatchEntry(id)}
+		onRetry={(id) => editor.retryBatchEntry(id)}
+		onRemove={(id) => editor.removeBatchEntry(id)}
+		onCancel={() => editor.cancelBatch()}
+		onClear={() => editor.clearBatch()}
 	/>
 	{#if editor.source}
 		<div class="grid min-w-0 items-start gap-6 lg:grid-cols-2">
@@ -90,7 +105,7 @@
 				<Grid
 					stickers={editor.stickers}
 					sizeOf={stickerSizes.get}
-					trayIconId={editor.trayIconId}
+					trayIconId={editor.batchTrayIconId}
 					busy={editor.isProcessing}
 					pending={editor.isProcessing && !editor.detected.length}
 					onRemove={(id) => editor.removeSticker(id)}
@@ -106,8 +121,8 @@
 				/>
 				<section data-slot="export" aria-label={m.tool_export_region_label()}>
 					<Export
-						stickers={editor.stickers}
-						trayIconId={editor.trayIconId}
+						stickers={editor.batchStickers}
+						trayIconId={editor.batchTrayIconId}
 						detecting={editor.isProcessing}
 					/>
 				</section>

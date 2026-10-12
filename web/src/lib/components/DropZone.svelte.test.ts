@@ -6,7 +6,7 @@ import { m } from '$lib/paraglide/messages';
 afterEach(cleanup);
 it.each(['Enter', ' '])('opens the chooser with %s', async (key) => {
 	const click = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
-	render(DropZone, { onFile: vi.fn(), onReject: vi.fn() });
+	render(DropZone, { onFiles: vi.fn(), onReject: vi.fn() });
 	await fireEvent.keyDown(screen.getByRole('button', { name: m.tool_dropzone_title() }), { key });
 	expect(click).toHaveBeenCalledOnce();
 	click.mockRestore();
@@ -14,7 +14,7 @@ it.each(['Enter', ' '])('opens the chooser with %s', async (key) => {
 it('keeps the dragging state until all nested enters leave and selects the first image', async () => {
 	const onFile = vi.fn(),
 		onReject = vi.fn();
-	render(DropZone, { onFile, onReject });
+	render(DropZone, { onFiles: onFile, onReject, multiple: true });
 	const area = screen.getByRole('button', { name: m.tool_dropzone_title() });
 	await fireEvent.dragEnter(area);
 	await fireEvent.dragEnter(area);
@@ -28,7 +28,7 @@ it('keeps the dragging state until all nested enters leave and selects the first
 	const first = new File([], 'one.png', { type: 'image/png' }),
 		second = new File([], 'two.png', { type: 'image/png' });
 	await fireEvent.drop(area, { dataTransfer: { files: [text, first, second] } });
-	expect(onFile).toHaveBeenCalledExactlyOnceWith(first);
+	expect(onFile).toHaveBeenCalledExactlyOnceWith([first, second]);
 });
 it('loads the sample image when sample button is clicked', async () => {
 	const onFile = vi.fn(),
@@ -38,12 +38,12 @@ it('loads the sample image when sample button is clicked', async () => {
 		blob: () => Promise.resolve(new Blob(['fake-png-bytes'], { type: 'image/png' }))
 	});
 	vi.stubGlobal('fetch', fetchMock);
-	render(DropZone, { onFile, onReject });
+	render(DropZone, { onFiles: onFile, onReject });
 	const sampleBtn = screen.getByRole('button', { name: m.dropzone_try_sample() });
 	await fireEvent.click(sampleBtn);
 	expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('rust-stickers.png'));
 	expect(onFile).toHaveBeenCalledOnce();
-	const passed = onFile.mock.calls[0][0];
+	const passed = onFile.mock.calls[0][0][0];
 	expect(passed.name).toBe('rust-stickers.png');
 	expect(passed.type).toBe('image/png');
 	vi.unstubAllGlobals();
@@ -52,7 +52,7 @@ it('calls onReject when sample fetch fails', async () => {
 	const onFile = vi.fn(),
 		onReject = vi.fn();
 	vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
-	render(DropZone, { onFile, onReject });
+	render(DropZone, { onFiles: onFile, onReject });
 	const sampleBtn = screen.getByRole('button', { name: m.dropzone_try_sample() });
 	await fireEvent.click(sampleBtn);
 	expect(onReject).toHaveBeenCalledOnce();
