@@ -82,9 +82,10 @@ algorithm, and [DESIGN.md](DESIGN.md) for the design system and i18n rules.
 
 The v0.2.1 implementation is documented in archived OpenSpec changes.
 Follow-up work is being planned in
-the existing GitHub Project as six epics and 22 child issues. In addition to
-sticker separation, WhatsApp metadata, editing, Telegram files, and agent
-coordination, the roadmap covers batch input, processing modes, theme colors,
+the existing GitHub Project as six epics and 23 child issues. The current top
+priorities are a technical documentation and code audit (P0), followed by the
+Rust orange/WhatsApp green palette (P1). In addition to sticker separation,
+WhatsApp metadata, editing, Telegram files, and agent coordination, the roadmap covers batch input, processing modes, theme colors,
 local history, notifications, WebMCP, and optional ONNX split assistance. The
 board's `Complexity` field orders relative effort from `S` through `XL`; these
 items are planning candidates, not a release commitment.

@@ -14,7 +14,7 @@ Rusticker's v0.2.1 release leaves several independently valuable improvements, b
 
 ## Proposed Issue Inventory
 
-The existing project contains six parent epics and 22 child issues. These are planning scopes, not a promise that every experiment will ship in the next release. The `Complexity` field uses relative sizes (`S`, `M`, `L`, `XL`), with larger values indicating more effort and uncertainty. Keep the release branch gated on the repository's end-to-end release-readiness rule.
+The existing project contains six parent epics and 23 child issues. These are planning scopes, not a promise that every experiment will ship in the next release. The `Priority` field orders execution urgency (`P0` through `P3`); the `Complexity` field estimates relative effort (`S`, `M`, `L`, `XL`) independently. The immediate order is P0 technical documentation review (#56), then P1 theme colors (#44). Keep the release branch gated on the repository's end-to-end release-readiness rule.
 
 ### Existing roadmap issues
 
@@ -31,11 +31,17 @@ The existing project contains six parent epics and 22 child issues. These are pl
 | Export static sticker files for Telegram workflows | Export Telegram-compatible static sticker images | P2 | Produce transparent PNG/WEBP files with one dimension exactly 512 px and the other at most 512 px, using locale-neutral names. Explain that users continue in Telegram's editor or `@Stickers`; do not claim the ZIP imports as a native set or upload images. |
 | Coordinate parallel agent work with atomic issue claims | Document and verify the issue-claim lifecycle | P0 | Update `AGENTS.md`; verify non-forced remote lock creation has a single winner, project/issue metadata mirrors the claim, PR completion clears it, and stale recovery cannot delete a changed lock. Document any GitHub permission/setup prerequisite. |
 
-### Added post-release requests, ordered by relative complexity
+### Immediate priority sequence
+
+| Priority | Issue | Acceptance criteria and sequence |
+|---|---|---|
+| P0 | [#56 Audit implementation and strengthen technical documentation](https://github.com/LucasReSilva/Rusticker/issues/56) | Review the implemented Rust/core, WASM/worker, frontend, and export flow; support technical claims with relevant research and primary references; add accurate Mermaid diagrams; document privacy boundaries; make no unplanned behavior changes. Complete first. |
+| P1 | [#44 Rust orange and WhatsApp green palette](https://github.com/LucasReSilva/Rusticker/issues/44) | Update semantic light/dark theme tokens, preserving contrast, focus states, and design-system usage. Schedule immediately after #56. |
+
+### Other added post-release requests, ordered by relative complexity
 
 | Complexity | Issue | Acceptance criteria and dependency |
 |---|---|---|
-| S | [#44 Rust orange and WhatsApp green palette](https://github.com/LucasReSilva/Rusticker/issues/44) | Update semantic light/dark theme tokens, preserving contrast, focus states, and design-system usage. |
 | S | [#47 Completion notifications](https://github.com/LucasReSilva/Rusticker/issues/47) | Request permission only after user action; provide localized fallback, opt-out, and local-only completion events. |
 | M | [#46 Automatic and Advanced modes](https://github.com/LucasReSilva/Rusticker/issues/46) | Automatic mode applies documented defaults; Advanced exposes supported controls while preserving image/results and accessibility. |
 | M | [#48 Privacy-first local history design](https://github.com/LucasReSilva/Rusticker/issues/48) | Decide between local hash lookup and browsable history; specify opt-in, retention, deletion, quota, and whether image blobs persist. |
@@ -50,7 +56,7 @@ The existing project contains six parent epics and 22 child issues. These are pl
 
 Research and diagnosis issues are gates, not implementation commitments. In particular, #49 depends on the history design, #51 on WebMCP evaluation, #53 on background-failure diagnosis, and #55 on ONNX evaluation. The board's complexity sizes are relative estimates, not schedules. Add native GitHub issue dependencies where supported; otherwise keep the dependency explicit in both descriptions. Do not assign a release milestone until maintainers confirm the scope is functionally complete.
 
-Across the complete roadmap, the board's ascending complexity order is: **S** — #44, #47; **M** — #32, #34–#37, #40, #46, #48, #50, #52; **L** — #33, #38, #41, #45, #49, #51, #53, #54; **XL** — #39, #55. This is relative engineering effort, not priority or a promised sequence; dependencies and release readiness still govern scheduling.
+Priority and complexity are separate: **P0 first** — #56 (documentation/code audit), followed immediately by **P1** — #44 (theme colors). Remaining items can be sequenced by dependency and relative complexity. Across the roadmap, complexity is: **S** — #44, #47; **M** — #32, #34–#37, #40, #46, #48, #50, #52, #56; **L** — #33, #38, #41, #45, #49, #51, #53, #54; **XL** — #39, #55. Complexity is not priority or a promised schedule; dependencies and release readiness still govern execution.
 
 Out of scope: implementing any detection, editing, metadata, or export feature; changing release automation; uploading images or archives; and silently creating a replacement GitHub Project if the existing board cannot be accessed.
 
@@ -68,5 +74,5 @@ None. Product behavior and its current capability specifications do not change i
 
 - Repository docs: `AGENTS.md`.
 - OpenSpec: one new `agent-work-coordination` capability spec.
-- GitHub: repository labels and 28 issues (six epics and 22 children), plus items in the existing project. The project has `Todo`, `In Progress`, `In Review`, and `Done` status values and a relative `Complexity` field (`S`, `M`, `L`, `XL`); issues remain the detailed scope and acceptance criteria.
+- GitHub: repository labels and 29 issues (six epics and 23 children), plus items in the existing project. The project has `Todo`, `In Progress`, `In Review`, and `Done` statuses, a `Priority` field (`P0`–`P3`), and relative `Complexity` (`S`, `M`, `L`, `XL`); issues remain the detailed scope and acceptance criteria.
 - No Rust, WebAssembly, frontend, dependency, or release workflow changes.
