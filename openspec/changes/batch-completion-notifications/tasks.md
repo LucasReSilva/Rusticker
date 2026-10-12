@@ -4,3 +4,4 @@
 - [x] 2. Add localized enable, disable, fallback, and completion messages in all supported locales; verify with `bun run i18n:check`.
 - [x] 3. Test granted, denied, unsupported, disabled, and batch completion behavior with browser API mocks; verify with `bun run test`.
 - [x] 4. Run web lint, tests, production build, and strict OpenSpec validation; document real-browser permission UI as a manual check.
+- [x] 5. Mount the controls beside the batch queue and verify the tool page exposes them; document browser permission UI as a manual check.
