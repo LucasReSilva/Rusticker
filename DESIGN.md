@@ -61,43 +61,43 @@ The light palette applies to `:root, .light`; `.dark` defines the dark palette.
 OKLCH values are the source of truth; approximate sRGB hex values below are reference only.
 | Token | Light (`:root`, `.light`) | ≈ hex | Dark (`.dark`) | ≈ hex |
 |---|---|---|---|---|
-| `background` | `oklch(0.99 0.004 300)` | `#fcfbfe` | `oklch(0.17 0.025 295)` | `#100d19` |
-| `foreground` | `oklch(0.2 0.03 295)` | `#171322` | `oklch(0.97 0.008 300)` | `#f6f4fa` |
-| `card` / `popover` | `oklch(1 0 0)` | `#ffffff` | `oklch(0.21 0.03 295)` | `#191525` |
+| `background` | `oklch(0.99 0.005 85)` | `#fdfcf8` | `oklch(0.17 0.02 145)` | `#0a120a` |
+| `foreground` | `oklch(0.2 0.02 70)` | `#1c140c` | `oklch(0.97 0.008 110)` | `#f5f6f0` |
+| `card` / `popover` | `oklch(1 0 0)` | `#ffffff` | `oklch(0.21 0.025 145)` | `#111b11` |
 | `card-foreground` / `popover-foreground` | = `foreground` | | = `foreground` | |
-| `primary` | `oklch(0.52 0.24 300)` | `#822dda` | `oklch(0.74 0.15 305)` | `#c190f6` |
-| `primary-foreground` | `oklch(0.99 0.004 300)` | `#fcfbfe` | `oklch(0.17 0.025 295)` | `#100d19` |
-| `secondary` | `oklch(0.95 0.025 300)` | `#f1ebfd` | `oklch(0.3 0.05 300)` | `#322843` |
-| `secondary-foreground` | `oklch(0.3 0.08 300)` | `#34234f` | `oklch(0.95 0.02 300)` | `#f0ecfa` |
-| `muted` | `oklch(0.96 0.01 300)` | `#f3f0f8` | `oklch(0.26 0.03 295)` | `#252131` |
-| `muted-foreground` | `oklch(0.48 0.03 295)` | `#5e5b6d` | `oklch(0.74 0.03 300)` | `#ada7bb` |
-| `accent` (hover surfaces) | `oklch(0.94 0.03 300)` | `#eee7fd` | `oklch(0.32 0.06 300)` | `#382b4d` |
-| `accent-foreground` | `oklch(0.28 0.08 300)` | `#2f1d4a` | `oklch(0.97 0.008 300)` | `#f6f4fa` |
+| `primary` (Rust orange) | `oklch(0.56 0.14 42)` | `#b65329` | `oklch(0.75 0.12 42)` | `#ee9370` |
+| `primary-foreground` | `oklch(0.99 0.005 90)` | `#fdfcf8` | = `background` | `#0a120a` |
+| `secondary` (WhatsApp green surface) | `oklch(0.94 0.05 145)` | `#d7f5d7` | `oklch(0.28 0.06 145)` | `#133015` |
+| `secondary-foreground` | `oklch(0.32 0.08 145)` | `#133d17` | `oklch(0.93 0.03 145)` | `#dceedc` |
+| `muted` | `oklch(0.96 0.01 100)` | `#f3f2eb` | `oklch(0.26 0.03 145)` | `#1b281b` |
+| `muted-foreground` | `oklch(0.48 0.025 110)` | `#5e5f4f` | `oklch(0.74 0.03 120)` | `#a8ae99` |
+| `accent` (green hover surfaces) | `oklch(0.92 0.07 148)` | `#c6f2cb` | `oklch(0.32 0.07 148)` | `#153c1d` |
+| `accent-foreground` | `oklch(0.3 0.07 148)` | `#0f3718` | `oklch(0.96 0.02 145)` | `#eaf6ea` |
 | `destructive` | `oklch(0.55 0.22 27)` | `#d40c1a` | `oklch(0.68 0.19 25)` | `#f75d59` |
-| `destructive-foreground` | `oklch(0.99 0.004 300)` | `#fcfbfe` | `oklch(0.17 0.025 295)` | `#100d19` |
-| `border` (decorative) | `oklch(0.9 0.015 300)` | `#dfdce7` | `oklch(0.32 0.03 295)` | `#343041` |
-| `input` (control borders) | `oklch(0.62 0.03 300)` | `#898296` | `oklch(0.5 0.03 300)` | `#666072` |
-| `ring` | = `primary` | `#822dda` | = `primary` | `#c190f6` |
-| `checkerboard-a` | `oklch(0.97 0.004 300)` | `#f5f4f7` | `oklch(0.3 0.015 295)` | `#2e2c35` |
-| `checkerboard-b` | `oklch(0.88 0.008 300)` | `#d8d6dc` | `oklch(0.24 0.015 295)` | `#201e26` |
+| `destructive-foreground` | `oklch(0.99 0.005 90)` | `#fdfcf8` | = `background` | `#0a120a` |
+| `border` (decorative) | `oklch(0.9 0.015 100)` | `#e0ded3` | `oklch(0.32 0.025 145)` | `#2b362b` |
+| `input` (control borders) | `oklch(0.62 0.03 125)` | `#828a76` | `oklch(0.5 0.03 145)` | `#596859` |
+| `ring` | = `primary` | `#b65329` | = `primary` | `#ee9370` |
+| `checkerboard-a` | `oklch(0.97 0.004 100)` | `#f6f5f2` | `oklch(0.3 0.015 145)` | `#293029` |
+| `checkerboard-b` | `oklch(0.88 0.008 100)` | `#d8d8d2` | `oklch(0.24 0.012 145)` | `#1c211c` |
 
 Contrast ratios (WCAG 2.x), computed from these values:
 
 | Pair | Light | Dark | Threshold |
 |---|---|---|---|
-| foreground / background | 17.66 | 17.56 | 4.5 |
-| foreground / card | 18.19 | 16.30 | 4.5 |
-| muted-foreground / background | 6.41 | 8.25 | 4.5 |
-| muted-foreground / muted | 5.86 | 6.73 | 4.5 |
-| primary-foreground / primary | 6.09 | 7.87 | 4.5 |
-| primary / background (links, indicators) | 6.09 | 7.87 | 4.5 |
-| secondary-foreground / secondary | 12.05 | 11.92 | 4.5 |
-| accent-foreground / accent | 12.48 | 11.85 | 4.5 |
-| destructive-foreground / destructive | 5.28 | 6.10 | 4.5 |
-| destructive / background | 5.28 | 6.10 | 4.5 |
-| ring / background | 6.09 | 7.87 | 3.0 |
-| input / background | 3.57 | 3.16 | 3.0 |
-| foreground / checkerboard-b | 12.65 | 15.10 | 4.5 |
+| foreground / background | 17.62 | 17.49 | 4.5 |
+| foreground / card | 18.13 | 16.17 | 4.5 |
+| muted-foreground / background | 6.32 | 8.33 | 4.5 |
+| muted-foreground / muted | 5.79 | 6.72 | 4.5 |
+| primary-foreground / primary | 4.80 | 8.22 | 4.5 |
+| primary / background (links, indicators) | 4.80 | 8.22 | 4.5 |
+| secondary-foreground / secondary | 10.49 | 11.75 | 4.5 |
+| accent-foreground / accent | 10.74 | 11.05 | 4.5 |
+| destructive-foreground / destructive | 5.28 | 6.06 | 4.5 |
+| destructive / background | 5.28 | 6.06 | 4.5 |
+| ring / background | 4.80 | 8.22 | 3.0 |
+| input / background | 3.51 | 3.22 | 3.0 |
+| foreground / checkerboard-b | 12.64 | 15.05 | 4.5 |
 
 
 Decorative `border` is intentionally subtle; meaningful control boundaries use `input`.
@@ -106,7 +106,7 @@ rejects raw colors, physical direction utilities, and arbitrary pixel sizes outs
 
 - Radius: `--radius: 0.75rem`; sm/md/lg/xl/2xl/3xl/4xl multiply it by 0.6/0.8/1/1.4/1.8/2.2/2.6.
 - Fonts: `--font-sans` uses the system UI stack; `--font-mono` uses SFMono-Regular, Menlo, Consolas; `--font-display` uses rounded system fonts with the sans stack as fallback. Fonts require no download.
-- Shadows: `--shadow-2xs/xs/sm/md/lg/xl` use violet-tinted shadow tokens in light and deeper black in dark. `--shadow-sticker` combines a small contact shadow with a soft lifted shadow.
+- Shadows: `--shadow-2xs/xs/sm/md/lg/xl` use warm-neutral shadow tokens in light and deeper black in dark. `--shadow-sticker` combines a small contact shadow with a soft lifted shadow.
 - Transparency: `--checkerboard-a`, `--checkerboard-b`, and `--checkerboard-size: 0.75rem` power `bg-checkerboard`, a repeating conic gradient that recolors with the theme.
 
 ### Theme
