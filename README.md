@@ -82,16 +82,18 @@ algorithm, and [DESIGN.md](DESIGN.md) for the design system and i18n rules.
 
 The v0.2.1 implementation is documented in archived OpenSpec changes.
 Follow-up work is being planned in
-the existing GitHub Project as five epics: improve separation of connected
-stickers and edge quality; customize WhatsApp pack metadata where a tested
-importer supports it; edit sticker order and boundaries; export static sticker
-files for Telegram workflows; and coordinate parallel agent work with atomic
-issue claims. These items are planning candidates, not a release commitment.
+the existing GitHub Project as six epics and 22 child issues. In addition to
+sticker separation, WhatsApp metadata, editing, Telegram files, and agent
+coordination, the roadmap covers batch input, processing modes, theme colors,
+local history, notifications, WebMCP, and optional ONNX split assistance. The
+board's `Complexity` field orders relative effort from `S` through `XL`; these
+items are planning candidates, not a release commitment.
 
 Telegram scope is limited to local static PNG/WEBP files; users continue in
 Telegram's editor or `@Stickers`. WhatsApp title/author work is gated on
-verifying a named importer's actual format support. User images remain on the
-device. See [the roadmap proposal](openspec/changes/post-release-agent-coordination/proposal.md)
+verifying a named importer's actual format support. ONNX and WebMCP work start
+with feasibility checks; ONNX would remain an opt-in local second step after
+the existing detector. User images remain on the device. See [the roadmap proposal](openspec/changes/post-release-agent-coordination/proposal.md)
 for issue-level acceptance criteria.
 
 ## Repository layout (planned)
