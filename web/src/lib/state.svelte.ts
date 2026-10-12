@@ -9,6 +9,7 @@ import {
 	type Sticker
 } from '$lib/detection';
 import { decodeImage, type DecodedImage } from '$lib/tool/decode';
+import { applyStickerOrder, moveStickerById } from '$lib/tool/sticker-order';
 
 export type EditorStatus = 'idle' | 'decoding' | 'detecting' | 'ready' | 'error';
 export type EditorErrorCode =
@@ -81,12 +82,19 @@ export class EditorState {
 	activeBatchId = $state<string | null>(null);
 	batchRunning = $state(false);
 	private pendingDebounce = $state(false);
-	readonly stickers = $derived(this.detected.filter((sticker) => !this.removedIds.has(sticker.id)));
+	private stickerOrder = $state.raw<string[]>([]);
+	readonly stickers = $derived(
+		applyStickerOrder(
+			this.detected.filter((sticker) => !this.removedIds.has(sticker.id)),
+			this.stickerOrder
+		)
+	);
 	readonly batchStickers = $derived(
 		this.batchEntries.length ? this.batchEntries.flatMap((entry) => entry.stickers) : this.stickers
 	);
 	readonly batchTrayIconId = $derived(
-		this.batchEntries.find((entry) => entry.id === this.activeBatchId)?.trayIconId ??
+		(this.status === 'ready' ? this.trayIconId : null) ??
+			this.batchEntries.find((entry) => entry.id === this.activeBatchId)?.trayIconId ??
 			this.batchEntries.find((entry) => entry.status === 'done')?.trayIconId ??
 			this.batchStickers[0]?.id ??
 			null
@@ -270,6 +278,7 @@ export class EditorState {
 		if (this.source) URL.revokeObjectURL(this.source.url);
 		this.source = null;
 		this.detected = [];
+		this.stickerOrder = [];
 		this.removedIds.clear();
 		this.trayIconId = null;
 		this.splitPreview = null;
@@ -353,6 +362,7 @@ export class EditorState {
 			});
 			if (sequence !== this.sequence || this.disposed) return;
 			this.detected = result;
+			this.stickerOrder = result.map((sticker) => sticker.id);
 			this.splitPreview = null;
 			this.splitBusyId = null;
 			this.noSplitProposalId = null;
@@ -364,6 +374,7 @@ export class EditorState {
 		} catch (error) {
 			if (sequence !== this.sequence || this.disposed || isCancelled(error)) return;
 			this.detected = [];
+			this.stickerOrder = [];
 			this.splitPreview = null;
 			this.splitBusyId = null;
 			this.noSplitProposalId = null;
@@ -380,7 +391,19 @@ export class EditorState {
 		if (this.splitPreview?.source.id === id) this.splitPreview = null;
 		if (this.noSplitProposalId === id) this.noSplitProposalId = null;
 		this.removedIds.add(id);
+		this.stickerOrder = this.stickerOrder.filter((stickerId) => stickerId !== id);
 		if (this.trayIconId === id) this.trayIconId = this.stickers[0]?.id ?? null;
+	}
+
+	reorderSticker(id: string, toIndex: number): boolean {
+		if (this.isProcessing) return false;
+		const current = this.stickers;
+		const fromIndex = current.findIndex((sticker) => sticker.id === id);
+		if (fromIndex < 0 || !Number.isInteger(toIndex) || toIndex < 0 || toIndex >= current.length)
+			return false;
+		if (fromIndex === toIndex) return false;
+		this.stickerOrder = moveStickerById(current, id, toIndex).map((sticker) => sticker.id);
+		return true;
 	}
 
 	async requestSplit(id: string): Promise<void> {
@@ -419,6 +442,12 @@ export class EditorState {
 			index: sourceIndex + index,
 			bbox: mapSplitBox(candidate.bbox, proposal.source.bbox)
 		}));
+		const ordered = this.stickers.map((sticker) => sticker.id);
+		const orderIndex = ordered.indexOf(proposal.source.id);
+		if (orderIndex >= 0) {
+			ordered.splice(orderIndex, 1, ...replacements.map((sticker) => sticker.id));
+			this.stickerOrder = ordered;
+		}
 		this.detected = [
 			...this.detected.slice(0, sourceIndex),
 			...replacements,
@@ -456,6 +485,20 @@ export class EditorState {
 		const firstIndex = this.detected.findIndex((sticker) => replacementIds.has(sticker.id));
 		if (firstIndex < 0) return;
 		const affectedIds = new SvelteSet([group.original.id, ...replacementIds]);
+		const currentOrder = this.stickers.map((sticker) => sticker.id);
+		let orderIndex = currentOrder.findIndex((stickerId) => replacementIds.has(stickerId));
+		if (orderIndex < 0) {
+			orderIndex = currentOrder.findIndex((stickerId) => {
+				const detectedIndex = this.detected.findIndex((sticker) => sticker.id === stickerId);
+				return detectedIndex >= firstIndex;
+			});
+			if (orderIndex < 0) orderIndex = currentOrder.length;
+		}
+		const restoredOrder = currentOrder.filter((stickerId) => !replacementIds.has(stickerId));
+		const insertionIndex = currentOrder
+			.slice(0, orderIndex)
+			.filter((stickerId) => !replacementIds.has(stickerId)).length;
+		restoredOrder.splice(insertionIndex, 0, group.original.id);
 		this.detected = [
 			...this.detected.slice(0, firstIndex),
 			group.original,
@@ -472,6 +515,7 @@ export class EditorState {
 			++this.sequence;
 		}
 		for (const affectedId of affectedIds) this.removedIds.delete(affectedId);
+		this.stickerOrder = restoredOrder;
 		if (affectedIds.has(this.trayIconId ?? '')) {
 			this.trayIconId = group.original.id;
 		}

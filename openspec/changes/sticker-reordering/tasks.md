@@ -5,11 +5,11 @@
 
 ## 2. Editor integration
 
-- [ ] 2.1 Store custom order in editor state and reset it on new detection; reconcile it after removal, split, undo, and batch activation.
-- [ ] 2.2 Render the ordered kept stickers in the grid and send that same order to preview and export while preserving tray-icon identity.
-- [ ] 2.3 Add pointer drag-and-drop and keyboard reorder controls with focus retention and localized live announcements in all supported locales.
+- [x] 2.1 Store custom order in editor state and reset it on new detection; reconcile it after removal, split, undo, and batch activation.
+- [x] 2.2 Render the ordered kept stickers in the grid and send that same order to preview and export while preserving tray-icon identity.
+- [x] 2.3 Add pointer drag-and-drop and keyboard reorder controls with focus retention and localized live announcements in all supported locales.
 
 ## 3. Validation
 
-- [ ] 3.1 Add editor and UI tests for pointer and keyboard ordering, removal/split interactions, detection reset, tray icon, and exported order.
-- [ ] 3.2 Verify all supported locales, accessibility, relevant web tests, and production build.
+- [x] 3.1 Add editor and UI tests for pointer and keyboard ordering, removal/split interactions, detection reset, tray icon, and exported order.
+- [x] 3.2 Verify all supported locales, accessibility, relevant web tests, and production build.
