@@ -83,6 +83,7 @@ it.each(['pt-BR', 'en', 'es'] as const)(
 		const { container } = render(Page);
 		await editor.loadFile(file());
 		const original = editor.stickers[0];
+		await fireEvent.click(screen.getByRole('button', { name: m.tool_processing_mode_advanced() }));
 		await fireEvent.click(screen.getByRole('button', { name: m.tool_split_request() }));
 		await screen.findByText(m.tool_split_unavailable());
 		expect(editor.stickers).toEqual([original]);
@@ -136,6 +137,7 @@ it('uses an accepted split in the sticker count and export eligibility', async (
 	setEditorForTesting(editor);
 	const { container } = render(Page);
 	await editor.loadFile(file());
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_processing_mode_advanced() }));
 	const exportButton = await screen.findByRole('button', { name: m.export_download_button() });
 	expect(exportButton).toBeDisabled();
 	await fireEvent.click(screen.getAllByRole('button', { name: m.tool_split_request() })[0]);
@@ -143,5 +145,28 @@ it('uses an accepted split in the sticker count and export eligibility', async (
 	await fireEvent.click(screen.getByRole('button', { name: m.tool_split_accept() }));
 	await waitFor(() => expect(container.querySelectorAll('[data-sticker-card]')).toHaveLength(3));
 	expect(exportButton).toBeEnabled();
+});
+it('switches modes without redetecting or changing curated/export state', async () => {
+	const { container } = render(Page);
+	await editor.loadFile(file());
+	const source = editor.source;
+	const detected = editor.detected;
+	const stickerId = editor.stickers[0].id;
+	editor.removeSticker(stickerId);
+	editor.setTrayIcon(editor.stickers[0].id);
+	const curated = [...editor.stickers];
+	const trayIconId = editor.trayIconId;
+	const exportButton = await screen.findByRole('button', { name: m.export_download_button() });
+	const disabledBefore = exportButton.hasAttribute('disabled');
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_processing_mode_advanced() }));
+	expect(await screen.findByRole('slider')).toBeInTheDocument();
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_processing_mode_automatic() }));
+	expect(screen.queryByRole('slider')).not.toBeInTheDocument();
+	expect(editor.source).toBe(source);
+	expect(editor.detected).toBe(detected);
+	expect(editor.stickers).toEqual(curated);
+	expect(editor.trayIconId).toBe(trayIconId);
+	expect(exportButton.hasAttribute('disabled')).toBe(disabledBefore);
+	expect(container.querySelectorAll('[data-sticker-card]')).toHaveLength(curated.length);
 });
 import '@testing-library/jest-dom/vitest';
