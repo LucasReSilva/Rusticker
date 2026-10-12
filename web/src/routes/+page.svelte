@@ -11,6 +11,7 @@
 	import Export from '$lib/components/Export.svelte';
 	import { stickerSizes } from '$lib/export';
 	import { m } from '$lib/paraglide/messages';
+	import HistoryRecorder from '$lib/history/HistoryRecorder.svelte';
 	const editor = getEditor();
 	$effect(() => {
 		stickerSizes.sync(editor.batchStickers);
@@ -58,6 +59,7 @@
 </svelte:head>
 
 <div class="mx-auto flex max-w-7xl min-w-0 flex-col gap-6 p-4 sm:p-6">
+	<HistoryRecorder />
 	<h1 class="font-display text-3xl font-bold">{m.app_tool_heading()}</h1>
 	<DropZone
 		compact={!!editor.source}
