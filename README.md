@@ -61,7 +61,7 @@ The complete flow is verified with synthetic images, including offline export.
 Release automation uses `release-plz` and `git-cliff`; release readiness still
 requires the end-to-end image-to-pack flow to work before a new release is made.
 
-## Planned stack
+## Technology stack
 
 - **Core:** Rust compiled to WebAssembly with `wasm-pack` and `wasm-bindgen`,
   using the `image` and `imageproc` crates (no OpenCV).
@@ -75,8 +75,9 @@ requires the end-to-end image-to-pack flow to work before a new release is made.
 - **Tooling:** Bun as package manager and runtime.
 - **Offline:** installable PWA via `@vite-pwa/sveltekit`.
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the data flow and the detection
-algorithm, and [DESIGN.md](DESIGN.md) for the design system and i18n rules.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the implemented detection pipeline,
+browser-to-WASM data flow, known limits, and technical references. See
+[DESIGN.md](DESIGN.md) for the design system and i18n rules.
 
 ## Post-release roadmap
 
@@ -94,10 +95,10 @@ Telegram scope is limited to local static PNG/WEBP files; users continue in
 Telegram's editor or `@Stickers`. WhatsApp title/author work is gated on
 verifying a named importer's actual format support. ONNX and WebMCP work start
 with feasibility checks; ONNX would preferably use Rust/WASM as an opt-in local
-second step after the existing detector. User images remain on the device. See [the roadmap proposal](openspec/changes/post-release-agent-coordination/proposal.md)
+second step after the existing detector. User images remain on the device. See [the roadmap proposal](openspec/changes/2026-10-12-post-release-agent-coordination/proposal.md)
 for issue-level acceptance criteria.
 
-## Repository layout (planned)
+## Repository layout
 
 ```text
 core/       Rust crate `rusticker-core`, compiled to WebAssembly (core-detection)
@@ -260,7 +261,7 @@ change that introduces them.
 
 | Document                               | Contents                                                   |
 |----------------------------------------|------------------------------------------------------------|
-| [ARCHITECTURE.md](ARCHITECTURE.md)     | Monorepo layout, data flow, detection algorithm, Rust ↔ JS |
+| [ARCHITECTURE.md](ARCHITECTURE.md)     | Current pipeline, browser/WASM data flow, limits, references |
 | [DESIGN.md](DESIGN.md)                 | Design system, tokens, accessibility, i18n                 |
 | [CONTRIBUTING.md](CONTRIBUTING.md)     | Setup, hooks, commits, adding a locale or a component      |
 | [SECURITY.md](SECURITY.md)             | Privacy guarantees and private vulnerability reporting     |
