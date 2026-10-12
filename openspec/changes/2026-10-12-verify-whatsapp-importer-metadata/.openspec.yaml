@@ -1,0 +1,5 @@
+schema: spec-driven
+skip_specs: true
+created: 2026-10-12
+goal: Record the supported third-party archive contract and determine whether
+  product metadata export is justified.
