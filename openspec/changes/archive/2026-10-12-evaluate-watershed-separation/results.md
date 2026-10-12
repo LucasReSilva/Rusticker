@@ -2,9 +2,9 @@
 
 ## Method
 
-The production baseline is the existing 3x3 morphological opening followed by 8-connected labeling. A test-only candidate computes squared Euclidean distance inside each padded component bounding box, collapses equal-height regional-maxima plateaus, drops peaks below 25% of the component's highest peak, applies an 8-pixel minimum separation, and floods the distance surface in descending order with deterministic queue ties. This is a deliberately small proof of concept, not a production watershed implementation.
+The production baseline is the existing 3x3 morphological opening followed by 8-connected labeling. The harness omits production's 0.4% component-area filter, so the baseline is an approximation for these generated fixtures. A test-only candidate computes squared Euclidean distance inside each component bounding box with an explicit one-pixel outside border, collapses equal-height regional-maxima plateaus, drops peaks below 25% of the component's highest **squared** distance (equivalent to half its largest linear radius), applies an 8-pixel minimum separation, and performs a deterministic maximin priority flood. This is a deliberately small proof of concept, not a production watershed implementation or a complete reference watershed.
 
-All masks and per-instance ground truth are generated in Rust at 96x80 pixels. The harness compares exact region counts, missed splits, false splits, greedy one-to-one mean IoU, deterministic repeatability, and foreground coverage. No source images or private data are used.
+All masks and per-instance ground truth are generated in Rust at 96x80 pixels. The harness compares exact region counts, greedy one-to-one mean IoU (unmatched ground-truth instances contribute zero), deterministic repeatability, and foreground coverage. The reported missed/false split values are count differences only; they do not establish instance correspondence. IoU and the ambiguous-shape cases provide additional evidence, though this small synthetic set cannot establish general accuracy. No source images or private data are used.
 
 ## Results
 
@@ -15,13 +15,13 @@ All masks and per-instance ground truth are generated in Rust at 96x80 pixels. T
 | 1px bridge | 2 / 2 | 2 / 2 | Existing opening removes the bridge, so watershed adds no benefit |
 | 3px, 6px, and 12px bridges | 1 / 2 each | 2 / 2 each | Recovers intended count; mean IoU 0.983, 0.968, and 0.940 |
 | Edge-touching and close-separated disks | 2 / 2 each | 2 / 2 each | Same count as baseline; mean IoU at least 0.993 |
-| Single disk, rectangle, and L | 1 / 1 each | 1 / 1 each | No false splits |
-| Single ring | 1 / 1 | 7 / 1 | Six false splits; mean IoU 0.236 |
-| Single star | 1 / 1 | 5 / 1 | Four false splits; mean IoU 0.687 |
-| Same dumbbell mask interpreted as one sticker | 1 / 1 | 2 / 1 | One false split; mean IoU 0.500 |
+| Single disk (including one clipped at the left image edge), rectangle, and L | 1 / 1 each | 1 / 1 each | No extra regions; IoU at least 0.995 |
+| Single ring | 1 / 1 | 7 / 1 | Six extra regions; mean IoU 0.376 |
+| Single star | 1 / 1 | 5 / 1 | Four extra regions; mean IoU 0.988 |
+| Same dumbbell mask interpreted as one sticker | 1 / 1 | 2 / 1 | One extra region; mean IoU 0.500 |
 | Same dumbbell mask interpreted as two stickers | 1 / 2 | 2 / 2 | Intended count recovered; mean IoU 0.992 |
 
-The candidate assigned every foreground pixel in these fixtures (100% coverage), and repeated runs produced identical labels. That does not imply useful boundaries: the ring and single-dumbbell false splits remain severe despite full coverage. The same dumbbell pixels yield the same two candidate regions under either ground-truth interpretation, demonstrating that binary shape alone cannot resolve sticker intent.
+The candidate assigned every foreground pixel in these fixtures (100% coverage), and repeated runs produced identical labels. It does not emit watershed lines, so full coverage says nothing about boundary quality. The ring and single-dumbbell extra regions remain severe despite full coverage. The same dumbbell pixels yield the same two candidate regions under either ground-truth interpretation, demonstrating that binary shape alone cannot resolve sticker intent.
 
 ## Recommendation
 
