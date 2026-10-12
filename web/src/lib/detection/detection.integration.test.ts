@@ -9,7 +9,7 @@ import jpeg from 'jpeg-js';
 import init from 'rusticker-core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { runDetect, runSplit } from './engine';
-import type { RawSticker, SplitRequest } from './protocol';
+import type { RawSticker, SplitRequest, WorkerRequest } from './protocol';
 import { STICKER_SIZE } from './types';
 
 const samplePath = process.env.RUSTICKER_SAMPLE_IMAGE;
@@ -126,6 +126,47 @@ describe('split proposal through the real WASM engine', () => {
 		expect(first.stickers).toHaveLength(2);
 		expect(first.stickers.map((sticker) => [...new Uint8Array(sticker.rgba)])).toEqual(
 			second.stickers.map((sticker) => [...new Uint8Array(sticker.rgba)])
+		);
+	});
+});
+
+describe('edge color decontamination through the real WASM engine', () => {
+	it('removes known green spill without changing alpha or sticker bounds', () => {
+		const width = 600;
+		const height = 360;
+		const background = [16, 240, 16] as const;
+		const foreground = [240, 16, 16] as const;
+		const mixedEdge = [128, 128, 16] as const;
+		const clean = new Uint8Array(width * height * 4);
+		for (let offset = 0; offset < clean.length; offset += 4) {
+			clean.set([...background, 255], offset);
+		}
+		const mixed = clean.slice();
+		for (let y = 60; y < 300; y++) {
+			for (let x = 60; x < 540; x++) {
+				const isEdge = x === 60 || x === 539 || y === 60 || y === 299;
+				const offset = (y * width + x) * 4;
+				clean.set([...foreground, 255], offset);
+				mixed.set([...(isEdge ? mixedEdge : foreground), 255], offset);
+			}
+		}
+		const request = (rgba: Uint8Array): WorkerRequest => ({
+			rgba: rgba.slice().buffer as ArrayBuffer,
+			width,
+			height,
+			background: 0x10f010,
+			tolerance: 50
+		});
+
+		const cleanResult = runDetect(request(clean));
+		const mixedResult = runDetect(request(mixed));
+		expect(cleanResult.ok).toBe(true);
+		expect(mixedResult.ok).toBe(true);
+		if (!cleanResult.ok || !mixedResult.ok) return;
+		expect(mixedResult.stickers).toHaveLength(1);
+		expect(mixedResult.stickers[0].bbox).toEqual(cleanResult.stickers[0].bbox);
+		expect(new Uint8Array(mixedResult.stickers[0].rgba)).toEqual(
+			new Uint8Array(cleanResult.stickers[0].rgba)
 		);
 	});
 });

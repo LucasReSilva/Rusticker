@@ -48,8 +48,10 @@ pipeline. The image is a straight RGBA buffer. Fully transparent pixels are
 always background, independent of their stored RGB values. At tolerance zero,
 classification uses exact RGB equality with the picked color; tolerances 1-100
 retain the HSV rule described below. Extraction multiplies source alpha by the
-existing 3x3 component coverage. This preserves transparency and softens
-component edges; it is not alpha matting or background-color decontamination.
+existing 3x3 component coverage. A separate conservative RGB pass can remove a
+selected-background mixture from an opaque boundary pixel when a nearby
+same-component interior reference confirms the mixture. It never uses geometric
+coverage as a physical alpha estimate and leaves uncertain colors unchanged.
 
 ```mermaid
 flowchart TD
@@ -61,11 +63,24 @@ flowchart TD
     F --> G["Component bounding boxes<br/>and pixel labels"]
     G --> H["Crop source RGBA<br/>alpha x component coverage"]
     H --> I["3x3 neighborhood average<br/>softens binary mask edges"]
-    I --> J["Reading order<br/>rows top-to-bottom, then left-to-right"]
-    J --> K["Lanczos3 resize on premultiplied colors<br/>longest side 480 px"]
-    K --> L["Centered transparent<br/>512x512 RGBA stickers"]
+    I --> J["Conditional RGB decontamination<br/>opaque boundary + selected background + interior reference"]
+    J --> K["Reading order<br/>rows top-to-bottom, then left-to-right"]
+    K --> L["Lanczos3 resize on premultiplied colors<br/>longest side 480 px"]
+    L --> M["Centered transparent<br/>512x512 RGBA stickers"]
 ```
 
+The RGB pass operates after component alpha coverage but does not use that
+coverage to infer a physical edge opacity. It checks the selected background,
+an adjacent background-labeled pixel with nonzero source alpha, an opaque edge
+pixel that belongs to the component, and nearby opaque interior pixels from the
+same component. At least three interior anchors must agree in all RGB channels;
+multicolored or textured neighborhoods are left unchanged. If the edge and
+representative fit a bounded mixture of foreground and background within
+byte-rounding error, the edge RGB is restored to the reference. Alpha, component
+labels, and bounding boxes remain unchanged. Partially transparent source RGB,
+transparent-background edges, and ambiguous or textured colors pass through
+unchanged. This is a targeted decontamination heuristic, not general foreground
+matting.
 1. **Background classification** (`color.rs`, `mask.rs`). Fully transparent
    pixels are excluded from the foreground mask. At tolerance zero, visible
    pixels match only when their RGB exactly equals the selected color. At
@@ -90,9 +105,9 @@ flowchart TD
    its component label matches. Output alpha is source alpha multiplied by
    component coverage in a 3x3 neighborhood. Fully transparent source pixels
    remain transparent. This preserves source opacity and softens mask edges,
-   but does not infer opacity from image content or decontaminate background
-   colors. The matting survey [10] covers a different technique family and is
-   listed for comparison only.
+   but does not infer opacity from image content. Conditional RGB
+   decontamination is described above. The matting survey [10] covers a
+   different technique family and is listed for comparison only.
 5. **Ordering and framing** (`order.rs`, `frame.rs`). Boxes are grouped into
    rows by vertical center: a box joins the current row only while its center
    is strictly above that row's lowest bottom edge. Each row is sorted by
@@ -120,8 +135,11 @@ unit and synthetic tests. The authoritative current contract is
   transform and watershed methods are research candidates, not implemented
   steps. Bai and Urtasun's paper [9] is an example of watershed-based instance
   segmentation, not a description of Rusticker's component labeling.
-- The 3 × 3 mask average softens edges but does not remove color halos or
-  perform general foreground matting.
+- The 3 × 3 mask average softens geometric edges. A conservative RGB pass
+  reduces only opaque boundary colors that match a selected-background mixture
+  with a nearby interior reference. It does not estimate physical alpha, solve
+  general foreground matting, or resolve an intentionally colored edge that
+  is indistinguishable from background spill.
 
 These limitations are tracked by separate roadmap work. Do not read a future
 candidate or comparison paper as a claim that the technique is already present.
