@@ -23,6 +23,7 @@
 		splitBusy,
 		noSplitProposal,
 		undoable,
+		allowSplitRequest = true,
 		onSplitRequest,
 		onSplitAccept,
 		onSplitDiscard,
@@ -41,6 +42,7 @@
 		splitBusy: boolean;
 		noSplitProposal: boolean;
 		undoable: boolean;
+		allowSplitRequest?: boolean;
 		onSplitRequest: () => void;
 		onSplitAccept: () => void;
 		onSplitDiscard: () => void;
@@ -105,13 +107,14 @@
 			>{/if}
 	</div>
 	<div class="flex flex-wrap justify-end gap-1">
-		<Button
-			variant="outline"
-			size="sm"
-			tabindex={active ? 0 : -1}
-			disabled={splitBusy}
-			onclick={onSplitRequest}>{splitBusy ? m.tool_split_working() : m.tool_split_request()}</Button
-		>
+		{#if allowSplitRequest}<Button
+				variant="outline"
+				size="sm"
+				tabindex={active ? 0 : -1}
+				disabled={splitBusy}
+				onclick={onSplitRequest}
+				>{splitBusy ? m.tool_split_working() : m.tool_split_request()}</Button
+			>{/if}
 		<Tooltip.Provider
 			><Tooltip.Root
 				><Tooltip.Trigger>
