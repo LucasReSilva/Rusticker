@@ -53,13 +53,13 @@ a vulnerability privately.
 
 ## Status
 
-Rusticker is in **early development**. The `core/` crate (`rusticker-core`)
+Rusticker is released as **v0.2.1**. The `core/` crate (`rusticker-core`)
 detects stickers and builds to WebAssembly, with native tests. The `web/` app
 has localized routes in Portuguese (Brazil), English and Spanish, and a browser
 editor for loading, detecting, adjusting, curating and exporting stickers.
 The complete flow is verified with synthetic images, including offline export.
-No release has been created for this integration; live deployment checks remain
-part of the release workflow.
+Release automation uses `release-plz` and `git-cliff`; release readiness still
+requires the end-to-end image-to-pack flow to work before a new release is made.
 
 ## Planned stack
 
@@ -77,6 +77,22 @@ part of the release workflow.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the data flow and the detection
 algorithm, and [DESIGN.md](DESIGN.md) for the design system and i18n rules.
+
+## Post-release roadmap
+
+The v0.2.1 implementation is documented in archived OpenSpec changes.
+Follow-up work is being planned in
+the existing GitHub Project as five epics: improve separation of connected
+stickers and edge quality; customize WhatsApp pack metadata where a tested
+importer supports it; edit sticker order and boundaries; export static sticker
+files for Telegram workflows; and coordinate parallel agent work with atomic
+issue claims. These items are planning candidates, not a release commitment.
+
+Telegram scope is limited to local static PNG/WEBP files; users continue in
+Telegram's editor or `@Stickers`. WhatsApp title/author work is gated on
+verifying a named importer's actual format support. User images remain on the
+device. See [the roadmap proposal](openspec/changes/post-release-agent-coordination/proposal.md)
+for issue-level acceptance criteria.
 
 ## Repository layout (planned)
 
