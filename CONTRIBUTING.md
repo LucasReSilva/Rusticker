@@ -234,6 +234,13 @@ Releases and semantic versioning are automated via Conventional Commits:
 - When unreleased changes land on `main`, `.github/workflows/release.yml` maintains an automated Release PR containing the updated `core/Cargo.toml`, synchronized `web/package.json` (`bun run version:sync`), and `CHANGELOG.md`.
 - When the Release PR is merged into `main`, GitHub Releases and git tag `vX.Y.Z` are created automatically, triggering GitHub Pages deployment.
 
+#### Repository settings for CI/CD
+
+To ensure automated deployment and release workflows execute properly:
+
+- **GitHub Pages:** under **Settings > Pages**, set **Source** to **GitHub Actions**.
+- **Workflow permissions:** under **Settings > Actions > General > Workflow permissions**, select **Read and write permissions** and check **Allow GitHub Actions to create and approve pull requests**.
+
 ## OpenSpec workflow
 
 Rusticker uses [OpenSpec](https://github.com/Fission-AI/OpenSpec) for
