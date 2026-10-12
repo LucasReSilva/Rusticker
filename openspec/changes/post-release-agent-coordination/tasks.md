@@ -25,7 +25,8 @@
 
 ## 5. Roadmap quality and tracking
 
-- [x] 5.1 Review all six parent epic descriptions and 22 child acceptance criteria for explicit dependencies, locale/privacy constraints, and independent completion.
+- [x] 5.1 Review all six parent epic descriptions and 23 child acceptance criteria for explicit dependencies, locale/privacy constraints, and independent completion.
 - [x] 5.2 Keep WhatsApp metadata implementation gated on a tested named importer; keep Telegram scope to compliant static sticker files and user-controlled Telegram import, with no API upload.
 - [x] 5.3 Verify the existing board shows all parent/sub-issue relationships, `Todo` statuses, and `S`/`M`/`L`/`XL` complexity values; confirm all issue links resolve and no user image or private sample has been uploaded.
 - [x] 5.4 Add the requested feature areas with relative complexity ordering and explicit research/diagnosis gates for WebMCP, ONNX, local history, and background handling.
+- [x] 5.5 Add documentation/code audit issue #56 as P0, place palette issue #44 at P1 immediately afterward, and add Priority tracking to the existing project.
