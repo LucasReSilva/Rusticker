@@ -73,6 +73,22 @@ it.each(['pt-BR', 'en', 'es'] as const)(
 		expect(editor.source).not.toBeNull();
 	}
 );
+it.each(['pt-BR', 'en', 'es'] as const)(
+	'shows localized no-proposal feedback and keeps the original in %s',
+	async (locale) => {
+		setLocale(locale, { reload: false });
+		editor.dispose();
+		editor = createEditorState({ detector: createMockDetector({ count: 1 }), decode });
+		setEditorForTesting(editor);
+		const { container } = render(Page);
+		await editor.loadFile(file());
+		const original = editor.stickers[0];
+		await fireEvent.click(screen.getByRole('button', { name: m.tool_split_request() }));
+		await screen.findByText(m.tool_split_unavailable());
+		expect(editor.stickers).toEqual([original]);
+		expect(container.querySelectorAll('[data-sticker-card]')).toHaveLength(1);
+	}
+);
 it('rejects pasted non-image files, ignores text and editable targets, and removes its paste listener on unmount', async () => {
 	const { unmount } = render(Page);
 	const clipboardData = {
@@ -113,5 +129,19 @@ it('mounts export with background size badges and blocks export after removing s
 	editor.removeSticker(editor.stickers[0].id);
 	await waitFor(() => expect(action).toBeDisabled());
 	expect(screen.getByText(m.export_min_stickers_notice({ min: 3 }))).toBeInTheDocument();
+});
+it('uses an accepted split in the sticker count and export eligibility', async () => {
+	editor.dispose();
+	editor = createEditorState({ detector: createMockDetector({ count: 2, splitCount: 2 }), decode });
+	setEditorForTesting(editor);
+	const { container } = render(Page);
+	await editor.loadFile(file());
+	const exportButton = await screen.findByRole('button', { name: m.export_download_button() });
+	expect(exportButton).toBeDisabled();
+	await fireEvent.click(screen.getAllByRole('button', { name: m.tool_split_request() })[0]);
+	await screen.findByText(m.tool_split_review());
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_split_accept() }));
+	await waitFor(() => expect(container.querySelectorAll('[data-sticker-card]')).toHaveLength(3));
+	expect(exportButton).toBeEnabled();
 });
 import '@testing-library/jest-dom/vitest';

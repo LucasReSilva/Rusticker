@@ -18,7 +18,15 @@
 		active,
 		onRemoveRequest,
 		onSetTrayIcon,
-		onFocus
+		onFocus,
+		splitPreview,
+		splitBusy,
+		noSplitProposal,
+		undoable,
+		onSplitRequest,
+		onSplitAccept,
+		onSplitDiscard,
+		onSplitUndo
 	}: {
 		sticker: Sticker;
 		position: number;
@@ -29,6 +37,14 @@
 		onRemoveRequest: () => void;
 		onSetTrayIcon: () => void;
 		onFocus: () => void;
+		splitPreview: Sticker[] | null;
+		splitBusy: boolean;
+		noSplitProposal: boolean;
+		undoable: boolean;
+		onSplitRequest: () => void;
+		onSplitAccept: () => void;
+		onSplitDiscard: () => void;
+		onSplitUndo: () => void;
 	} = $props();
 	let canvas: HTMLCanvasElement;
 	const size = $derived(sizeOf?.(sticker.id));
@@ -36,6 +52,9 @@
 	$effect(() => {
 		canvas.getContext('2d')?.putImageData(sticker.pixels, 0, 0);
 	});
+	function drawCandidate(node: HTMLCanvasElement, image: ImageData) {
+		node.getContext('2d')?.putImageData(image, 0, 0);
+	}
 </script>
 
 <Card.Root
@@ -86,6 +105,13 @@
 			>{/if}
 	</div>
 	<div class="flex flex-wrap justify-end gap-1">
+		<Button
+			variant="outline"
+			size="sm"
+			tabindex={active ? 0 : -1}
+			disabled={splitBusy}
+			onclick={onSplitRequest}>{splitBusy ? m.tool_split_working() : m.tool_split_request()}</Button
+		>
 		<Tooltip.Provider
 			><Tooltip.Root
 				><Tooltip.Trigger>
@@ -119,4 +145,33 @@
 			></Tooltip.Provider
 		>
 	</div>
+	{#if noSplitProposal}<p role="status" class="text-sm text-muted-foreground">
+			{m.tool_split_unavailable()}
+		</p>{/if}
+	{#if splitPreview}
+		<div class="flex flex-col gap-2" data-split-preview>
+			<p class="text-sm font-medium">{m.tool_split_review()}</p>
+			<div class="grid grid-cols-2 gap-2">
+				{#each splitPreview as candidate, index (candidate.id)}
+					<canvas
+						use:drawCandidate={candidate.pixels}
+						width={candidate.pixels.width}
+						height={candidate.pixels.height}
+						role="img"
+						aria-label={m.tool_split_candidate({ position: formatNumber(index + 1) })}
+						class="aspect-square w-full rounded-md bg-checkerboard"
+					></canvas>
+				{/each}
+			</div>
+			<div class="flex flex-wrap justify-end gap-2">
+				<Button variant="outline" size="sm" onclick={onSplitDiscard}
+					>{m.tool_split_discard()}</Button
+				>
+				<Button size="sm" onclick={onSplitAccept}>{m.tool_split_accept()}</Button>
+			</div>
+		</div>
+	{/if}
+	{#if undoable}<Button variant="outline" size="sm" onclick={onSplitUndo}
+			>{m.tool_split_undo()}</Button
+		>{/if}
 </Card.Root>
