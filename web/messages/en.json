@@ -266,5 +266,15 @@
 	"history_confirm_clear_action": "Delete all",
 	"history_cancel_action": "Cancel",
 	"export_error_webp_unsupported": "This browser can't create WEBP stickers. Try Chrome, Edge, or Firefox.",
-	"export_error_failed": "Couldn't create the pack. Please try again."
+	"export_error_failed": "Couldn't create the pack. Please try again.",
+	"telegram_export_format_label": "Telegram sticker image format",
+	"telegram_export_region_label": "Static sticker files for Telegram",
+	"telegram_export_png": "PNG files",
+	"telegram_export_webp": "WEBP files",
+	"telegram_export_button": "Download static Telegram sticker files (.zip)",
+	"telegram_export_progress": "Preparing {done} of {total}…",
+	"telegram_export_instructions": "This ZIP contains image files only; it is not a Telegram sticker set. Extract the files, then add them in Telegram's sticker editor or use @Stickers to create a set.",
+	"telegram_export_success": "Prepared {count} static sticker files for Telegram.",
+	"telegram_export_webp_unsupported": "This browser can't create transparent WEBP files. Choose PNG or try another browser.",
+	"telegram_export_failed": "Couldn't prepare the Telegram sticker files. Please try again."
 }
