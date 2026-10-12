@@ -43,7 +43,7 @@ The editor SHALL show every kept sticker as a card in the current sticker order,
 
 ### Requirement: Manually reorder stickers
 
-The editor SHALL let users change the order of kept stickers with pointer drag-and-drop and a keyboard-operable alternative. Reordering SHALL change the sequence used by the grid and exported pack without changing sticker pixels, bounding boxes, removed-sticker state, or tray-icon identity. The initial order SHALL match detection order. Removing a sticker SHALL remove it from the custom order; newly created stickers SHALL be inserted consistently with their source operation. Re-detection SHALL reset the order to the new detector result. The UI SHALL announce successful keyboard moves in the active locale.
+The editor SHALL let users change the order of kept stickers with pointer drag-and-drop and keyboard-operable move-earlier/move-later controls. Alt+ArrowUp and Alt+ArrowDown on a focused card SHALL provide the same keyboard operation without conflicting with grid navigation. Reordering SHALL change the sequence used by the grid, preview outlines, and exported pack without changing sticker pixels, bounding boxes, removed-sticker state, or tray-icon identity. The initial order SHALL match detection order. Removing a sticker SHALL remove it from the custom order; stickers created by splitting SHALL occupy the source sticker's position in candidate order, and undo SHALL restore the source at the earliest position occupied by its replacements. Re-detection SHALL reset the order to the new detector result. Successful moves SHALL keep focus on the moved card and announce its new position and total in the active locale.
 
 #### Scenario: Move a sticker with pointer
 

@@ -118,6 +118,7 @@
 					pending={editor.isProcessing && !editor.detected.length}
 					onRemove={(id) => editor.removeSticker(id)}
 					onSetTrayIcon={(id) => editor.setTrayIcon(id)}
+					onReorder={(id, index) => editor.reorderSticker(id, index)}
 					splitPreview={editor.splitPreview}
 					splitBusyId={editor.splitBusyId}
 					noSplitProposalId={editor.noSplitProposalId}
@@ -155,6 +156,7 @@
 			pending={true}
 			onRemove={(id) => editor.removeSticker(id)}
 			onSetTrayIcon={(id) => editor.setTrayIcon(id)}
+			onReorder={(id, index) => editor.reorderSticker(id, index)}
 			splitPreview={editor.splitPreview}
 			splitBusyId={editor.splitBusyId}
 			noSplitProposalId={editor.noSplitProposalId}
