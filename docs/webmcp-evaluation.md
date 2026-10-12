@@ -1,6 +1,6 @@
 # WebMCP feasibility and safe-tool evaluation
 
-**Decision:** conditional go for a small, opt-in, progressive enhancement; no-go for exposing image data, generated assets, or consequential export actions to agents. WebMCP is an experimental draft, not an interoperable baseline. This report records feasibility for a future implementation issue; Rusticker does not currently register WebMCP tools.
+**Decision:** conditional go for a small, opt-in, progressive enhancement; no-go for exposing image data, generated assets, or consequential export actions to agents. WebMCP is an experimental draft, not an interoperable baseline. The isolated adapter for issue #51 is implemented, but the editor page has not mounted it; the running application currently registers no WebMCP tools.
 
 ## Scope and date
 
@@ -10,7 +10,7 @@ This evaluation was completed on 2026-10-12 against the current WebMCP Community
 
 WebMCP exposes page functionality as tools with structured input schemas. It has imperative JavaScript registration and declarative HTML form annotations. Rusticker's Svelte editor has stateful, asynchronous actions, so a small imperative adapter is the better fit if the API stabilizes; declarative tools would only fit a conventional form workflow.
 
-The specification remains a W3C Web Machine Learning Community Group draft report and explicitly is not a W3C Standard or on the Standards Track. Chrome's documentation currently describes an Origin Trial (Chrome 149+) and a local-development flag. The API is therefore unsuitable as a required product path: use runtime feature detection, leave the normal interface fully functional when absent, and avoid claiming cross-browser support. Isolate calls behind a small adapter so API changes do not spread through Svelte components. Register and unregister tools with component/application lifecycle, and pin or locally define the draft types only after checking them against the implementation being tested.
+The specification remains a W3C Web Machine Learning Community Group draft report and explicitly is not a W3C Standard or on the Standards Track. Chrome's documentation currently describes an Origin Trial (Chrome 149+) and a local-development flag. The API is therefore unsuitable as a required product path: use runtime feature detection, leave the normal interface fully functional when absent, and avoid claiming cross-browser support. The current draft and Chrome documentation expose the imperative API through `document.modelContext.registerTool(tool, { signal })`; an abort signal removes registrations as their owner is torn down. Rusticker isolates those calls in a small adapter so API changes do not spread through Svelte components. The adapter is not mounted by the editor page yet.
 
 ## Privacy and security boundaries
 
