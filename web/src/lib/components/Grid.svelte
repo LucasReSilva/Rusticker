@@ -21,6 +21,7 @@
 		splitBusyId = null,
 		noSplitProposalId = null,
 		undoableStickerIds = new Set<string>(),
+		allowSplitRequest = true,
 		onSplitRequest = () => {},
 		onSplitAccept = () => {},
 		onSplitDiscard = () => {},
@@ -37,6 +38,7 @@
 		splitBusyId?: string | null;
 		noSplitProposalId?: string | null;
 		undoableStickerIds?: ReadonlySet<string>;
+		allowSplitRequest?: boolean;
 		onSplitRequest?: (id: string) => void;
 		onSplitAccept?: () => void;
 		onSplitDiscard?: () => void;
@@ -158,6 +160,7 @@
 						splitBusy={splitBusyId === sticker.id}
 						noSplitProposal={noSplitProposalId === sticker.id}
 						undoable={undoableStickerIds.has(sticker.id)}
+						{allowSplitRequest}
 						onSplitRequest={() => onSplitRequest(sticker.id)}
 						{onSplitAccept}
 						{onSplitDiscard}

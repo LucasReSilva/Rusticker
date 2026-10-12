@@ -13,7 +13,11 @@ afterEach(() => {
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
 });
-function mount(count = 6, sizeOf?: (id: string) => StickerSizeInfo | undefined) {
+function mount(
+	count = 6,
+	sizeOf?: (id: string) => StickerSizeInfo | undefined,
+	allowSplitRequest = true
+) {
 	let kept = stickers(count);
 	let trayIconId = kept[0]?.id ?? null;
 	const onRemove = vi.fn((id: string) => {
@@ -30,6 +34,7 @@ function mount(count = 6, sizeOf?: (id: string) => StickerSizeInfo | undefined) 
 		busy: false,
 		pending: false,
 		sizeOf,
+		allowSplitRequest,
 		onRemove,
 		onSetTrayIcon
 	});
@@ -184,5 +189,9 @@ it('offers an explicit action to request split assistance', async () => {
 	expect(action).toHaveAttribute('tabindex', '0');
 	await fireEvent.click(action);
 	expect(onSplitRequest).toHaveBeenCalledWith(source.id);
+});
+it('hides split requests when automatic mode disables refinement', () => {
+	mount(1, undefined, false);
+	expect(screen.queryByRole('button', { name: m.tool_split_request() })).not.toBeInTheDocument();
 });
 import '@testing-library/jest-dom/vitest';

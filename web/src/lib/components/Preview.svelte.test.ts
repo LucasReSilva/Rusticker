@@ -30,7 +30,7 @@ it('draws boxes in source coordinates and keeps the inactive overlay decorative'
 });
 it('clamps the keyboard crosshair, picks the source neighborhood and returns focus', async () => {
 	const onPick = vi.fn();
-	const { container } = render(Preview, { ...props, onPick });
+	const { container } = render(Preview, { ...props, advanced: true, onPick });
 	const toggle = screen.getByRole('button');
 	await fireEvent.click(toggle);
 	const area = screen.getByRole('application');
@@ -45,11 +45,15 @@ it('clamps the keyboard crosshair, picks the source neighborhood and returns foc
 });
 it('Escape cancels without sampling', async () => {
 	const onPick = vi.fn();
-	render(Preview, { ...props, onPick });
+	render(Preview, { ...props, advanced: true, onPick });
 	const toggle = screen.getByRole('button');
 	await fireEvent.click(toggle);
 	await fireEvent.keyDown(screen.getByRole('application'), { key: 'Escape' });
 	expect(onPick).not.toHaveBeenCalled();
 	expect(toggle).toHaveFocus();
+});
+it('hides the eyedropper in automatic mode', () => {
+	render(Preview, { ...props, onPick: vi.fn() });
+	expect(screen.queryByRole('button')).not.toBeInTheDocument();
 });
 import '@testing-library/jest-dom/vitest';
