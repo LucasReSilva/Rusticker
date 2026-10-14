@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import { Progress } from '$lib/components/ui/progress';
 	import { m } from '$lib/paraglide/messages';
 	import type { BatchEntry } from '$lib/state.svelte';
 	let {
@@ -34,6 +35,15 @@
 						? m.batch_status_cancelled()
 						: m.batch_status_error();
 	};
+	const handled = $derived(
+		entries.filter(
+			(entry) => entry.status === 'done' || entry.status === 'error' || entry.status === 'cancelled'
+		).length
+	);
+	const successful = $derived(entries.filter((entry) => entry.status === 'done').length);
+	const needsAttention = $derived(
+		entries.filter((entry) => entry.status === 'error' || entry.status === 'cancelled').length
+	);
 </script>
 
 {#if entries.length}
@@ -51,10 +61,30 @@
 				<Button variant="outline" size="sm" onclick={onClear}>{m.batch_clear()}</Button>
 			</div>
 		</div>
+		<div class="flex flex-col gap-2" data-testid="batch-progress">
+			<div class="flex flex-wrap items-baseline justify-between gap-2">
+				<h3 class="text-sm font-medium">{m.batch_progress_heading()}</h3>
+				<p class="text-sm text-muted-foreground">
+					{m.batch_progress_count({ handled, total: entries.length })}
+				</p>
+			</div>
+			<Progress
+				value={handled}
+				max={entries.length}
+				aria-label={m.batch_progress_heading()}
+				aria-valuetext={m.batch_progress_count({ handled, total: entries.length })}
+			/>
+			<div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+				<p>{m.batch_progress_results({ count: successful })}</p>
+				{#if needsAttention}
+					<p class="text-destructive">{m.batch_progress_attention({ count: needsAttention })}</p>
+				{/if}
+			</div>
+		</div>
 		<ul class="flex flex-col gap-2">
 			{#each entries as entry (entry.id)}
 				<li
-					class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-2"
+					class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-2 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-2"
 					data-batch-status={entry.status}
 				>
 					<div class="min-w-0">
