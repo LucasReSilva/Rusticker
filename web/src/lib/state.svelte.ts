@@ -9,6 +9,7 @@ import {
 	type Sticker
 } from '$lib/detection';
 import { decodeImage, type DecodedImage } from '$lib/tool/decode';
+import { adjustStickerBounds } from '$lib/tool/bounds';
 
 export type EditorStatus = 'idle' | 'decoding' | 'detecting' | 'ready' | 'error';
 export type EditorErrorCode =
@@ -383,6 +384,21 @@ export class EditorState {
 		if (this.trayIconId === id) this.trayIconId = this.stickers[0]?.id ?? null;
 	}
 
+	updateStickerBounds(id: string, bounds: Sticker['bbox']): void {
+		const current = this.stickers.find((sticker) => sticker.id === id);
+		const source = this.source;
+		if (!current || !source || this.disposed) return;
+		const adjusted = adjustStickerBounds(current, bounds, source.width, source.height);
+		if (!adjusted || adjusted === current) return;
+		this.detected = this.detected.map((sticker) => (sticker.id === id ? adjusted : sticker));
+		this.splitUndo = this.splitUndo.map((group) => ({
+			...group,
+			replacements: group.replacements.map((sticker) => (sticker.id === id ? adjusted : sticker))
+		}));
+		if (this.splitPreview?.source.id === id) this.splitPreview = null;
+		if (this.noSplitProposalId === id) this.noSplitProposalId = null;
+	}
+
 	async requestSplit(id: string): Promise<void> {
 		const source = this.stickers.find((sticker) => sticker.id === id);
 		if (!source || this.disposed || this.splitBusyId) return;
@@ -391,7 +407,11 @@ export class EditorState {
 		this.splitBusyId = id;
 		try {
 			const candidates = await this.detector.proposeSplit(source.pixels);
-			if (this.disposed || !this.stickers.some((sticker) => sticker.id === id)) return;
+			if (
+				this.disposed ||
+				this.stickers.find((sticker) => sticker.id === id)?.pixels !== source.pixels
+			)
+				return;
 			if (candidates.length < 2) {
 				this.noSplitProposalId = id;
 				return;
