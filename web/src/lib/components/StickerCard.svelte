@@ -11,6 +11,8 @@
 	import type { StickerSizeInfo } from '$lib/tool/size';
 	import { formatKilobytes, formatNumber } from '$lib/format';
 	import { m } from '$lib/paraglide/messages';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import StickerBoundsEditor from './StickerBoundsEditor.svelte';
 	let {
 		sticker,
 		position,
@@ -30,7 +32,11 @@
 		noSplitProposal,
 		undoable,
 		allowSplitRequest = true,
+		allowBoundsAdjustment = false,
+		sourceWidth = 0,
+		sourceHeight = 0,
 		onSplitRequest,
+		onBoundsApply = () => {},
 		onSplitAccept,
 		onSplitDiscard,
 		onSplitUndo
@@ -53,7 +59,11 @@
 		noSplitProposal: boolean;
 		undoable: boolean;
 		allowSplitRequest?: boolean;
+		allowBoundsAdjustment?: boolean;
+		sourceWidth?: number;
+		sourceHeight?: number;
 		onSplitRequest: () => void;
+		onBoundsApply?: (sticker: Sticker) => void;
 		onSplitAccept: () => void;
 		onSplitDiscard: () => void;
 		onSplitUndo: () => void;
@@ -61,6 +71,7 @@
 	let canvas: HTMLCanvasElement;
 	const size = $derived(sizeOf?.(sticker.id));
 	const formattedPosition = $derived(formatNumber(position));
+	let boundsOpen = $state(false);
 	$effect(() => {
 		canvas.getContext('2d')?.putImageData(sticker.pixels, 0, 0);
 	});
@@ -133,6 +144,30 @@
 			aria-label={m.tool_move_later()}
 			onclick={onMoveLater}><ArrowDown aria-hidden="true" /></Button
 		>
+		{#if allowBoundsAdjustment}
+			<Dialog.Root bind:open={boundsOpen}>
+				<Button
+					variant="outline"
+					size="sm"
+					tabindex={active ? 0 : -1}
+					onclick={() => (boundsOpen = true)}>{m.tool_bounds_open()}</Button
+				>
+				<Dialog.Content class="max-h-[calc(100dvh_-_2rem)] overflow-y-auto sm:max-w-2xl">
+					<Dialog.Title class="sr-only">{m.tool_bounds_title()}</Dialog.Title>
+					<Dialog.Description class="sr-only">{m.tool_bounds_help()}</Dialog.Description>
+					<StickerBoundsEditor
+						{sticker}
+						{sourceWidth}
+						{sourceHeight}
+						onCancel={() => (boundsOpen = false)}
+						onApply={(updated) => {
+							onBoundsApply(updated);
+							boundsOpen = false;
+						}}
+					/>
+				</Dialog.Content>
+			</Dialog.Root>
+		{/if}
 		{#if allowSplitRequest}<Button
 				variant="outline"
 				size="sm"

@@ -23,7 +23,11 @@
 		noSplitProposalId = null,
 		undoableStickerIds = new Set<string>(),
 		allowSplitRequest = true,
+		allowBoundsAdjustment = false,
+		sourceWidth = 0,
+		sourceHeight = 0,
 		onSplitRequest = () => {},
+		onBoundsApply = () => {},
 		onSplitAccept = () => {},
 		onSplitDiscard = () => {},
 		onSplitUndo = () => {}
@@ -41,7 +45,11 @@
 		noSplitProposalId?: string | null;
 		undoableStickerIds?: ReadonlySet<string>;
 		allowSplitRequest?: boolean;
+		allowBoundsAdjustment?: boolean;
+		sourceWidth?: number;
+		sourceHeight?: number;
 		onSplitRequest?: (id: string) => void;
+		onBoundsApply?: (sticker: Sticker) => void;
 		onSplitAccept?: () => void;
 		onSplitDiscard?: () => void;
 		onSplitUndo?: (id: string) => void;
@@ -214,7 +222,11 @@
 						noSplitProposal={noSplitProposalId === sticker.id}
 						undoable={undoableStickerIds.has(sticker.id)}
 						{allowSplitRequest}
+						{allowBoundsAdjustment}
+						{sourceWidth}
+						{sourceHeight}
 						onSplitRequest={() => onSplitRequest(sticker.id)}
+						{onBoundsApply}
 						{onSplitAccept}
 						{onSplitDiscard}
 						onSplitUndo={() => onSplitUndo(sticker.id)}
