@@ -266,5 +266,9 @@
 	"history_confirm_clear_action": "Delete all",
 	"history_cancel_action": "Cancel",
 	"export_error_webp_unsupported": "This browser can't create WEBP stickers. Try Chrome, Edge, or Firefox.",
-	"export_error_failed": "Couldn't create the pack. Please try again."
+	"export_error_failed": "Couldn't create the pack. Please try again.",
+	"batch_progress_heading": "Processing progress",
+	"batch_progress_count": "Handled: {handled}/{total}",
+	"batch_progress_results": "Successful: {count}",
+	"batch_progress_attention": "Needs attention: {count}"
 }
