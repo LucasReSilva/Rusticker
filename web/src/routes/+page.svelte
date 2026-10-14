@@ -124,7 +124,11 @@
 					noSplitProposalId={editor.noSplitProposalId}
 					undoableStickerIds={editor.undoableStickerIds}
 					allowSplitRequest={processingMode === 'advanced'}
+					allowBoundsAdjustment={processingMode === 'advanced'}
+					sourceWidth={editor.source.width}
+					sourceHeight={editor.source.height}
 					onSplitRequest={(id) => void editor.requestSplit(id)}
+					onBoundsApply={(sticker) => editor.updateStickerBounds(sticker.id, sticker.bbox)}
 					onSplitAccept={() => editor.acceptSplit()}
 					onSplitDiscard={() => editor.discardSplit()}
 					onSplitUndo={(id) => editor.undoSplit(id)}
