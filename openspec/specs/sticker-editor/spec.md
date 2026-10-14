@@ -6,40 +6,80 @@ Lets a user turn one image of many stickers into a curated set of cut-out sticke
 ## Requirements
 
 ### Requirement: Load an image by drop, choice or paste
-The tool page SHALL let the user provide a single image by dragging and dropping a file onto the drop area, by activating the drop area (pointer or keyboard) to open the system file chooser, or by pasting an image from the clipboard with Ctrl+V (Cmd+V on macOS) anywhere on the tool page. The drop area SHALL show a distinct visual state while the pointer hovers it and while a file is being dragged over it. Loading a new image SHALL replace the current image and all of its results. The image SHALL be read and processed only on the user's device.
+The tool page SHALL let the user provide one or more images by dragging and dropping files onto the drop area, by activating the area with pointer or keyboard to open the system file chooser, or by pasting an image from the clipboard with Ctrl+V (Cmd+V on macOS) anywhere on the tool page. The drop area SHALL show a distinct visual state while the pointer hovers it and while files are dragged over it. Valid files SHALL be appended to a sequential local batch instead of replacing earlier successful results. The batch SHALL show per-image queued, processing, completed, or recoverable error status; allow retry and removal of an individual image; allow cancellation of queued work and clearing the batch; and preserve successful results when another image fails. The editor SHALL retain at most ten source files and sixty sticker results; files over the source limit SHALL be rejected, and an image whose complete result exceeds remaining sticker capacity SHALL fail as a whole without discarding earlier results. Only one source image SHALL be decoded for processing at a time. Batch results SHALL be combined in file selection order for export, which SHALL explain that each pack contains 3–30 stickers. Image bytes and derived pixels SHALL be read and processed only on the user's device.
+
+#### Scenario: Several images selected or dropped
+- **WHEN** the user chooses or drops several files and at least one is an image
+- **THEN** valid image files are appended to the batch and processed one at a time, with a visible status for each
 
 #### Scenario: Image dropped on the drop area
 - **WHEN** the user drops a PNG, JPEG or WEBP file onto the drop area
-- **THEN** the image is loaded, shown in the preview, and detection starts automatically
+- **THEN** the image is queued, shown in the batch, and detection starts automatically
 
 #### Scenario: Image chosen with the keyboard
 - **WHEN** the user focuses the drop area with Tab and presses Enter or Space
 - **THEN** the system file chooser opens, restricted to image files
-- **AND** choosing an image loads it as if it had been dropped
+- **AND** choosing an image appends it to the batch as if it had been dropped
 
 #### Scenario: Image pasted from the clipboard
 - **WHEN** the clipboard contains an image and the user presses Ctrl+V (or Cmd+V) on the tool page
-- **THEN** that image is loaded and detection starts automatically
+- **THEN** that image is appended to the batch and detection starts automatically
 
 #### Scenario: Dragging state
-- **WHEN** the user drags a file over the drop area
-- **THEN** the drop area shows its dragging state until the file is dropped or the drag leaves the area
+- **WHEN** the user drags files over the drop area
+- **THEN** the drop area shows its dragging state until the files are dropped or the drag leaves the area
 
 #### Scenario: Non-image file rejected
 - **WHEN** the user drops, chooses or pastes something that is not an image
-- **THEN** no image is loaded, the current image (if any) is kept, and a localized error notification explains that only images are accepted
+- **THEN** no invalid file is queued, existing batch results are kept, and a localized error notification explains that only images are accepted
 
 #### Scenario: Several files dropped at once
 - **WHEN** the user drops several files and at least one is an image
-- **THEN** only the first image file is loaded
+- **THEN** all valid image files are queued within the session limit
 
-#### Scenario: Image cannot be decoded
-- **WHEN** the user provides a file that claims to be an image but cannot be decoded
-- **THEN** a localized error notification is shown and the current image (if any) is kept
+#### Scenario: Some dropped files are not images
+- **WHEN** the user drops a mixture of images and non-image files
+- **THEN** image files are queued, non-image files are rejected with a localized error, and no successful result is discarded
+
+#### Scenario: Single image pasted
+- **WHEN** the clipboard contains an image and the user presses Ctrl+V (or Cmd+V) on the tool page
+- **THEN** the image is appended to the batch and processing starts automatically
+
+#### Scenario: Retry a failed image
+- **WHEN** an image cannot be decoded or detected and the user retries its row
+- **THEN** only that image is processed again and successful results from other rows remain available
+
+#### Scenario: Remove an image
+- **WHEN** the user removes an image from the batch
+- **THEN** its sticker results are excluded from the combined editor and export input
+
+#### Scenario: Cancel queued work
+- **WHEN** the user cancels while images are queued
+- **THEN** pending images stop after the current image finishes and completed results remain available
+
+#### Scenario: Clear the batch
+- **WHEN** the user clears the batch
+- **THEN** all batch entries, source files, and current image results are released
+
+#### Scenario: Source image limit
+- **WHEN** adding an image would exceed the ten-image session limit
+- **THEN** the new image is rejected with a localized explanation and existing entries remain unchanged
+
+#### Scenario: Sticker result limit
+- **WHEN** an image's complete detection result would exceed the sixty-sticker session limit
+- **THEN** that image is marked with a localized recoverable error and none of its partial results are added
+
+#### Scenario: Export grouping
+- **WHEN** completed images contain more than thirty stickers in total
+- **THEN** export explains the number of generated packs and each pack contains between three and thirty stickers
 
 #### Scenario: No upload
 - **WHEN** an image is loaded and processed
 - **THEN** no network request carries the image or any data derived from it
+
+#### Scenario: Image cannot be decoded
+- **WHEN** a user provides a file that claims to be an image but cannot be decoded
+- **THEN** its row shows a localized recoverable error and the user can retry or remove it without losing other results
 
 ### Requirement: Detected stickers are outlined on the original image
 After a successful detection, the preview SHALL show the original image with one outline per detected sticker, at the position and size of that sticker in the source image, scaled with the image as the preview resizes. A localized, pluralized summary SHALL state how many stickers are currently kept.
@@ -129,31 +169,69 @@ When detection fails, the editor SHALL show a notification with the localized me
 - **THEN** detection is attempted again with the new tolerance
 
 ### Requirement: Stickers shown on a transparency background
-The editor SHALL show every kept sticker as a card in detection order, rendering the cut-out on the theme's checkerboard so transparent areas are visible in both light and dark themes. Each card SHALL have a localized accessible name that includes its position. When the export step provides size information for a sticker, its card SHALL show a size badge: a localized placeholder while the size is being measured, the encoded size in kilobytes formatted for the active locale once known (visibly marked, with a localized explanation, when it exceeds the sticker size limit), or a localized "size unavailable" indication if measuring failed. When no size information is provided, no size badge SHALL be shown.
+
+The editor SHALL show every kept sticker as a card in the current sticker order, initially matching detection order, rendering the cut-out on the theme's checkerboard so transparent areas are visible in both light and dark themes. Each card SHALL have a localized accessible name that includes its current position. When the export step provides size information for a sticker, its card SHALL show a size badge: a localized placeholder while the size is being measured, the encoded size in kilobytes formatted for the active locale once known (visibly marked, with a localized explanation, when it exceeds the sticker size limit), or a localized "size unavailable" indication if measuring failed. When no size information is provided, no size badge SHALL be shown. In Advanced mode, a kept sticker SHALL offer an accessible control to adjust its crop using source-image pixel bounds. Applying a valid adjustment SHALL update the sticker's source-image bounds and its 512x512 transparent pixels as one result, and the adjusted result SHALL be used by the source preview and export. The adjustment SHALL remain on-device and SHALL NOT re-run segmentation. Bounds SHALL use positive integer width and height and stay within the source image. Empty, non-integer, or out-of-image bounds SHALL be rejected without changing the existing sticker. Adjustment controls, preview alternatives, and validation feedback SHALL be localized in every supported locale.
+
+#### Scenario: Apply adjusted sticker bounds
+
+- **WHEN** the user adjusts a kept sticker to a valid crop and applies it
+- **THEN** the editor uses the adjusted source-image bounds and matching transparent sticker pixels in the preview and export
+
+#### Scenario: Crop adjustment is available in Advanced mode
+
+- **WHEN** the user selects Advanced mode
+- **THEN** each kept sticker card exposes a localized control to open the crop editor
+- **AND** Automatic mode does not expose the manual crop controls
 
 #### Scenario: Cards in detection order
+
 - **WHEN** detection returns stickers
 - **THEN** one card per sticker is shown in the same order as the detection result
 
 #### Scenario: No size information
+
 - **WHEN** no size information is provided for a sticker
 - **THEN** its card shows no size badge
 
 #### Scenario: Size being measured
+
 - **WHEN** a sticker's size is reported as pending
 - **THEN** its size badge shows a localized placeholder instead of a number
 
 #### Scenario: Size known
+
 - **WHEN** a sticker's encoded size is reported as known and within the limit
 - **THEN** its badge shows that size in kilobytes, formatted for the active locale
 
 #### Scenario: Size over the limit
+
 - **WHEN** a sticker's encoded size is reported as known and over the limit
 - **THEN** its badge shows the size with a distinct warning appearance and a localized accessible explanation
 
 #### Scenario: Size measurement failed
+
 - **WHEN** measuring a sticker's size is reported as failed
 - **THEN** its badge shows a localized "size unavailable" indication
+
+#### Scenario: Reject invalid bounds
+
+- **WHEN** an adjustment has an empty size or extends outside the source image
+- **THEN** it cannot be applied and the prior bounds and sticker pixels remain unchanged
+
+#### Scenario: Keyboard-accessible adjustment
+
+- **WHEN** the user edits the crop using the keyboard
+- **THEN** each bound control is keyboard operable, has a localized accessible name, and the resulting crop can be applied without pointer input
+
+#### Scenario: Adjustment remains local
+
+- **WHEN** the user changes and applies sticker bounds
+- **THEN** source pixels and adjusted sticker pixels remain in browser memory and no network request carries image data or data derived from it
+
+#### Scenario: Current positions are announced
+
+- **WHEN** the user changes the sticker order
+- **THEN** each card's localized accessible name reflects its new position
 
 ### Requirement: Remove a sticker with confirmation
 Each sticker card SHALL offer a remove action. Removing SHALL require confirmation in a dialog that names the sticker; cancelling SHALL leave everything unchanged. After removal, keyboard focus SHALL move to the next sticker (or the previous one if the removed sticker was last), or to the grid's heading if none remain. Removed stickers SHALL be excluded from the kept set, from the preview outlines and from export. A new detection result SHALL replace the whole sticker set, so earlier removals do not carry over to it.
@@ -236,17 +314,21 @@ Every piece of text the editor shows or exposes to assistive technologies (label
 - **THEN** state changes in the editor happen without non-essential animation
 
 ### Requirement: Kept stickers and tray icon are handed to export
-The editor SHALL make the kept stickers, in detection order, the identity of the tray-icon sticker, and whether detection is currently in progress available to the export step, and SHALL display per-sticker size information supplied by it. The export step SHALL never receive removed stickers.
+
+The editor SHALL make the kept stickers, in the user's current order (initially detection order), the identity of the tray-icon sticker, and whether detection is currently in progress available to the export step, and SHALL display per-sticker size information supplied by it. The export step SHALL never receive removed stickers.
 
 #### Scenario: Export sees only kept stickers
+
 - **WHEN** the user has removed two of seventeen detected stickers
-- **THEN** the export step receives the fifteen kept stickers in detection order and the current tray-icon sticker's identity
+- **THEN** the export step receives the fifteen kept stickers in the user's current order and the current tray-icon sticker's identity
 
 #### Scenario: Export knows detection is running
+
 - **WHEN** detection re-runs after a tolerance change
 - **THEN** the export step is told that detection is in progress until the new result is available
 
 #### Scenario: Size supplied by export
+
 - **WHEN** the export step supplies the encoded size of a sticker
 - **THEN** that sticker's size badge shows the supplied size
 
@@ -260,6 +342,59 @@ Switching the interface language on the tool page SHALL NOT reload the page and 
 #### Scenario: Switch language during detection
 - **WHEN** detection is running and the user switches the language
 - **THEN** detection completes and its result is shown in the new language without the user loading the image again
+
+### Requirement: Processing modes
+The tool page SHALL provide Automatic and Advanced processing modes, with Automatic selected by default. Automatic mode SHALL use the existing default background color of RGB (0, 177, 64) and tolerance 50 without requiring configuration. It SHALL explain that these are the default detection settings. Advanced mode SHALL expose the existing tolerance control, background color readout and eyedropper, and manual split-refinement actions. Mode controls and explanatory text SHALL be available in every supported locale and operable with keyboard and assistive technology. Switching modes SHALL preserve the loaded image, detected stickers, removals, tray-icon choice, current background and tolerance, and export state; a mode change alone SHALL NOT re-run detection or alter results.
+
+#### Scenario: Start in automatic mode
+- **WHEN** a user opens the tool page
+- **THEN** Automatic is selected, existing default settings are used, and advanced tuning controls are hidden
+
+#### Scenario: Change to advanced mode
+- **WHEN** the user selects Advanced
+- **THEN** existing background and tolerance controls and manual split-refinement actions become available without changing the current image or sticker results
+
+#### Scenario: Return to automatic mode
+- **WHEN** the user switches to Automatic after tuning or curating stickers
+- **THEN** the current settings, image, sticker results, curation, tray icon, and export state remain intact, while advanced controls are hidden
+
+#### Scenario: Select a mode by keyboard
+- **WHEN** the mode selector has keyboard focus
+- **THEN** the user can select either mode and assistive technology can determine the selected mode
+
+### Requirement: Manually reorder stickers
+
+The editor SHALL let users change the order of kept stickers with pointer drag-and-drop and keyboard-operable move-earlier/move-later controls. Alt+ArrowUp and Alt+ArrowDown on a focused card SHALL provide the same keyboard operation without conflicting with grid navigation. Reordering SHALL change the sequence used by the grid, preview outlines, and exported pack without changing sticker pixels, bounding boxes, removed-sticker state, or tray-icon identity. The initial order SHALL match detection order. Removing a sticker SHALL remove it from the custom order; stickers created by splitting SHALL occupy the source sticker's position in candidate order, and undo SHALL restore the source at the earliest position occupied by its replacements. Re-detection SHALL reset the order to the new detector result. Successful moves SHALL keep focus on the moved card and announce its new position and total in the active locale.
+
+#### Scenario: Move a sticker with pointer
+
+- **WHEN** the user drags a kept sticker card and drops it at another position
+- **THEN** the card order and exported sticker order reflect the new position
+
+#### Scenario: Move a sticker with keyboard
+
+- **WHEN** the user invokes the keyboard reorder command on a focused card
+- **THEN** the card moves one position in the requested direction, focus remains on that card, and assistive technology receives a localized position announcement
+
+#### Scenario: Move outside the order bounds
+
+- **WHEN** the user requests a keyboard move beyond the first or last position
+- **THEN** the order remains unchanged
+
+#### Scenario: Removal and split preserve a valid order
+
+- **WHEN** a sticker is removed, split, or restored by undo
+- **THEN** the current order contains each kept sticker exactly once and no removed sticker
+
+#### Scenario: Tray icon remains selected after a move
+
+- **WHEN** the user reorders stickers
+- **THEN** the same sticker remains the tray icon
+
+#### Scenario: New detection resets custom order
+
+- **WHEN** a new detection result replaces the previous sticker set
+- **THEN** the new result starts in detector order
 
 ### Requirement: Batch processing progress is understandable
 The editor SHALL show the number of batch images whose processing has ended out of the total, using actual image states rather than an estimated per-image percentage. It SHALL distinguish successful results from items needing attention, and SHALL expose the progress in every supported locale to sighted users and assistive technology users. The progress presentation SHALL not block retry, cancellation, or editing, and SHALL disappear when the batch is cleared.
