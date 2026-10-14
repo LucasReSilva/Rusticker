@@ -266,5 +266,9 @@
 	"history_confirm_clear_action": "Apagar tudo",
 	"history_cancel_action": "Cancelar",
 	"export_error_webp_unsupported": "Este navegador não consegue criar figurinhas WEBP. Tente Chrome, Edge ou Firefox.",
-	"export_error_failed": "Não foi possível criar o pacote. Tente de novo."
+	"export_error_failed": "Não foi possível criar o pacote. Tente de novo.",
+	"batch_progress_heading": "Progresso do processamento",
+	"batch_progress_count": "Finalizadas: {handled}/{total}",
+	"batch_progress_results": "Com sucesso: {count}",
+	"batch_progress_attention": "Atenção necessária: {count}"
 }
