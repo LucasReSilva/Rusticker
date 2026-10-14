@@ -34,6 +34,31 @@ async function load(page: Page): Promise<void> {
 	await expect(page.locator('[data-detected-count]')).toHaveText('6 figurinhas selecionadas');
 }
 
+test('sticker previews fade in without layout shifts and skip animation for reduced motion', async ({
+	page
+}) => {
+	await page.emulateMedia({ reducedMotion: 'no-preference' });
+	await load(page);
+	const preview = page.locator('[data-sticker-preview]').first();
+	const animationName = await preview.evaluate(
+		(element) => getComputedStyle(element).animationName
+	);
+	expect(animationName).not.toBe('none');
+	const initialBounds = await preview.boundingBox();
+	await page.waitForTimeout(350);
+	const finalBounds = await preview.boundingBox();
+	expect(finalBounds?.width).toBe(initialBounds?.width);
+	expect(finalBounds?.height).toBe(initialBounds?.height);
+
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await load(page);
+	const reducedPreview = page.locator('[data-sticker-preview]').first();
+	expect(await reducedPreview.evaluate((element) => getComputedStyle(element).animationName)).toBe(
+		'none'
+	);
+	expect(await reducedPreview.boundingBox()).not.toBeNull();
+});
+
 test('click chooser, keyboard eyedropper and debounced tolerance use the real worker locally', async ({
 	page
 }) => {
