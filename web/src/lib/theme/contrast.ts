@@ -30,13 +30,22 @@ export const CONTRAST_PAIRS: readonly ContrastPair[] = [
 	{ fg: 'muted-foreground', bg: 'background', min: 4.5 },
 	{ fg: 'muted-foreground', bg: 'muted', min: 4.5 },
 	{ fg: 'primary-foreground', bg: 'primary', min: 4.5 },
+	{ fg: 'primary-foreground', bg: 'primary-hover', min: 4.5 },
 	{ fg: 'primary', bg: 'background', min: 4.5 },
 	{ fg: 'secondary-foreground', bg: 'secondary', min: 4.5 },
+	{ fg: 'secondary-foreground', bg: 'secondary-hover', min: 4.5 },
 	{ fg: 'accent-foreground', bg: 'accent', min: 4.5 },
 	{ fg: 'destructive-foreground', bg: 'destructive', min: 4.5 },
+	{ fg: 'destructive-foreground', bg: 'destructive-hover', min: 4.5 },
 	{ fg: 'destructive', bg: 'background', min: 4.5 },
 	{ fg: 'ring', bg: 'background', min: 3 },
+	...['card', 'popover', 'muted', 'secondary', 'secondary-hover', 'accent'].map((bg) => ({
+		fg: 'ring',
+		bg,
+		min: 3
+	})),
 	{ fg: 'input', bg: 'background', min: 3 },
+	...['card', 'popover', 'muted'].map((bg) => ({ fg: 'input', bg, min: 3 })),
 	{ fg: 'foreground', bg: 'checkerboard-b', min: 4.5 }
 ];
 
