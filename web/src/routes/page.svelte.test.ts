@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/svelte';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import Page from './+page.svelte';
 import { createEditorState, setEditorForTesting, type EditorState } from '$lib/state.svelte';
@@ -132,6 +132,38 @@ it('mounts export with background size badges and blocks export after removing s
 	await waitFor(() => expect(action).toBeDisabled());
 	expect(screen.getByText(m.export_min_stickers_notice({ min: 3 }))).toBeInTheDocument();
 });
+
+it('reorders the tool grid and keeps preview, export input and tray icon synchronized', async () => {
+	const { container } = render(Page);
+	await editor.loadFile(file());
+	await waitFor(() => expect(container.querySelectorAll('[data-sticker-card]')).toHaveLength(3));
+	const initial = editor.stickers.map((sticker) => sticker.id);
+	editor.setTrayIcon(initial[2]);
+	const movedCard = container.querySelector<HTMLElement>(`[data-sticker-card="${initial[0]}"]`)!;
+	await fireEvent.click(within(movedCard).getByRole('button', { name: m.tool_move_later() }));
+
+	await waitFor(() =>
+		expect(editor.stickers.map((sticker) => sticker.id)).toEqual([
+			initial[1],
+			initial[0],
+			initial[2]
+		])
+	);
+	expect(editor.batchStickers.map((sticker) => sticker.id)).toEqual(
+		editor.stickers.map((sticker) => sticker.id)
+	);
+	expect(editor.trayIconId).toBe(initial[2]);
+	expect(editor.batchTrayIconId).toBe(initial[2]);
+	expect(
+		Array.from(container.querySelectorAll<SVGRectElement>('[data-detection-box]')).map((box) => ({
+			x: Number(box.getAttribute('x')),
+			y: Number(box.getAttribute('y')),
+			width: Number(box.getAttribute('width')),
+			height: Number(box.getAttribute('height'))
+		}))
+	).toEqual(editor.stickers.map((sticker) => sticker.bbox));
+});
+
 it('uses an accepted split in the sticker count and export eligibility', async () => {
 	editor.dispose();
 	editor = createEditorState({ detector: createMockDetector({ count: 2, splitCount: 2 }), decode });
