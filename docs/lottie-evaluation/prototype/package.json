@@ -4,6 +4,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "vite build && bun run src/copy-wasm.mjs",
+		"bench": "bun run src/benchmark.mjs",
 		"preview": "vite preview --host 127.0.0.1"
 	},
 	"devDependencies": {

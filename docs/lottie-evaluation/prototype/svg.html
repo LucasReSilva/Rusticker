@@ -10,14 +10,6 @@
 			#svg { width: 8rem; height: 8rem; margin: 2rem auto; }
 			@media (prefers-reduced-motion: reduce) { #svg { display: none; } }
 		</style>
-		<script>
-			const longTasks = [];
-			if (PerformanceObserver.supportedEntryTypes.includes('longtask')) new PerformanceObserver((list) => longTasks.push(...list.getEntries().map(({ duration }) => duration))).observe({ type: 'longtask', buffered: true });
-			window.addEventListener('load', () => setTimeout(() => {
-				const resources = performance.getEntriesByType('resource');
-				document.documentElement.dataset.metrics = JSON.stringify({ fcpMs: performance.getEntriesByName('first-contentful-paint')[0]?.startTime ?? null, tbtMs: longTasks.reduce((sum, duration) => sum + Math.max(0, duration - 50), 0), resourceBytes: resources.reduce((sum, item) => sum + item.transferSize, 0), externalResourceCount: resources.filter((item) => new URL(item.name).origin !== location.origin).length });
-			}, 100));
-		</script>
 	</head>
 	<body>
 		<h1>Lottie SVG</h1><p>State: complete.</p>
