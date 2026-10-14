@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/svelte';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import Page from './+page.svelte';
 import { createEditorState, setEditorForTesting, type EditorState } from '$lib/state.svelte';
@@ -31,10 +31,12 @@ afterEach(() => {
 
 it('loads through the chooser, renders the plural count and preserves curated state across page remount', async () => {
 	const first = render(Page);
+	expect(screen.getByTestId('batch-notifications')).toBeInTheDocument();
 	await fireEvent.change(first.container.querySelector('input')!, { target: { files: [file()] } });
 	await waitFor(() =>
 		expect(first.container.querySelectorAll('[data-sticker-card]')).toHaveLength(3)
 	);
+	expect(screen.getByRole('group', { name: m.telegram_export_format_label() })).toBeInTheDocument();
 	expect(first.container.querySelector('[data-detected-count]')).toHaveTextContent(
 		m.tool_detected_count({ count: 3 })
 	);
@@ -71,6 +73,23 @@ it.each(['pt-BR', 'en', 'es'] as const)(
 		expect(container.querySelectorAll('[data-sticker-card]')).toHaveLength(0);
 		expect(screen.getByText(m.tool_grid_empty())).toBeInTheDocument();
 		expect(editor.source).not.toBeNull();
+	}
+);
+it.each(['pt-BR', 'en', 'es'] as const)(
+	'shows localized no-proposal feedback and keeps the original in %s',
+	async (locale) => {
+		setLocale(locale, { reload: false });
+		editor.dispose();
+		editor = createEditorState({ detector: createMockDetector({ count: 1 }), decode });
+		setEditorForTesting(editor);
+		const { container } = render(Page);
+		await editor.loadFile(file());
+		const original = editor.stickers[0];
+		await fireEvent.click(screen.getByRole('button', { name: m.tool_processing_mode_advanced() }));
+		await fireEvent.click(screen.getByRole('button', { name: m.tool_split_request() }));
+		await screen.findByText(m.tool_split_unavailable());
+		expect(editor.stickers).toEqual([original]);
+		expect(container.querySelectorAll('[data-sticker-card]')).toHaveLength(1);
 	}
 );
 it('rejects pasted non-image files, ignores text and editable targets, and removes its paste listener on unmount', async () => {
@@ -113,5 +132,75 @@ it('mounts export with background size badges and blocks export after removing s
 	editor.removeSticker(editor.stickers[0].id);
 	await waitFor(() => expect(action).toBeDisabled());
 	expect(screen.getByText(m.export_min_stickers_notice({ min: 3 }))).toBeInTheDocument();
+});
+
+it('reorders the tool grid and keeps preview, export input and tray icon synchronized', async () => {
+	const { container } = render(Page);
+	await editor.loadFile(file());
+	await waitFor(() => expect(container.querySelectorAll('[data-sticker-card]')).toHaveLength(3));
+	const initial = editor.stickers.map((sticker) => sticker.id);
+	editor.setTrayIcon(initial[2]);
+	const movedCard = container.querySelector<HTMLElement>(`[data-sticker-card="${initial[0]}"]`)!;
+	await fireEvent.click(within(movedCard).getByRole('button', { name: m.tool_move_later() }));
+
+	await waitFor(() =>
+		expect(editor.stickers.map((sticker) => sticker.id)).toEqual([
+			initial[1],
+			initial[0],
+			initial[2]
+		])
+	);
+	expect(editor.batchStickers.map((sticker) => sticker.id)).toEqual(
+		editor.stickers.map((sticker) => sticker.id)
+	);
+	expect(editor.trayIconId).toBe(initial[2]);
+	expect(editor.batchTrayIconId).toBe(initial[2]);
+	expect(
+		Array.from(container.querySelectorAll<SVGRectElement>('[data-detection-box]')).map((box) => ({
+			x: Number(box.getAttribute('x')),
+			y: Number(box.getAttribute('y')),
+			width: Number(box.getAttribute('width')),
+			height: Number(box.getAttribute('height'))
+		}))
+	).toEqual(editor.stickers.map((sticker) => sticker.bbox));
+});
+
+it('uses an accepted split in the sticker count and export eligibility', async () => {
+	editor.dispose();
+	editor = createEditorState({ detector: createMockDetector({ count: 2, splitCount: 2 }), decode });
+	setEditorForTesting(editor);
+	const { container } = render(Page);
+	await editor.loadFile(file());
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_processing_mode_advanced() }));
+	const exportButton = await screen.findByRole('button', { name: m.export_download_button() });
+	expect(exportButton).toBeDisabled();
+	await fireEvent.click(screen.getAllByRole('button', { name: m.tool_split_request() })[0]);
+	await screen.findByText(m.tool_split_review());
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_split_accept() }));
+	await waitFor(() => expect(container.querySelectorAll('[data-sticker-card]')).toHaveLength(3));
+	expect(exportButton).toBeEnabled();
+});
+it('switches modes without redetecting or changing curated/export state', async () => {
+	const { container } = render(Page);
+	await editor.loadFile(file());
+	const source = editor.source;
+	const detected = editor.detected;
+	const stickerId = editor.stickers[0].id;
+	editor.removeSticker(stickerId);
+	editor.setTrayIcon(editor.stickers[0].id);
+	const curated = [...editor.stickers];
+	const trayIconId = editor.trayIconId;
+	const exportButton = await screen.findByRole('button', { name: m.export_download_button() });
+	const disabledBefore = exportButton.hasAttribute('disabled');
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_processing_mode_advanced() }));
+	expect(await screen.findByRole('slider')).toBeInTheDocument();
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_processing_mode_automatic() }));
+	expect(screen.queryByRole('slider')).not.toBeInTheDocument();
+	expect(editor.source).toBe(source);
+	expect(editor.detected).toBe(detected);
+	expect(editor.stickers).toEqual(curated);
+	expect(editor.trayIconId).toBe(trayIconId);
+	expect(exportButton.hasAttribute('disabled')).toBe(disabledBefore);
+	expect(container.querySelectorAll('[data-sticker-card]')).toHaveLength(curated.length);
 });
 import '@testing-library/jest-dom/vitest';

@@ -2,7 +2,13 @@
 // Importing this module never touches `Worker`; only createDetector() does,
 // so it is safe to import from prerendered code (call it in the browser only).
 import * as Comlink from 'comlink';
-import type { WorkerApi, WorkerFailure, WorkerRequest, WorkerResult } from './protocol';
+import type {
+	SplitRequest,
+	WorkerApi,
+	WorkerFailure,
+	WorkerRequest,
+	WorkerResult
+} from './protocol';
 import { createRuntime, type Job } from './runtime';
 import type { Detector } from './types';
 
@@ -74,8 +80,32 @@ export function createDetector(): Detector {
 		if (!result.ok && result.code === 'WorkerFailed') recycle(current);
 		return result;
 	};
+	const propose = async (image: import('./types').DetectInput): Promise<WorkerResult> => {
+		const current = (engine ??= spawnEngine());
+		const rgba = image.data.slice().buffer;
+		const request: SplitRequest = { rgba };
+		let result: WorkerResult;
+		try {
+			result = await Promise.race([
+				current.api.split(Comlink.transfer(request, [rgba])),
+				current.crashed
+			]);
+		} catch (thrown) {
+			result = {
+				ok: false,
+				code: 'WorkerFailed',
+				detail: thrown instanceof Error ? `${thrown.name}: ${thrown.message}` : String(thrown)
+			};
+		}
+		if (!result.ok && result.code === 'WorkerFailed') recycle(current);
+		return result;
+	};
 
-	return createRuntime(execute, () => {
-		if (engine !== null) recycle(engine);
-	});
+	return createRuntime(
+		execute,
+		() => {
+			if (engine !== null) recycle(engine);
+		},
+		propose
+	);
 }

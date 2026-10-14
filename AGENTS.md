@@ -89,6 +89,54 @@ Non-trivial work goes through [OpenSpec](https://github.com/Fission-AI/OpenSpec)
 `openspec/specs/` is the source of truth for current behavior. Do not
 implement behavior that contradicts a spec without changing the spec first.
 
+## Multi-agent issue lifecycle
+
+Before using the GitHub Project, verify that GitHub CLI is authenticated as the
+intended repository owner and can read the repository, create remote refs, and
+read and update the existing project. Project operations require the account or
+token to have project access; repository operations require write access to
+the repository and permission to create the claim and feature branches. Check
+the authenticated account and effective access before starting. If a required
+permission, project field, or API operation is unavailable, stop before any
+issue/project mutation or implementation; do not substitute labels or comments
+for a lock. Never print or commit authentication tokens.
+
+When selecting work from the repository's existing GitHub Project, take only
+an open issue in `Todo` with no active claim ref. Labels, assignees, comments,
+and project fields are tracking mirrors; none is an exclusive lock.
+
+Before changing issue metadata or source, atomically claim
+`refs/heads/agent-locks/issue-<ID>` by creating and pushing that previously
+absent remote ref without force. Use an empty claim commit based on the current
+`develop` head, with the agent identity, a unique nonce, and the required
+`Co-authored-by` trailer. Exactly one create-only push may win. If the push is
+rejected, ambiguous, or branch creation is not permitted, stop; never fall back
+to a label, assignment, project status, or comment as the lock.
+
+After confirming ownership, use the nonce in a dedicated branch name such as
+`feature/issue-<ID>-<slug>-<claim>` and create a separate worktree when working
+in parallel. Then add `agent:claimed`, set the existing project item to
+`In Progress`, and comment `🔒 Claimed by Agent <name> on branch
+<branch> (claim <nonce>)`. Assignment is optional. Recheck ownership before
+every issue/project update, commit, push, pull request, lock renewal, and lock
+release. If a required status or claim comment cannot be published, conditionally
+remove only your exact lock ref and stop before implementation.
+
+Keep non-trivial work in OpenSpec. Push progress regularly and open a pull
+request to `develop` with `Closes #<ID>`; move the project item to `In Review`
+only after verifying ownership. Keep the lock until the issue closes on merge,
+then set `Done` and remove only the exact completed lock ref. Do not attach or
+upload user images, sticker pixels, generated private archives, credentials, or
+other user data to GitHub.
+
+A claim may be reclaimed only when the issue remains open, has no active pull
+request, and GitHub's server-timestamped push-event history for the lock and
+feature refs plus pull-request activity shows no progress for more than 12
+hours. Git commit dates alone are not reliable. If event history is unavailable
+or unclear, fail closed and ask a maintainer. Delete with an expected old lock
+SHA, then compete to create a fresh lock without force. If the SHA changed, do
+not delete it; do not reuse the previous owner's branch or worktree.
+
 ## Hard rules (architecture)
 
 - The Rust core **never returns user-facing text**. Errors and warnings are

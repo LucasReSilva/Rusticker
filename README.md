@@ -53,15 +53,15 @@ a vulnerability privately.
 
 ## Status
 
-Rusticker is in **early development**. The `core/` crate (`rusticker-core`)
+Rusticker is released as **v0.2.1**. The `core/` crate (`rusticker-core`)
 detects stickers and builds to WebAssembly, with native tests. The `web/` app
 has localized routes in Portuguese (Brazil), English and Spanish, and a browser
 editor for loading, detecting, adjusting, curating and exporting stickers.
 The complete flow is verified with synthetic images, including offline export.
-No release has been created for this integration; live deployment checks remain
-part of the release workflow.
+Release automation uses `release-plz` and `git-cliff`; release readiness still
+requires the end-to-end image-to-pack flow to work before a new release is made.
 
-## Planned stack
+## Technology stack
 
 - **Core:** Rust compiled to WebAssembly with `wasm-pack` and `wasm-bindgen`,
   using the `image` and `imageproc` crates (no OpenCV).
@@ -75,10 +75,35 @@ part of the release workflow.
 - **Tooling:** Bun as package manager and runtime.
 - **Offline:** installable PWA via `@vite-pwa/sveltekit`.
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the data flow and the detection
-algorithm, and [DESIGN.md](DESIGN.md) for the design system and i18n rules.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the implemented detection pipeline,
+browser-to-WASM data flow, known limits, and technical references. See
+[DESIGN.md](DESIGN.md) for the design system and i18n rules.
 
-## Repository layout (planned)
+## Post-release roadmap
+
+The v0.2.1 implementation is documented in archived OpenSpec changes.
+Follow-up work is being planned in
+the existing GitHub Project as six epics and 23 child issues. The current top
+priorities are a technical documentation and code audit (P0), followed by the
+Rust orange/WhatsApp green palette (P1). In addition to sticker separation,
+WhatsApp metadata, editing, Telegram files, and agent coordination, the roadmap covers batch input, processing modes, theme colors,
+local history, notifications, WebMCP, and optional ONNX split assistance. The
+board's `Complexity` field orders relative effort from `S` through `XL`; these
+items are planning candidates, not a release commitment.
+
+Telegram scope is limited to local static PNG/WEBP files; users continue in
+Telegram's editor or `@Stickers`. WhatsApp title/author work is gated on
+verifying a named importer's actual format support. The WebMCP feasibility
+review recommends an experimental, feature-detected integration with only
+coarse, bounded tool outputs; no image data, hashes, or exports are exposed.
+See the [WebMCP evaluation](docs/webmcp-evaluation.md) and the
+[ONNX split-assistance evaluation](docs/onnx-split-evaluation.md), which
+recommends testing Rust/WASM first as an opt-in local second step after the
+existing detector; no model or runtime is shipped. User images remain on the
+device. See [the roadmap proposal](openspec/changes/2026-10-12-post-release-agent-coordination/proposal.md)
+for issue-level acceptance criteria.
+
+## Repository layout
 
 ```text
 core/       Rust crate `rusticker-core`, compiled to WebAssembly (core-detection)
@@ -241,7 +266,7 @@ change that introduces them.
 
 | Document                               | Contents                                                   |
 |----------------------------------------|------------------------------------------------------------|
-| [ARCHITECTURE.md](ARCHITECTURE.md)     | Monorepo layout, data flow, detection algorithm, Rust ↔ JS |
+| [ARCHITECTURE.md](ARCHITECTURE.md)     | Current pipeline, browser/WASM data flow, limits, references |
 | [DESIGN.md](DESIGN.md)                 | Design system, tokens, accessibility, i18n                 |
 | [CONTRIBUTING.md](CONTRIBUTING.md)     | Setup, hooks, commits, adding a locale or a component      |
 | [SECURITY.md](SECURITY.md)             | Privacy guarantees and private vulnerability reporting     |

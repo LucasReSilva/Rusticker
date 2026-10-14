@@ -76,6 +76,8 @@ export interface Detector {
 	 * The caller's `image` is never modified or detached.
 	 */
 	detect(image: DetectInput, options: DetectOptions): Promise<Sticker[]>;
+	/** Proposes reviewed sub-stickers for one framed image; empty means no proposal. */
+	proposeSplit(image: DetectInput): Promise<Sticker[]>;
 	/** Stops the background context; later `detect` calls fail with `WorkerFailed`. */
 	dispose(): void;
 }

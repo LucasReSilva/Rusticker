@@ -16,7 +16,21 @@
 		busy,
 		pending,
 		onRemove,
-		onSetTrayIcon
+		onSetTrayIcon,
+		onReorder = () => false,
+		splitPreview = null,
+		splitBusyId = null,
+		noSplitProposalId = null,
+		undoableStickerIds = new Set<string>(),
+		allowSplitRequest = true,
+		allowBoundsAdjustment = false,
+		sourceWidth = 0,
+		sourceHeight = 0,
+		onSplitRequest = () => {},
+		onBoundsApply = () => {},
+		onSplitAccept = () => {},
+		onSplitDiscard = () => {},
+		onSplitUndo = () => {}
 	}: {
 		stickers: Sticker[];
 		trayIconId: string | null;
@@ -25,6 +39,20 @@
 		pending: boolean;
 		onRemove: (id: string) => void;
 		onSetTrayIcon: (id: string) => void;
+		onReorder?: (id: string, toIndex: number) => boolean;
+		splitPreview?: { source: Sticker; candidates: Sticker[] } | null;
+		splitBusyId?: string | null;
+		noSplitProposalId?: string | null;
+		undoableStickerIds?: ReadonlySet<string>;
+		allowSplitRequest?: boolean;
+		allowBoundsAdjustment?: boolean;
+		sourceWidth?: number;
+		sourceHeight?: number;
+		onSplitRequest?: (id: string) => void;
+		onBoundsApply?: (sticker: Sticker) => void;
+		onSplitAccept?: () => void;
+		onSplitDiscard?: () => void;
+		onSplitUndo?: (id: string) => void;
 	} = $props();
 	let activeId = $state<string | null>(null);
 	const activeIndex = $derived(
@@ -38,6 +66,8 @@
 	let dialogOpen = $state(false);
 	let removeId = $state<string | null>(null);
 	let removePosition = $state(0);
+	let draggedId = $state<string | null>(null);
+	let reorderAnnouncement = $state('');
 	let confirmed = false;
 	const headingId = $props.id();
 	function cards(): HTMLElement[] {
@@ -53,11 +83,31 @@
 		confirmed = false;
 		dialogOpen = true;
 	}
+	async function moveTo(id: string, toIndex: number) {
+		if (busy || pending) return;
+		const fromIndex = stickers.findIndex((sticker) => sticker.id === id);
+		if (fromIndex < 0 || toIndex < 0 || toIndex >= stickers.length || fromIndex === toIndex) return;
+		if (!onReorder(id, toIndex)) return;
+		activeId = id;
+		reorderAnnouncement = m.tool_reorder_announcement({
+			position: formatNumber(toIndex + 1),
+			total: formatNumber(stickers.length)
+		});
+		await tick();
+		cards()
+			.find((card) => card.dataset.stickerCard === id)
+			?.focus();
+	}
 	function keydown(event: KeyboardEvent) {
 		const target = (event.target as HTMLElement).closest<HTMLElement>('[data-sticker-card]');
 		if (!target || dialogOpen) return;
 		const elements = cards();
 		const index = elements.indexOf(target);
+		if (event.altKey && ['ArrowUp', 'ArrowDown'].includes(event.key)) {
+			event.preventDefault();
+			void moveTo(target.dataset.stickerCard ?? '', index + (event.key === 'ArrowUp' ? -1 : 1));
+			return;
+		}
 		if (['Delete', 'Backspace'].includes(event.key)) {
 			event.preventDefault();
 			requestRemove(index);
@@ -127,21 +177,64 @@
 					/>
 				</li>{/each}
 		{:else}
-			{#each stickers as sticker, index (sticker.id)}<li class="min-w-0">
+			{#each stickers as sticker, index (sticker.id)}<li
+					class="min-w-0 cursor-grab active:cursor-grabbing"
+					draggable={!busy && !pending && stickers.length > 1}
+					data-dragging={draggedId === sticker.id ? 'true' : undefined}
+					ondragstart={(event) => {
+						if (busy || pending) {
+							event.preventDefault();
+							return;
+						}
+						draggedId = sticker.id;
+						if (event.dataTransfer) {
+							event.dataTransfer.effectAllowed = 'move';
+							event.dataTransfer.setData('text/plain', sticker.id);
+						}
+					}}
+					ondragover={(event) => {
+						if (draggedId && draggedId !== sticker.id && !busy && !pending) event.preventDefault();
+					}}
+					ondrop={(event) => {
+						event.preventDefault();
+						const id = event.dataTransfer?.getData('text/plain') || draggedId;
+						draggedId = null;
+						if (id) void moveTo(id, index);
+					}}
+					ondragend={() => (draggedId = null)}
+				>
 					<StickerCard
 						{sticker}
 						position={index + 1}
 						total={stickers.length}
 						isTrayIcon={trayIconId === sticker.id}
+						canMoveEarlier={index > 0}
+						canMoveLater={index < stickers.length - 1}
 						{sizeOf}
 						active={index === activeIndex}
 						onFocus={() => (activeId = sticker.id)}
 						onRemoveRequest={() => requestRemove(index)}
 						onSetTrayIcon={() => onSetTrayIcon(sticker.id)}
+						onMoveEarlier={() => void moveTo(sticker.id, index - 1)}
+						onMoveLater={() => void moveTo(sticker.id, index + 1)}
+						splitPreview={splitPreview?.source.id === sticker.id ? splitPreview.candidates : null}
+						splitBusy={splitBusyId === sticker.id}
+						noSplitProposal={noSplitProposalId === sticker.id}
+						undoable={undoableStickerIds.has(sticker.id)}
+						{allowSplitRequest}
+						{allowBoundsAdjustment}
+						{sourceWidth}
+						{sourceHeight}
+						onSplitRequest={() => onSplitRequest(sticker.id)}
+						{onBoundsApply}
+						{onSplitAccept}
+						{onSplitDiscard}
+						onSplitUndo={() => onSplitUndo(sticker.id)}
 					/>
 				</li>{/each}
 		{/if}
 	</ul>
+	<p aria-live="polite" role="status" class="sr-only">{reorderAnnouncement}</p>
 	{#if !pending && !stickers.length}<p class="text-muted-foreground">{m.tool_grid_empty()}</p>{/if}
 	<Dialog.Root bind:open={dialogOpen}>
 		<Dialog.Content onCloseAutoFocus={restoreFocus}>

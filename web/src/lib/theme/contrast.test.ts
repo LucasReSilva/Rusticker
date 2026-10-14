@@ -54,6 +54,21 @@ describe('color math', () => {
 });
 
 describe('theme tokens in app.css', () => {
+	it('uses orange primary tokens and green supporting tokens in both themes', () => {
+		for (const theme of ['light', 'dark'] as const) {
+			const primary = resolveColor(tokens[theme], 'primary');
+			expect(primary.h, `${theme} primary hue`).toBeGreaterThanOrEqual(30);
+			expect(primary.h, `${theme} primary hue`).toBeLessThanOrEqual(55);
+
+			for (const name of ['secondary', 'accent']) {
+				const color = resolveColor(tokens[theme], name);
+				expect(color.h, `${theme} ${name} hue`).toBeGreaterThanOrEqual(120);
+				expect(color.h, `${theme} ${name} hue`).toBeLessThanOrEqual(160);
+				expect(color.c, `${theme} ${name} chroma`).toBeGreaterThan(0.04);
+			}
+		}
+	});
+
 	it.each(['light', 'dark'] as const)('every %s color token is inside the sRGB gamut', (theme) => {
 		const outside = Object.entries(tokens[theme])
 			.filter(([, value]) => value.startsWith('oklch('))

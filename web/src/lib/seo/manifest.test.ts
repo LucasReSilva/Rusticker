@@ -1,10 +1,17 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { locales } from '$lib/paraglide/runtime';
+import { oklchToLinearRgb, parseThemeTokens, resolveColor, toHex } from '$lib/theme/contrast';
 import { BACKGROUND_COLOR, THEME_COLOR, buildManifest, type WebAppManifest } from './manifest';
 
 const catalog = (locale: string) =>
 	JSON.parse(readFileSync(`messages/${locale}.json`, 'utf8')) as Record<string, string>;
+
+const appCss = readFileSync(fileURLToPath(new URL('../../app.css', import.meta.url)), 'utf8');
+const lightPrimaryHex = toHex(
+	oklchToLinearRgb(resolveColor(parseThemeTokens(appCss).light, 'primary'))
+).toUpperCase();
 
 const startUrls = { 'pt-BR': '/Rusticker/', en: '/Rusticker/en/', es: '/Rusticker/es/' };
 
@@ -35,7 +42,8 @@ describe('buildManifest', () => {
 		expect(first.id).toBe('/Rusticker/');
 		expect(first.scope).toBe('/Rusticker/');
 		expect(first.display).toBe('standalone');
-		expect(THEME_COLOR).toBe('#822DDA');
+		expect(THEME_COLOR).toBe('#B65329');
+		expect(THEME_COLOR).toBe(lightPrimaryHex);
 		expect(BACKGROUND_COLOR).toBe('#FFFFFF');
 		expect(first.theme_color).toBe(THEME_COLOR);
 		expect(first.background_color).toBe(BACKGROUND_COLOR);

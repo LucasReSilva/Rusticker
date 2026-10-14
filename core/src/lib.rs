@@ -7,7 +7,8 @@
 //!    background color and a 0-100 tolerance;
 //! 2. remove noise with a 3x3 morphological opening;
 //! 3. label 8-connected foreground regions and drop those below 0.4% of the image;
-//! 4. crop each region with alpha from region membership, softened by a 3x3 average;
+//! 4. crop each region with source alpha multiplied by 3x3 component coverage,
+//!    then conservatively decontaminate eligible opaque boundary colors;
 //! 5. sort into rows, then left to right;
 //! 6. fit each crop to 480 px and center it in a transparent 512x512 frame.
 //!
@@ -21,6 +22,7 @@ mod error;
 mod frame;
 mod mask;
 mod order;
+mod split;
 mod wasm;
 
 use image::{Rgb, RgbaImage};
@@ -28,6 +30,12 @@ use image::{Rgb, RgbaImage};
 pub use error::ErrorCode;
 pub use frame::{CONTENT_SIZE, FRAME_SIZE};
 pub use wasm::{Detection, detect};
+
+/// Proposes reviewed sub-stickers from a 512x512 sticker returned by detection.
+/// An empty result means the bounded candidate operation found no split.
+pub fn propose_sticker_split(image: &RgbaImage) -> Vec<Sticker> {
+    split::propose(image)
+}
 
 /// Longest accepted side, in pixels.
 pub const MAX_SIDE: u32 = 8192;
@@ -151,7 +159,7 @@ fn run(
         .collect();
     let crops: Vec<RgbaImage> = components
         .iter()
-        .map(|c| alpha::extract(rgba, width, &labels, c))
+        .map(|c| alpha::extract(rgba, width, &labels, c, background))
         .collect();
     drop(labels);
 

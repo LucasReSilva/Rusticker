@@ -6,8 +6,8 @@ import { localizedPath } from './urls';
 
 // Manifests cannot reference CSS variables, so the colors are literal values,
 // fixed by the shared contract (design D9).
-/** Browser UI color: the "Grape" primary of the light theme. */
-export const THEME_COLOR = '#822DDA';
+/** Browser UI color: the Rust-orange primary of the light theme. */
+export const THEME_COLOR = '#B65329';
 /** Splash-screen background. */
 export const BACKGROUND_COLOR = '#FFFFFF';
 

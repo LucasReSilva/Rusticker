@@ -22,7 +22,7 @@ pub(crate) fn foreground_mask(
         .0
         .iter()
         .map(|p| {
-            if thresholds.is_background(p[0], p[1], p[2]) {
+            if p[3] == 0 || thresholds.is_background(p[0], p[1], p[2]) {
                 0
             } else {
                 FOREGROUND
@@ -69,6 +69,26 @@ mod tests {
         let t = Thresholds::new(image::Rgb([0, 255, 0]), 50);
         let mask = foreground_mask(&rgba, 4, 1, &t);
         assert_eq!(mask.as_raw(), &vec![0, 255, 255, 0]);
+    }
+
+    #[test]
+    fn mask_transparent_pixels_ignore_hidden_colors() {
+        let rgba = [255, 0, 0, 0, 255, 255, 255, 0, 0, 0, 0, 0, 0, 255, 0, 0];
+        for tolerance in [0, 50, 100] {
+            let thresholds = Thresholds::new(image::Rgb([0, 255, 0]), tolerance);
+            let mask = foreground_mask(&rgba, 4, 1, &thresholds);
+            assert!(mask.pixels().all(|pixel| pixel[0] == 0));
+        }
+    }
+
+    #[test]
+    fn mask_nonzero_alpha_uses_color_classification() {
+        let rgba = [
+            255, 0, 0, 1, 255, 0, 0, 128, 255, 0, 0, 255, 0, 255, 0, 1, 0, 255, 0, 128,
+        ];
+        let thresholds = Thresholds::new(image::Rgb([0, 255, 0]), 50);
+        let mask = foreground_mask(&rgba, 5, 1, &thresholds);
+        assert_eq!(mask.as_raw(), &[FOREGROUND, FOREGROUND, FOREGROUND, 0, 0]);
     }
 
     #[test]

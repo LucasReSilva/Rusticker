@@ -5,9 +5,9 @@ import init from 'rusticker-core';
 // A `?url` import makes Vite emit the binary as a hashed asset whose URL
 // respects the configured base path (e.g. /Rusticker on GitHub Pages).
 import wasmUrl from 'rusticker-core/rusticker_core_bg.wasm?url';
-import { runDetect, transferables } from './engine';
+import { runDetect, runSplit, transferables } from './engine';
 import { failureFromThrown } from './errors';
-import type { WorkerApi, WorkerRequest, WorkerResult } from './protocol';
+import type { SplitRequest, WorkerApi, WorkerRequest, WorkerResult } from './protocol';
 
 // Started once, when the worker module is evaluated; every job awaits it.
 const ready = init({ module_or_path: wasmUrl });
@@ -22,6 +22,15 @@ const api: WorkerApi = {
 			return failureFromThrown(thrown);
 		}
 		const result = runDetect(request);
+		return Comlink.transfer(result, transferables(result));
+	},
+	async split(request: SplitRequest): Promise<WorkerResult> {
+		try {
+			await ready;
+		} catch (thrown) {
+			return failureFromThrown(thrown);
+		}
+		const result = runSplit(request);
 		return Comlink.transfer(result, transferables(result));
 	}
 };
