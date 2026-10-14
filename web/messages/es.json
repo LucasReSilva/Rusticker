@@ -285,5 +285,15 @@
 	"batch_progress_heading": "Progreso del procesamiento",
 	"batch_progress_count": "Finalizadas: {handled}/{total}",
 	"batch_progress_results": "Con éxito: {count}",
-	"batch_progress_attention": "Atención necesaria: {count}"
+	"batch_progress_attention": "Atención necesaria: {count}",
+	"telegram_export_format_label": "Formato de imagen de los stickers de Telegram",
+	"telegram_export_region_label": "Archivos estáticos de stickers para Telegram",
+	"telegram_export_png": "Archivos PNG",
+	"telegram_export_webp": "Archivos WEBP",
+	"telegram_export_button": "Descargar archivos estáticos para Telegram (.zip)",
+	"telegram_export_progress": "Preparando {done} de {total}…",
+	"telegram_export_instructions": "Este ZIP solo contiene archivos de imagen; no es un conjunto de stickers de Telegram. Extrae los archivos y añádelos en el editor de stickers de Telegram o usa @Stickers para crear un conjunto.",
+	"telegram_export_success": "Se prepararon {count} archivos estáticos para Telegram.",
+	"telegram_export_webp_unsupported": "Este navegador no puede crear archivos WEBP transparentes. Elige PNG o prueba otro navegador.",
+	"telegram_export_failed": "No se pudieron preparar los archivos de Telegram. Inténtalo de nuevo."
 }
