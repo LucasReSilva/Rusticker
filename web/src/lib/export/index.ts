@@ -18,3 +18,4 @@ export * from './canvas';
 export * from './download';
 export * from './controller.svelte';
 export * from './session';
+export * from './telegram';
