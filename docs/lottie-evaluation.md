@@ -1,6 +1,6 @@
 # Lottie micro-interaction evaluation
 
-**Evaluated:** 2026-10-14  
+**Evaluated:** 2026-10-14
 **Decision:** Do not add a Lottie player for Rusticker's current short, decorative state changes. Use CSS or a small static SVG. Revisit only for an animation whose visual value cannot be delivered simply, and keep any later player and animation locally bundled and lazy-loaded.
 
 ## Scope and method
