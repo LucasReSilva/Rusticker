@@ -10,6 +10,7 @@
 	import Controls from '$lib/components/Controls.svelte';
 	import Grid from '$lib/components/Grid.svelte';
 	import Export from '$lib/components/Export.svelte';
+	import TelegramExport from '$lib/components/TelegramExport.svelte';
 	import { stickerSizes } from '$lib/export';
 	import { m } from '$lib/paraglide/messages';
 	import HistoryRecorder from '$lib/history/HistoryRecorder.svelte';
@@ -139,6 +140,7 @@
 						trayIconId={editor.batchTrayIconId}
 						detecting={editor.isProcessing}
 					/>
+					<TelegramExport stickers={editor.batchStickers} disabled={editor.isProcessing} />
 				</section>
 			</div>
 		</div>
