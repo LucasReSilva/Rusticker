@@ -283,6 +283,12 @@ The detailed contract is in
 
 ## Static app and tests
 
+The [Lottie feasibility evaluation](docs/lottie-evaluation.md) compares native
+CSS with SVG and canvas players. It recommends CSS or static SVG for current
+state changes; any future Lottie use must lazy-load its player, bundle WASM and
+JSON assets locally, honor reduced motion, and retain an accessible text state.
+No Lottie runtime is included in the application.
+
 The SvelteKit app is built as a static site for GitHub Pages. The service worker
 supports offline use after application assets have been cached. The relevant
 behavior contract is [`offline-install`](openspec/specs/offline-install/spec.md).
