@@ -56,7 +56,6 @@ it('loads locally, defaults the tray icon, curates and falls back when the tray 
 	editor.setTrayIcon('missing');
 	expect(editor.trayIconId).toBe(editor.stickers[0].id);
 });
-
 it('reorders kept stickers without changing the tray icon and removes moved IDs from the order', async () => {
 	await editor.loadFile(file());
 	const original = editor.stickers.map((sticker) => sticker.id);
@@ -111,6 +110,40 @@ it('keeps split candidates at the source position and restores that position on 
 	editor.undoSplit(candidates[0].id);
 	expect(editor.stickers.map((sticker) => sticker.id)).toEqual([source.id, first.id, last.id]);
 });
+
+it('applies valid source bounds atomically and ignores invalid bounds', async () => {
+	await editor.loadFile(file());
+	const original = editor.stickers[0];
+	const bounds = { ...original.bbox, x: original.bbox.x + 1, width: original.bbox.width - 1 };
+
+	editor.updateStickerBounds(original.id, bounds);
+
+	const updated = editor.stickers[0];
+	expect(updated.bbox).toEqual(bounds);
+	expect(updated.pixels).not.toBe(original.pixels);
+	expect(updated.pixels.width).toBe(512);
+	editor.updateStickerBounds(original.id, { ...bounds, x: 30 });
+	expect(editor.stickers[0]).toBe(updated);
+});
+
+it('keeps custom order when adjusting a moved sticker', async () => {
+	await editor.loadFile(file());
+	const originalIds = editor.stickers.map((sticker) => sticker.id);
+	const moved = editor.stickers[2];
+	const bounds = { ...moved.bbox, x: moved.bbox.x + 1, width: moved.bbox.width - 1 };
+
+	expect(editor.reorderSticker(moved.id, 0)).toBe(true);
+	editor.updateStickerBounds(moved.id, bounds);
+
+	expect(editor.stickers.map((sticker) => sticker.id)).toEqual([
+		originalIds[2],
+		originalIds[0],
+		originalIds[1]
+	]);
+	expect(editor.stickers[0].bbox).toEqual(bounds);
+	expect(editor.trayIconId).toBe(originalIds[0]);
+});
+
 it('keeps split proposals separate until accepted and supports undo', async () => {
 	editor.dispose();
 	detector = createMockDetector({ count: 1, splitCount: 2 });
@@ -171,6 +204,26 @@ it('keeps the original unchanged when no split proposal is available or discarde
 	await editor.requestSplit(candidateSource.id);
 	editor.discardSplit();
 	expect(editor.stickers).toEqual([candidateSource]);
+});
+it('discards a pending split proposal when its sticker bounds change', async () => {
+	vi.spyOn(detector, 'proposeSplit');
+	let finishProposal!: (value: Sticker[]) => void;
+	vi.mocked(detector.proposeSplit).mockImplementationOnce(
+		() => new Promise((resolve) => (finishProposal = resolve))
+	);
+	await editor.loadFile(file());
+	const original = editor.stickers[0];
+	const pending = editor.requestSplit(original.id);
+	editor.updateStickerBounds(original.id, {
+		...original.bbox,
+		x: original.bbox.x + 1,
+		width: original.bbox.width - 1
+	});
+	finishProposal([]);
+	await pending;
+	expect(editor.splitPreview).toBeNull();
+	expect(editor.noSplitProposalId).toBeNull();
+	expect(editor.splitBusyId).toBeNull();
 });
 it('keeps the previous source and results after an unsupported file or decode failure, including repeated errors', async () => {
 	await editor.loadFile(file());
@@ -319,6 +372,19 @@ it('processes several files sequentially and retains their sticker results', asy
 		activeIds[0],
 		activeIds[1]
 	]);
+});
+
+it('keeps adjusted sticker pixels and bounds in the active batch export data', async () => {
+	editor.addBatchFiles([file()]);
+	await vi.waitFor(() => expect(editor.batchEntries[0]?.status).toBe('done'));
+	const original = editor.batchStickers[0];
+	const bounds = { ...original.bbox, x: original.bbox.x + 1, width: original.bbox.width - 1 };
+
+	editor.updateStickerBounds(original.id, bounds);
+	editor.syncActiveBatch();
+
+	expect(editor.batchStickers[0].bbox).toEqual(bounds);
+	expect(editor.batchStickers[0].pixels).not.toBe(original.pixels);
 });
 
 it('keeps successful results when another image fails and retries only the failed row', async () => {

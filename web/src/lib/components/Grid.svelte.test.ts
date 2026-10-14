@@ -258,5 +258,42 @@ it('offers an explicit action to request split assistance', async () => {
 it('hides split requests when automatic mode disables refinement', () => {
 	mount(1, undefined, false);
 	expect(screen.queryByRole('button', { name: m.tool_split_request() })).not.toBeInTheDocument();
+	expect(screen.queryByRole('button', { name: m.tool_bounds_open() })).not.toBeInTheDocument();
+});
+
+it('opens the localized crop editor and sends the applied sticker to the editor callback', async () => {
+	const data = new Uint8ClampedArray(512 * 512 * 4);
+	const source = {
+		...stickers(1)[0],
+		bbox: { x: 10, y: 10, width: 100, height: 100 },
+		pixels: { data, width: 512, height: 512 } as ImageData
+	};
+	const onBoundsApply = vi.fn();
+	render(Grid, {
+		stickers: [source],
+		trayIconId: null,
+		busy: false,
+		pending: false,
+		allowBoundsAdjustment: true,
+		sourceWidth: 200,
+		sourceHeight: 200,
+		onRemove: vi.fn(),
+		onSetTrayIcon: vi.fn(),
+		onBoundsApply
+	});
+
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_bounds_open() }));
+	const xSlider = await screen.findByRole('slider', { name: m.tool_bounds_x() });
+	await fireEvent.keyDown(xSlider, { key: 'ArrowRight' });
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_bounds_apply() }));
+
+	expect(onBoundsApply).toHaveBeenCalledOnce();
+	expect(onBoundsApply.mock.calls[0][0].bbox).toEqual({
+		x: 11,
+		y: 10,
+		width: 100,
+		height: 100
+	});
+	expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 import '@testing-library/jest-dom/vitest';
