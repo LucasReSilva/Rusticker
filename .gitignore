@@ -37,6 +37,9 @@ desktop.ini
 # Claude Code local settings
 .claude/settings.local.json
 
+# Machine-local shared agent handover memory
+/.agents/memory.local.md
+
 # Demo recorder temporary artifacts
 web/scripts/temp-video/
 *.webm
