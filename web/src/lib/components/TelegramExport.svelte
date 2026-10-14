@@ -51,11 +51,17 @@
 			{m.telegram_export_webp()}
 		</Button>
 	</div>
-	<Button onclick={exportFiles} disabled={!stickers.length || disabled || exporting}>
+	<Button
+		onclick={exportFiles}
+		disabled={!stickers.length || disabled || exporting}
+		class="h-auto min-h-9 max-w-full text-start whitespace-normal"
+	>
 		<Download aria-hidden="true" />
-		{exporting
-			? m.telegram_export_progress({ done: number(progress.done), total: number(progress.total) })
-			: m.telegram_export_button()}
+		<span>
+			{exporting
+				? m.telegram_export_progress({ done: number(progress.done), total: number(progress.total) })
+				: m.telegram_export_button()}
+		</span>
 	</Button>
 	<p class="flex items-start gap-2 text-sm text-muted-foreground">
 		<Info class="size-4 shrink-0" aria-hidden="true" />
