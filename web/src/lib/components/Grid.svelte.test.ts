@@ -28,6 +28,15 @@ function mount(
 		trayIconId = id;
 		void result.rerender(props());
 	});
+	const onReorder = vi.fn((id: string, toIndex: number) => {
+		const fromIndex = kept.findIndex((sticker) => sticker.id === id);
+		if (fromIndex < 0 || toIndex < 0 || toIndex >= kept.length || fromIndex === toIndex)
+			return false;
+		const [sticker] = kept.splice(fromIndex, 1);
+		kept.splice(toIndex, 0, sticker);
+		void result.rerender(props());
+		return true;
+	});
 	const props = () => ({
 		stickers: kept,
 		trayIconId,
@@ -36,13 +45,69 @@ function mount(
 		sizeOf,
 		allowSplitRequest,
 		onRemove,
-		onSetTrayIcon
+		onSetTrayIcon,
+		onReorder
 	});
 	const result = render(Grid, props());
 	const cards = () =>
 		Array.from(result.container.querySelectorAll<HTMLElement>('[data-sticker-card]'));
-	return { ...result, cards, onRemove, onSetTrayIcon };
+	return { ...result, cards, onRemove, onSetTrayIcon, onReorder };
 }
+
+it('reorders by the pointer and retains focus on the moved card', async () => {
+	const { cards, onReorder } = mount(4);
+	const transfer = {
+		effectAllowed: 'none',
+		setData: vi.fn(),
+		getData: vi.fn(() => 'test-s0')
+	};
+	const source = cards()[0].parentElement!;
+	const target = cards()[2].parentElement!;
+	await fireEvent.dragStart(source, { dataTransfer: transfer });
+	await fireEvent.dragOver(target);
+	await fireEvent.drop(target, { dataTransfer: transfer });
+	await waitFor(() =>
+		expect(cards().map((card) => card.dataset.stickerCard)).toEqual([
+			'test-s1',
+			'test-s2',
+			'test-s0',
+			'test-s3'
+		])
+	);
+	await waitFor(() => expect(cards()[2]).toHaveFocus());
+	expect(onReorder).toHaveBeenCalledExactlyOnceWith('test-s0', 2);
+	expect(screen.getByRole('status')).toHaveTextContent(
+		m.tool_reorder_announcement({ position: '3', total: '4' })
+	);
+});
+
+it('reorders with the move control and Alt+ArrowDown without conflicting with grid arrows', async () => {
+	const { cards, onReorder } = mount(4);
+	await fireEvent.click(cards()[0].querySelector(`[aria-label="${m.tool_move_later()}"]`)!);
+	await waitFor(() =>
+		expect(cards().map((card) => card.dataset.stickerCard)).toEqual([
+			'test-s1',
+			'test-s0',
+			'test-s2',
+			'test-s3'
+		])
+	);
+	cards()[1].focus();
+	await fireEvent.keyDown(cards()[1], { key: 'ArrowDown', altKey: true });
+	await waitFor(() =>
+		expect(cards().map((card) => card.dataset.stickerCard)).toEqual([
+			'test-s1',
+			'test-s2',
+			'test-s0',
+			'test-s3'
+		])
+	);
+	await waitFor(() => expect(cards()[2]).toHaveFocus());
+	expect(onReorder).toHaveBeenCalledTimes(2);
+	expect(screen.getByRole('status')).toHaveTextContent(
+		m.tool_reorder_announcement({ position: '3', total: '4' })
+	);
+});
 it('uses a remembered roving tab stop and follows measured rows, arrows, Home and End', async () => {
 	const { cards } = mount();
 	cards().forEach((card, index) => {

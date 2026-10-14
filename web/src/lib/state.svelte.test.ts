@@ -56,6 +56,61 @@ it('loads locally, defaults the tray icon, curates and falls back when the tray 
 	editor.setTrayIcon('missing');
 	expect(editor.trayIconId).toBe(editor.stickers[0].id);
 });
+it('reorders kept stickers without changing the tray icon and removes moved IDs from the order', async () => {
+	await editor.loadFile(file());
+	const original = editor.stickers.map((sticker) => sticker.id);
+	editor.setTrayIcon(original[1]);
+
+	expect(editor.reorderSticker(original[2], 0)).toBe(true);
+	expect(editor.stickers.map((sticker) => sticker.id)).toEqual([
+		original[2],
+		original[0],
+		original[1]
+	]);
+	expect(editor.trayIconId).toBe(original[1]);
+	expect(editor.reorderSticker('missing', 0)).toBe(false);
+	expect(editor.reorderSticker(original[2], 4)).toBe(false);
+
+	editor.removeSticker(original[0]);
+	expect(editor.stickers.map((sticker) => sticker.id)).toEqual([original[2], original[1]]);
+	expect(editor.trayIconId).toBe(original[1]);
+});
+
+it('resets custom order and removals when a new detection result replaces the set', async () => {
+	vi.useFakeTimers();
+	await editor.loadFile(file());
+	const original = editor.stickers.map((sticker) => sticker.id);
+	editor.reorderSticker(original[2], 0);
+	editor.removeSticker(original[0]);
+	editor.setTolerance(60);
+	await vi.advanceTimersByTimeAsync(300);
+
+	expect(editor.stickers.map((sticker) => sticker.index)).toEqual([0, 1, 2]);
+	expect(editor.stickers.map((sticker) => sticker.id)).not.toEqual(original);
+	expect(editor.removedIds.size).toBe(0);
+});
+
+it('keeps split candidates at the source position and restores that position on undo', async () => {
+	editor.dispose();
+	detector = createMockDetector({ count: 3, splitCount: 2 });
+	vi.spyOn(detector, 'detect');
+	vi.spyOn(detector, 'dispose');
+	editor = createEditorState({ detector, decode });
+	await editor.loadFile(file());
+	const [first, source, last] = editor.stickers;
+	expect(editor.reorderSticker(source.id, 0)).toBe(true);
+	await editor.requestSplit(source.id);
+	editor.acceptSplit();
+	const candidates = editor.stickers.slice(0, 2);
+	expect(editor.stickers.map((sticker) => sticker.id)).toEqual([
+		...candidates.map((sticker) => sticker.id),
+		first.id,
+		last.id
+	]);
+	editor.undoSplit(candidates[0].id);
+	expect(editor.stickers.map((sticker) => sticker.id)).toEqual([source.id, first.id, last.id]);
+});
+
 it('applies valid source bounds atomically and ignores invalid bounds', async () => {
 	await editor.loadFile(file());
 	const original = editor.stickers[0];
@@ -70,6 +125,25 @@ it('applies valid source bounds atomically and ignores invalid bounds', async ()
 	editor.updateStickerBounds(original.id, { ...bounds, x: 30 });
 	expect(editor.stickers[0]).toBe(updated);
 });
+
+it('keeps custom order when adjusting a moved sticker', async () => {
+	await editor.loadFile(file());
+	const originalIds = editor.stickers.map((sticker) => sticker.id);
+	const moved = editor.stickers[2];
+	const bounds = { ...moved.bbox, x: moved.bbox.x + 1, width: moved.bbox.width - 1 };
+
+	expect(editor.reorderSticker(moved.id, 0)).toBe(true);
+	editor.updateStickerBounds(moved.id, bounds);
+
+	expect(editor.stickers.map((sticker) => sticker.id)).toEqual([
+		originalIds[2],
+		originalIds[0],
+		originalIds[1]
+	]);
+	expect(editor.stickers[0].bbox).toEqual(bounds);
+	expect(editor.trayIconId).toBe(originalIds[0]);
+});
+
 it('keeps split proposals separate until accepted and supports undo', async () => {
 	editor.dispose();
 	detector = createMockDetector({ count: 1, splitCount: 2 });
@@ -282,6 +356,22 @@ it('processes several files sequentially and retains their sticker results', asy
 	expect(editor.batchEntries.map((entry) => entry.file.name)).toEqual(['first.png', 'second.png']);
 	expect(editor.batchStickers).toHaveLength(6);
 	expect(detector.detect).toHaveBeenCalledTimes(2);
+	const firstEntry = editor.batchEntries[0];
+	const activeEntry = editor.batchEntries[1];
+	const activeIds = activeEntry.stickers.map((sticker) => sticker.id);
+	expect(editor.reorderSticker(activeIds[2], 0)).toBe(true);
+	editor.syncActiveBatch();
+	expect(editor.batchEntries[1].stickers.map((sticker) => sticker.id)).toEqual([
+		activeIds[2],
+		activeIds[0],
+		activeIds[1]
+	]);
+	expect(editor.batchStickers.map((sticker) => sticker.id)).toEqual([
+		...firstEntry.stickers.map((sticker) => sticker.id),
+		activeIds[2],
+		activeIds[0],
+		activeIds[1]
+	]);
 });
 
 it('keeps adjusted sticker pixels and bounds in the active batch export data', async () => {
