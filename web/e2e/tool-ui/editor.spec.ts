@@ -197,7 +197,7 @@ test('the dark editor fits a 375px viewport with reduced motion', async ({ page 
 			const firstSticker = document.querySelector('[data-sticker-card]');
 			return Boolean(
 				firstSticker &&
-				(region.compareDocumentPosition(firstSticker) & Node.DOCUMENT_POSITION_FOLLOWING)
+				region.compareDocumentPosition(firstSticker) & Node.DOCUMENT_POSITION_FOLLOWING
 			);
 		})
 	).toBe(true);
