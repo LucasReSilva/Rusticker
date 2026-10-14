@@ -42,7 +42,7 @@ describe('buildManifest', () => {
 		expect(first.id).toBe('/Rusticker/');
 		expect(first.scope).toBe('/Rusticker/');
 		expect(first.display).toBe('standalone');
-		expect(THEME_COLOR).toBe('#B65329');
+		expect(THEME_COLOR).toBe('#CA430E');
 		expect(THEME_COLOR).toBe(lightPrimaryHex);
 		expect(BACKGROUND_COLOR).toBe('#FFFFFF');
 		expect(first.theme_color).toBe(THEME_COLOR);

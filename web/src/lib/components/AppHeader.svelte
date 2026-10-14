@@ -50,7 +50,7 @@
 	<div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
 		<a
 			href={localizedPath('tool', locale.current)}
-			class="flex items-center gap-2 rounded-md font-display text-xl font-bold text-foreground focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
+			class="flex items-center gap-2 rounded-md font-display text-xl font-bold text-primary focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
 		>
 			<img src="{base}/logo.png" alt="" class="h-7 w-7 object-contain" />
 			<span>{m.app_name({}, opts)}</span>
