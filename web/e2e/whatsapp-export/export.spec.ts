@@ -140,24 +140,24 @@ for (const [locale, path, button, notice, success] of [
 		'./',
 		'Baixar pacote (.zip)',
 		'O WhatsApp precisa de pelo menos 3 figurinhas por pacote.',
-		'Pacote pronto: 3 figurinhas'
+		'Pacote pronto: 5 figurinhas'
 	],
 	[
 		'en',
 		'en/',
 		'Download pack (.zip)',
 		'WhatsApp needs at least 3 stickers per pack.',
-		'Pack ready: 3 stickers'
+		'Pack ready: 5 stickers'
 	],
 	[
 		'es',
 		'es/',
 		'Descargar paquete (.zip)',
 		'WhatsApp necesita al menos 3 stickers por paquete.',
-		'Paquete listo: 3 stickers'
+		'Paquete listo: 5 stickers'
 	]
 ] as const) {
-	test(`shows the minimum notice, disables two stickers and exports with ${locale} text`, async ({
+	test(`shows the minimum notice, disables two stickers and exports the batch with ${locale} text`, async ({
 		page
 	}) => {
 		await page.goto(path);

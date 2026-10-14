@@ -49,6 +49,10 @@ test('click chooser, keyboard eyedropper and debounced tolerance use the real wo
 	await expect(boxes).toHaveCount(6);
 	await expect(boxes.first()).toHaveAttribute('x', '40');
 	await expect(boxes.first()).toHaveAttribute('y', '40');
+	await expect(
+		page.getByRole('button', { name: 'Escolher cor de fundo', exact: true })
+	).toHaveCount(0);
+	await page.getByRole('button', { name: 'Avançado', exact: true }).click();
 	await page.getByRole('button', { name: 'Escolher cor de fundo', exact: true }).click();
 	const picker = page.getByRole('application');
 	await expect(picker).toBeFocused();
@@ -66,7 +70,7 @@ test('click chooser, keyboard eyedropper and debounced tolerance use the real wo
 	});
 	await expect(slider).toHaveAttribute('aria-valuenow', '53');
 	await expect(page.locator('[data-detected-count]')).toHaveText('Processando imagem');
-	const progress = page.getByRole('progressbar');
+	const progress = page.getByRole('progressbar', { name: 'Processando imagem' });
 	await expect(progress).toHaveAttribute('data-state', 'indeterminate');
 	await expect(progress).not.toHaveAttribute('aria-valuenow');
 	const indicator = progress.locator('[data-slot=progress-indicator]');

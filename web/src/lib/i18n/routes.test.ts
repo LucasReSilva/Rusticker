@@ -37,9 +37,15 @@ describe('route table', () => {
 		expect(pages).toEqual({
 			tool: { 'pt-BR': '/', en: '/en/', es: '/es/' },
 			howToUse: { 'pt-BR': '/como-usar', en: '/en/how-to-use', es: '/es/como-usar' },
-			about: { 'pt-BR': '/sobre', en: '/en/about', es: '/es/acerca-de' }
+			about: { 'pt-BR': '/sobre', en: '/en/about', es: '/es/acerca-de' },
+			history: { 'pt-BR': '/historico', en: '/en/history', es: '/es/historial' }
 		});
-		expect(internalPath).toEqual({ tool: '/', howToUse: '/how-to-use', about: '/about' });
+		expect(internalPath).toEqual({
+			tool: '/',
+			howToUse: '/how-to-use',
+			about: '/about',
+			history: '/history'
+		});
 	});
 
 	it('has a slug for every configured locale', () => {
@@ -49,7 +55,7 @@ describe('route table', () => {
 		}
 	});
 
-	it('lists the 9 localized paths as prerender entries', () => {
+	it('lists the 12 localized paths as prerender entries', () => {
 		expect(prerenderEntries().sort()).toEqual(
 			[
 				'/',
@@ -60,7 +66,10 @@ describe('route table', () => {
 				'/es/como-usar',
 				'/sobre',
 				'/en/about',
-				'/es/acerca-de'
+				'/es/acerca-de',
+				'/historico',
+				'/en/history',
+				'/es/historial'
 			].sort()
 		);
 	});
@@ -88,6 +97,9 @@ describe.each(['', '/Rusticker'])('URL patterns with base "%s"', (base) => {
 		['/sobre', 'pt-BR', '/about'],
 		['/en/about', 'en', '/about'],
 		['/es/acerca-de', 'es', '/about'],
+		['/historico', 'pt-BR', '/history'],
+		['/en/history', 'en', '/history'],
+		['/es/historial', 'es', '/history'],
 		['/en/sobre', 'en', '/sobre'],
 		['/es/unknown', 'es', '/unknown']
 	];

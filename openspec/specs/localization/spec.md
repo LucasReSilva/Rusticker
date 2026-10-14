@@ -20,8 +20,13 @@ Pages in the base locale SHALL be served without a locale prefix. Pages in every
 | tool       | `/`          | `/en`            | `/es`           |
 | how to use | `/como-usar` | `/en/how-to-use` | `/es/como-usar` |
 | about      | `/sobre`     | `/en/about`      | `/es/acerca-de` |
+| history    | `/historico` | `/en/history`    | `/es/historial` |
 
 Every link the app generates SHALL use the localized URL of its target page in the active locale.
+
+#### Scenario: Localized processing history
+- **WHEN** a user opens the history page
+- **THEN** the localized history route is displayed in the locale selected by its URL
 
 #### Scenario: English about page
 - **WHEN** a user opens `/en/about`

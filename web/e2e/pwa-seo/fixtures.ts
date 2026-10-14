@@ -3,11 +3,12 @@
 export const base = '/Rusticker';
 export const site = `http://localhost:4173${base}`;
 
-/** The 9 public URLs (base-relative), per page and locale. */
+/** The 12 public URLs (base-relative), per page and locale. */
 export const urls = {
 	tool: { 'pt-BR': '/', en: '/en/', es: '/es/' },
 	howToUse: { 'pt-BR': '/como-usar', en: '/en/how-to-use', es: '/es/como-usar' },
-	about: { 'pt-BR': '/sobre', en: '/en/about', es: '/es/acerca-de' }
+	about: { 'pt-BR': '/sobre', en: '/en/about', es: '/es/acerca-de' },
+	history: { 'pt-BR': '/historico', en: '/en/history', es: '/es/historial' }
 } as const;
 
 export type PageId = keyof typeof urls;

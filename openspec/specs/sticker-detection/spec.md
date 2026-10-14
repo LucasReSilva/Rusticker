@@ -51,28 +51,36 @@ Every failure SHALL be reported as exactly one of the codes `NoStickers`, `Image
 - **THEN** the call throws the string `InvalidInput`
 
 ### Requirement: Background classification
-The core SHALL classify each pixel as background or foreground by comparing it with the background color in the hue-saturation-value color space, where hue is in degrees from 0 to 360 and saturation and value are fractions from 0 to 1. An achromatic pixel (saturation 0) SHALL have hue 0. With tolerance `t` and the background color's saturation `s_bg` and value `v_bg`, a pixel SHALL be background if and only if all of the following hold:
+The core SHALL classify each pixel as background or foreground using the caller-provided 24-bit RGB background color and tolerance. A pixel whose source alpha is zero SHALL always be background, regardless of its stored RGB values. At tolerance 0, a non-transparent pixel SHALL be background if and only if its RGB value exactly equals the selected background color. At tolerance `t` greater than 0, with the background color's saturation `s_bg` and value `v_bg`, a non-transparent pixel SHALL be background if and only if all of the following hold in hue-saturation-value color space, where hue is in degrees from 0 to 360 and saturation and value are fractions from 0 to 1:
 - the circular hue distance between the pixel and the background color is at most `t` degrees;
 - the pixel's saturation is at least `min(0.94 * (1 - t / 100), s_bg)`;
 - the pixel's value is at least `min(0.48 * (1 - t / 100), v_bg)`.
 
-Consequences the core SHALL preserve: the background color itself is always background, and raising the tolerance never turns a background pixel into foreground.
+An achromatic pixel (saturation 0) SHALL have hue 0 for nonzero tolerances. The background color itself SHALL always be background, and raising a nonzero tolerance SHALL NOT turn a background pixel into foreground. A uniform background of any RGB color is supported when the caller supplies that exact color with tolerance 0; at higher tolerances, foreground colors that satisfy the background thresholds may also be removed.
 
 #### Scenario: Default tolerance on pure green reproduces the prototype
 - **WHEN** the background color is `0x00FF00` and the tolerance is 50
-- **THEN** a pixel is background exactly when its hue is between 70° and 170° inclusive, its saturation is at least 47%, and its value is at least 24%
+- **THEN** an opaque pixel is background exactly when its hue is between 70° and 170° inclusive, its saturation is at least 47%, and its value is at least 24%
 
 #### Scenario: White outline is foreground
-- **WHEN** the background color is `0x00FF00`, the tolerance is 50, and a pixel is pure white
+- **WHEN** the background color is `0x00FF00`, the tolerance is 50, and a pixel is pure white with nonzero alpha
 - **THEN** that pixel is foreground
 
 #### Scenario: Picked color is background at any tolerance
-- **WHEN** the tolerance is 0 and a pixel has exactly the background color
-- **THEN** that pixel is background
+- **WHEN** a non-transparent pixel has exactly the selected background RGB value
+- **THEN** that pixel is background at every tolerance from 0 to 100
+
+#### Scenario: Zero tolerance distinguishes a neutral background from colored stickers
+- **WHEN** the background is uniform gray, the tolerance is 0, and a sticker pixel is red
+- **THEN** the gray pixel is background and the red pixel is foreground
+
+#### Scenario: Transparent hidden RGB does not affect classification
+- **WHEN** a pixel has alpha 0 and any stored RGB value
+- **THEN** it is background
 
 #### Scenario: Higher tolerance removes more background
 - **WHEN** the same image is classified with tolerance 30 and with tolerance 70
-- **THEN** every pixel that is background at tolerance 30 is also background at tolerance 70
+- **THEN** every non-transparent pixel that is background at tolerance 30 is also background at tolerance 70
 
 ### Requirement: Noise removal and minimum sticker size
 The core SHALL remove foreground noise by discarding foreground features that cannot contain a full 3x3 square of foreground pixels (a 3x3 morphological opening), and SHALL then discard every remaining connected foreground region whose pixel count is less than 0.4% of the image's pixel count.
@@ -90,7 +98,7 @@ The core SHALL remove foreground noise by discarding foreground features that ca
 - **THEN** that region is returned as a sticker
 
 ### Requirement: Sticker separation
-Each sticker SHALL be one region of foreground pixels connected through any of their 8 neighbors (horizontal, vertical, or diagonal). Foreground regions that touch, even only diagonally, SHALL be returned as a single sticker.
+Each sticker returned by standard detection SHALL be one region of foreground pixels connected through any of their 8 neighbors (horizontal, vertical, or diagonal). Foreground regions that touch, even only diagonally, SHALL be returned as a single sticker by standard detection. The core SHALL provide a separate, explicit operation that proposes subdivisions for one selected sticker without changing the standard detection result. A proposal SHALL be deterministic, SHALL preserve every foreground pixel in exactly one proposed region, and SHALL leave the original sticker available until the user accepts the proposal. The application SHALL show the proposal for review and SHALL let the user accept or discard it; discarding or undoing SHALL restore the original sticker. The application SHALL NOT silently apply a proposed split to the export.
 
 #### Scenario: Separate stickers
 - **WHEN** an image contains three non-touching rectangles of different colors on the background
@@ -99,6 +107,22 @@ Each sticker SHALL be one region of foreground pixels connected through any of t
 #### Scenario: Touching stickers merge
 - **WHEN** two rectangles share an edge or are joined by a foreground bridge at least 3 pixels thick
 - **THEN** they are returned as one sticker
+
+#### Scenario: User requests a split proposal
+- **WHEN** the user explicitly requests assistance for one detected sticker
+- **THEN** the application displays deterministic candidate regions for review while preserving the original sticker
+
+#### Scenario: User accepts a reviewed proposal
+- **WHEN** the user accepts the displayed candidate regions
+- **THEN** those regions replace the original sticker in the editor and are used by subsequent export
+
+#### Scenario: User discards or undoes a proposal
+- **WHEN** the user discards a proposal or undoes an accepted split
+- **THEN** the original sticker is restored and remains available for export
+
+#### Scenario: Ambiguous shape has no safe proposal
+- **WHEN** the selected sticker cannot be divided under the proposal operation's safety limits
+- **THEN** the application keeps the original sticker unchanged and reports no proposal through a localized status
 
 ### Requirement: No stickers found
 The core SHALL fail with `NoStickers` when no foreground region survives noise removal and the minimum size filter.
@@ -119,7 +143,7 @@ Each returned sticker SHALL report its bounding box in source-image pixels as `[
 - **THEN** its bounding box is `[10, 20, 50, 30]`
 
 ### Requirement: Background removal and transparency
-Within a sticker's bounding box, a pixel SHALL be opaque only if it belongs to that sticker's region and is not background. Every other pixel, including background enclosed by the sticker (interior gaps) and pixels of a different sticker that fall inside the bounding box, SHALL be transparent. The alpha edge SHALL be softened with a 3x3 average so that boundary pixels get intermediate alpha, while pixels whose whole 3x3 neighborhood belongs to the sticker stay fully opaque. Output colors SHALL be straight (non-premultiplied) RGBA, and every fully transparent output pixel SHALL be `(0, 0, 0, 0)` so that no background color is carried in transparent pixels.
+Within a sticker's bounding box, a pixel SHALL be opaque only if it belongs to that sticker's region and is not background. Every other pixel, including background enclosed by the sticker (interior gaps), pixels of a different sticker that fall inside the bounding box, and source pixels whose alpha is zero, SHALL be transparent. For a source pixel with nonzero alpha that belongs to a sticker, the detector's 3x3 neighborhood coverage SHALL soften the edge without increasing that source pixel's opacity; the resulting alpha SHALL be the source alpha multiplied by the neighborhood coverage, rounded to the nearest integer. Pixels whose whole 3x3 neighborhood belongs to the sticker SHALL retain their source alpha. Output colors SHALL be straight (non-premultiplied) RGBA, and every fully transparent output pixel SHALL be `(0, 0, 0, 0)` so that no background color is carried in transparent pixels.
 
 #### Scenario: Interior gap is transparent
 - **WHEN** a sticker is a 480x480 square outline with 40-pixel-thick walls enclosing a background-colored 400x400 hole
@@ -129,13 +153,21 @@ Within a sticker's bounding box, a pixel SHALL be opaque only if it belongs to t
 - **WHEN** an L-shaped sticker's bounding box also contains part of another, non-touching sticker
 - **THEN** the other sticker's pixels are transparent in the first sticker's output
 
+#### Scenario: Soft edge preserves source opacity
+- **WHEN** a sticker is a solid 480x240 rectangle with source alpha 128 and its content is not rescaled
+- **THEN** interior pixels have alpha 128 and boundary pixels have alpha greater than 0 and less than 128
+
 #### Scenario: Soft edge
-- **WHEN** a sticker is a solid 480x240 rectangle, so its content is not rescaled
+- **WHEN** a sticker is a solid 480x240 rectangle with source alpha 255, so its content is not rescaled
 - **THEN** output pixels more than 1 pixel inside the rectangle are fully opaque, and pixels on its outer boundary have alpha strictly between 0 and 255
+
+#### Scenario: Fully transparent source pixels stay transparent
+- **WHEN** a fully transparent pixel lies inside a sticker's detected bounding box
+- **THEN** its output alpha is 0 regardless of the pixel's stored RGB value
 
 #### Scenario: Transparent pixels carry no color
 - **WHEN** any sticker is returned
-- **THEN** every output pixel with alpha 0 has red, green, and blue equal to 0
+- **THEN** every pixel with alpha 0 has red, green, blue, and alpha equal to 0
 
 ### Requirement: Output framing
 Each returned sticker image SHALL be exactly 512x512 pixels. The sticker's bounding-box content SHALL be scaled, up or down, preserving its aspect ratio, so that its longer side is 480 pixels (the shorter side rounded to the nearest pixel, minimum 1), using a high-quality resampling filter that does not bleed background color into edges. The scaled content SHALL be centered in the frame (offset rounded down), and everything outside it SHALL be fully transparent.
@@ -207,3 +239,63 @@ The project SHALL provide a verification check that runs detection on the refere
 #### Scenario: Sample not available
 - **WHEN** the test suite runs without `RUSTICKER_SAMPLE_IMAGE`, as in continuous integration
 - **THEN** the check runs against the repository bundled sample image and passes with 31 detected stickers
+
+### Requirement: Sticker edge color decontamination
+For a foreground source pixel at a sticker boundary, the detector SHALL reduce selected-background color spill only when it has reliable evidence that the opaque source RGB is a mixture of the selected background color and a nearby opaque interior color from the same sticker. This correction SHALL affect RGB only; it SHALL preserve the detector's existing alpha coverage, component membership, bounding boxes, and reading order. The detector SHALL preserve source RGB for partially transparent pixels and for boundary pixels without reliable evidence of background spill. Fully transparent output pixels SHALL remain `(0, 0, 0, 0)`.
+
+#### Scenario: Opaque boundary color contains selected-background spill
+- **WHEN** an opaque sticker boundary pixel is a measurable mixture of the selected background color and a nearby opaque interior color from the same sticker
+- **THEN** the output boundary RGB is closer to the interior color than the uncorrected output, while its output alpha remains unchanged
+
+#### Scenario: Opaque interior color is preserved
+- **WHEN** a foreground pixel has a full foreground neighborhood and is not a boundary pixel
+- **THEN** its output RGB and alpha are unchanged
+
+#### Scenario: Partially transparent source RGB is preserved
+- **WHEN** a foreground boundary pixel has nonzero source alpha below 255 and its input RGB is straight foreground color
+- **THEN** the detector preserves that RGB and applies only the existing geometric alpha coverage
+
+#### Scenario: Ambiguous edge color is preserved
+- **WHEN** a boundary pixel has no reliable nearby interior reference or its RGB does not provide reliable evidence of selected-background mixing
+- **THEN** the detector leaves its source RGB unchanged
+
+#### Scenario: Multicolored interior has no representative reference
+- **WHEN** nearby opaque interior anchors are multicolored without a unanimous representative color
+- **THEN** the detector leaves an ambiguous boundary pixel's source RGB unchanged
+
+#### Scenario: Selected background is not green
+- **WHEN** an opaque boundary pixel contains spill from a selected uniform background color other than green and the same mixing evidence is present
+- **THEN** the detector reduces that selected-background spill without changing output alpha
+
+#### Scenario: Transparent-background source is unchanged
+- **WHEN** a sticker source has transparent surroundings and its boundary pixels contain no selected-background spill
+- **THEN** the detector preserves the boundary RGB and existing alpha coverage
+
+### Requirement: Opt-in assisted sticker separation
+The application MAY offer a separate model-assisted proposal for a user-selected sticker after standard detection. It SHALL require an explicit user action and prompts identifying at least two intended regions. It SHALL NOT download model or inference assets or run model inference before the user requests this assistance. Inference SHALL execute on-device in a dedicated worker; user image pixels, prompts, and embeddings SHALL NOT be sent over the network. Before a first-use model download, the user SHALL be told the download size. Model and inference assets SHALL be version-pinned, integrity-checked, and excluded from the initial offline-install precache. The application SHALL show processing progress, allow cancellation, preserve the original sticker until acceptance, and require explicit review and acceptance before replacing it. Missing, invalid, offline, canceled, unsupported, or failed inference SHALL leave the original result and standard editor workflow usable.
+
+#### Scenario: Assistance is requested explicitly
+- **WHEN** the user selects one detected sticker and starts assisted separation
+- **THEN** the application explains the model download size if its assets are not cached and requests prompts for the intended regions
+- **AND** standard detection results remain visible and unchanged while assistance is prepared
+
+#### Scenario: Model inference stays local
+- **WHEN** assisted inference runs for user-selected regions
+- **THEN** the image, prompts, and image embeddings are processed only in the browser worker
+- **AND** any network requests contain only versioned model/runtime assets and no user-derived data
+
+#### Scenario: Safe proposal is reviewed
+- **WHEN** the model returns valid masks for the prompted regions
+- **THEN** the application constructs candidate stickers from the original pixels and alpha, displays them as a proposal, and keeps the original sticker available until the user accepts
+
+#### Scenario: Unsafe or empty proposal is rejected
+- **WHEN** model masks are empty, substantially ambiguous, or cannot be reconciled with the selected sticker's foreground
+- **THEN** the application shows no assisted proposal and leaves the original sticker unchanged
+
+#### Scenario: User cancels or inference fails
+- **WHEN** the user cancels assistance or a model asset, runtime, browser capability, or inference operation fails
+- **THEN** the worker operation stops where possible, no partial result is applied, and the existing standard result remains usable
+
+#### Scenario: Assistance assets are not installed by default
+- **WHEN** the application is installed or first loaded without requesting assisted separation
+- **THEN** neither the model files nor optional inference assets are fetched or included in the initial PWA precache

@@ -12,6 +12,8 @@ export interface MockDetectorConfig {
 	failWith?: DetectionErrorCode;
 	/** Simulated processing time per request, in milliseconds (default 0). */
 	delayMs?: number;
+	/** Number of synthetic regions returned for a split request (default 0). */
+	splitCount?: number;
 }
 
 /** Fixed sticker colors, cycled by index. */
@@ -79,7 +81,7 @@ function layout(count: number, width: number, height: number): RawSticker['bbox'
 
 /** Creates a detector that returns synthetic stickers depending only on its config and the image size. */
 export function createMockDetector(config: MockDetectorConfig = {}): Detector {
-	const { count = 6, failWith, delayMs = 0 } = config;
+	const { count = 6, failWith, delayMs = 0, splitCount = 0 } = config;
 
 	const execute = async (job: Job): Promise<WorkerResult> => {
 		if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
@@ -91,5 +93,16 @@ export function createMockDetector(config: MockDetectorConfig = {}): Detector {
 		return { ok: true, stickers: boxes.map((bbox, index) => ({ bbox, rgba: circleImage(index) })) };
 	};
 
-	return createRuntime(execute);
+	return createRuntime(
+		execute,
+		() => {},
+		async (image) => {
+			if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
+			const boxes = layout(splitCount, image.width, image.height);
+			return {
+				ok: true,
+				stickers: boxes.map((bbox, index) => ({ bbox, rgba: circleImage(index) }))
+			};
+		}
+	);
 }
