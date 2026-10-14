@@ -5,6 +5,7 @@
 	import { detectionErrorMessage } from '$lib/detection';
 	import DropZone from '$lib/components/DropZone.svelte';
 	import BatchQueue from '$lib/components/BatchQueue.svelte';
+	import BatchNotifications from '$lib/components/BatchNotifications.svelte';
 	import Preview from '$lib/components/Preview.svelte';
 	import Controls from '$lib/components/Controls.svelte';
 	import Grid from '$lib/components/Grid.svelte';
@@ -79,6 +80,7 @@
 		onCancel={() => editor.cancelBatch()}
 		onClear={() => editor.clearBatch()}
 	/>
+	<BatchNotifications entries={editor.batchEntries} running={editor.batchRunning} />
 	{#if editor.source}
 		<div class="grid min-w-0 items-start gap-6 lg:grid-cols-2">
 			<div class="flex min-w-0 flex-col gap-4 lg:sticky lg:top-4">
@@ -117,12 +119,17 @@
 					pending={editor.isProcessing && !editor.detected.length}
 					onRemove={(id) => editor.removeSticker(id)}
 					onSetTrayIcon={(id) => editor.setTrayIcon(id)}
+					onReorder={(id, index) => editor.reorderSticker(id, index)}
 					splitPreview={editor.splitPreview}
 					splitBusyId={editor.splitBusyId}
 					noSplitProposalId={editor.noSplitProposalId}
 					undoableStickerIds={editor.undoableStickerIds}
 					allowSplitRequest={processingMode === 'advanced'}
+					allowBoundsAdjustment={processingMode === 'advanced'}
+					sourceWidth={editor.source.width}
+					sourceHeight={editor.source.height}
 					onSplitRequest={(id) => void editor.requestSplit(id)}
+					onBoundsApply={(sticker) => editor.updateStickerBounds(sticker.id, sticker.bbox)}
 					onSplitAccept={() => editor.acceptSplit()}
 					onSplitDiscard={() => editor.discardSplit()}
 					onSplitUndo={(id) => editor.undoSplit(id)}
@@ -155,6 +162,7 @@
 			pending={true}
 			onRemove={(id) => editor.removeSticker(id)}
 			onSetTrayIcon={(id) => editor.setTrayIcon(id)}
+			onReorder={(id, index) => editor.reorderSticker(id, index)}
 			splitPreview={editor.splitPreview}
 			splitBusyId={editor.splitBusyId}
 			noSplitProposalId={editor.noSplitProposalId}
