@@ -126,6 +126,11 @@ it('rejects pasted non-image files, ignores text and editable targets, and remov
 it('mounts export with background size badges and blocks export after removing stickers below the minimum', async () => {
 	const { container } = render(Page);
 	await editor.loadFile(file());
+	const exportRegion = container.querySelector('[data-slot="export"]')!;
+	const firstSticker = container.querySelector('[data-sticker-card]')!;
+	expect(exportRegion.compareDocumentPosition(firstSticker) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+		Node.DOCUMENT_POSITION_FOLLOWING
+	);
 	const action = await screen.findByRole('button', { name: m.export_download_button() });
 	await waitFor(() => expect(action).toBeEnabled());
 	await waitFor(() => expect(container.querySelectorAll('[data-size-badge]')).toHaveLength(3));

@@ -192,6 +192,15 @@ test('the dark editor fits a 375px viewport with reduced motion', async ({ page 
 	await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
 	await load(page);
 	await expect(page.locator('html')).toHaveClass(/dark/);
+	expect(
+		await page.locator('[data-slot="export"]').evaluate((region) => {
+			const firstSticker = document.querySelector('[data-sticker-card]');
+			return Boolean(
+				firstSticker &&
+				(region.compareDocumentPosition(firstSticker) & Node.DOCUMENT_POSITION_FOLLOWING)
+			);
+		})
+	).toBe(true);
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
 		true
 	);
