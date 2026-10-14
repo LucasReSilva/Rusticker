@@ -36,6 +36,16 @@ Telegram's first export issue covers static image files only: preserve transpare
 
 Keep WhatsApp metadata as a research-gated pair of issues. First identify and test a named importer that can read title and author from a generated local archive. Implement metadata UI/serialization only if this establishes a stable format; otherwise record the incompatibility and stop before changing the current archive contract. The previous export proposal explicitly excludes unverified `author.txt` and `contents.json` files.
 
+## Verification record (2026-10-12)
+
+The repository protocol and current specification were audited against issue #41's acceptance criteria. `AGENTS.md` and the capability spec cover discovery of open `Todo` issues without an active lock; authenticated repository and Project access prerequisites; create-only claims from `develop`; nonce-scoped branches and worktrees; OpenSpec; exact-lock checks before each mutation; PR handoff and completion; privacy; and event-based stale recovery with exact-SHA compare-and-delete.
+
+A disposable remote-ref race used two distinct empty commits based on `develop` and two concurrent, non-forced pushes to `refs/heads/agent-lock-tests/issue-41-race-20261012-9f34e7`. Contender A (`b43e014cd4d0428d4ebc6b2052d3a005d0ece119`) was rejected as non-fast-forward; contender B (`592986a82976d4353005ae7ef11861321c298600`) created the absent ref. No GitHub issue, label, comment, or Project item was read or changed as part of the race.
+
+Compare-and-delete was checked on disposable refs. A current ref advanced from `1e32535e763d75abc8d62fa045fa88cd86680e0c` to `7371bee257f8a42117b664757802397cc42dc3e6`; deletion with the old expected SHA was rejected as stale. A separate exact-SHA cleanup fixture (`ef10eded6ca275d041c3130cb7fe7633dac7fbc5`) was deleted with an explicit expected SHA and verified absent. The race and fence test refs were also verified absent after cleanup.
+
+These tests establish Git's single-winner create-only behavior and ref-SHA fencing for the disposable refs. They do not simulate GitHub Project/issue writes, PR merge/closure, a real 12-hour stale window, or project permission failure. Those operations were intentionally not performed against a real issue; the Project access prerequisite is documented, but its write path remains untested here. The protocol treats each of those as a fail-closed, ownership-checked lifecycle step.
+
 ## Risks / Trade-offs
 
 - [Repository rules reject creation of `agent-locks/*` branches] â†’ Test branch creation during protocol setup; agents fail closed and request a maintainer to adjust branch rules rather than degrading to non-atomic labels.

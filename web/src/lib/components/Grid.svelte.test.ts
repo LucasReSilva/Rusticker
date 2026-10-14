@@ -13,7 +13,11 @@ afterEach(() => {
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
 });
-function mount(count = 6, sizeOf?: (id: string) => StickerSizeInfo | undefined) {
+function mount(
+	count = 6,
+	sizeOf?: (id: string) => StickerSizeInfo | undefined,
+	allowSplitRequest = true
+) {
 	let kept = stickers(count);
 	let trayIconId = kept[0]?.id ?? null;
 	const onRemove = vi.fn((id: string) => {
@@ -24,20 +28,86 @@ function mount(count = 6, sizeOf?: (id: string) => StickerSizeInfo | undefined) 
 		trayIconId = id;
 		void result.rerender(props());
 	});
+	const onReorder = vi.fn((id: string, toIndex: number) => {
+		const fromIndex = kept.findIndex((sticker) => sticker.id === id);
+		if (fromIndex < 0 || toIndex < 0 || toIndex >= kept.length || fromIndex === toIndex)
+			return false;
+		const [sticker] = kept.splice(fromIndex, 1);
+		kept.splice(toIndex, 0, sticker);
+		void result.rerender(props());
+		return true;
+	});
 	const props = () => ({
 		stickers: kept,
 		trayIconId,
 		busy: false,
 		pending: false,
 		sizeOf,
+		allowSplitRequest,
 		onRemove,
-		onSetTrayIcon
+		onSetTrayIcon,
+		onReorder
 	});
 	const result = render(Grid, props());
 	const cards = () =>
 		Array.from(result.container.querySelectorAll<HTMLElement>('[data-sticker-card]'));
-	return { ...result, cards, onRemove, onSetTrayIcon };
+	return { ...result, cards, onRemove, onSetTrayIcon, onReorder };
 }
+
+it('reorders by the pointer and retains focus on the moved card', async () => {
+	const { cards, onReorder } = mount(4);
+	const transfer = {
+		effectAllowed: 'none',
+		setData: vi.fn(),
+		getData: vi.fn(() => 'test-s0')
+	};
+	const source = cards()[0].parentElement!;
+	const target = cards()[2].parentElement!;
+	await fireEvent.dragStart(source, { dataTransfer: transfer });
+	await fireEvent.dragOver(target);
+	await fireEvent.drop(target, { dataTransfer: transfer });
+	await waitFor(() =>
+		expect(cards().map((card) => card.dataset.stickerCard)).toEqual([
+			'test-s1',
+			'test-s2',
+			'test-s0',
+			'test-s3'
+		])
+	);
+	await waitFor(() => expect(cards()[2]).toHaveFocus());
+	expect(onReorder).toHaveBeenCalledExactlyOnceWith('test-s0', 2);
+	expect(screen.getByRole('status')).toHaveTextContent(
+		m.tool_reorder_announcement({ position: '3', total: '4' })
+	);
+});
+
+it('reorders with the move control and Alt+ArrowDown without conflicting with grid arrows', async () => {
+	const { cards, onReorder } = mount(4);
+	await fireEvent.click(cards()[0].querySelector(`[aria-label="${m.tool_move_later()}"]`)!);
+	await waitFor(() =>
+		expect(cards().map((card) => card.dataset.stickerCard)).toEqual([
+			'test-s1',
+			'test-s0',
+			'test-s2',
+			'test-s3'
+		])
+	);
+	cards()[1].focus();
+	await fireEvent.keyDown(cards()[1], { key: 'ArrowDown', altKey: true });
+	await waitFor(() =>
+		expect(cards().map((card) => card.dataset.stickerCard)).toEqual([
+			'test-s1',
+			'test-s2',
+			'test-s0',
+			'test-s3'
+		])
+	);
+	await waitFor(() => expect(cards()[2]).toHaveFocus());
+	expect(onReorder).toHaveBeenCalledTimes(2);
+	expect(screen.getByRole('status')).toHaveTextContent(
+		m.tool_reorder_announcement({ position: '3', total: '4' })
+	);
+});
 it('uses a remembered roving tab stop and follows measured rows, arrows, Home and End', async () => {
 	const { cards } = mount();
 	cards().forEach((card, index) => {
@@ -184,5 +254,46 @@ it('offers an explicit action to request split assistance', async () => {
 	expect(action).toHaveAttribute('tabindex', '0');
 	await fireEvent.click(action);
 	expect(onSplitRequest).toHaveBeenCalledWith(source.id);
+});
+it('hides split requests when automatic mode disables refinement', () => {
+	mount(1, undefined, false);
+	expect(screen.queryByRole('button', { name: m.tool_split_request() })).not.toBeInTheDocument();
+	expect(screen.queryByRole('button', { name: m.tool_bounds_open() })).not.toBeInTheDocument();
+});
+
+it('opens the localized crop editor and sends the applied sticker to the editor callback', async () => {
+	const data = new Uint8ClampedArray(512 * 512 * 4);
+	const source = {
+		...stickers(1)[0],
+		bbox: { x: 10, y: 10, width: 100, height: 100 },
+		pixels: { data, width: 512, height: 512 } as ImageData
+	};
+	const onBoundsApply = vi.fn();
+	render(Grid, {
+		stickers: [source],
+		trayIconId: null,
+		busy: false,
+		pending: false,
+		allowBoundsAdjustment: true,
+		sourceWidth: 200,
+		sourceHeight: 200,
+		onRemove: vi.fn(),
+		onSetTrayIcon: vi.fn(),
+		onBoundsApply
+	});
+
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_bounds_open() }));
+	const xSlider = await screen.findByRole('slider', { name: m.tool_bounds_x() });
+	await fireEvent.keyDown(xSlider, { key: 'ArrowRight' });
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_bounds_apply() }));
+
+	expect(onBoundsApply).toHaveBeenCalledOnce();
+	expect(onBoundsApply.mock.calls[0][0].bbox).toEqual({
+		x: 11,
+		y: 10,
+		width: 100,
+		height: 100
+	});
+	expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 import '@testing-library/jest-dom/vitest';

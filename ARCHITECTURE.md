@@ -172,6 +172,27 @@ Web only as a measured compatibility fallback. No ONNX model has been tested
 against Rusticker's sticker fixtures, so neither model-assisted behavior nor
 runtime compatibility is claimed today.
 
+### WebMCP: feasibility only
+
+WebMCP is an experimental Community Group draft, and the current browser
+documentation describes a Chrome Origin Trial and local testing flag. It is
+not required for the app to work. The [WebMCP evaluation](docs/webmcp-evaluation.md)
+recommends feature detection and an isolated adapter if issue #51 proceeds.
+Any initial tools should expose only coarse workflow status and the existing
+image picker; they must never accept or return user image bytes, file names,
+hashes, sticker pixels, or derived metadata. Do not expose pack downloads as
+agent tools. No WebMCP tools are currently implemented.
+
+```mermaid
+flowchart LR
+    A["User-selected image"] --> B["Existing local UI and worker"]
+    B --> C["Image pixels stay in browser"]
+    D["Browser agent"] --> E["Feature-detected WebMCP adapter"]
+    E --> F["Coarse fixed workflow state"]
+    E --> G["Open existing image picker"]
+    E -. "never expose pixels, files, hashes, or exports" .-> C
+```
+
 ## Browser, worker, WebAssembly, and export flow
 
 The editor decodes selected, pasted, or dropped image bytes locally. The

@@ -5,25 +5,38 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import Star from '@lucide/svelte/icons/star';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
+	import ArrowUp from '@lucide/svelte/icons/arrow-up';
+	import ArrowDown from '@lucide/svelte/icons/arrow-down';
 	import type { Sticker } from '$lib/detection';
 	import type { StickerSizeInfo } from '$lib/tool/size';
 	import { formatKilobytes, formatNumber } from '$lib/format';
 	import { m } from '$lib/paraglide/messages';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import StickerBoundsEditor from './StickerBoundsEditor.svelte';
 	let {
 		sticker,
 		position,
 		total,
 		isTrayIcon,
+		canMoveEarlier,
+		canMoveLater,
 		sizeOf,
 		active,
 		onRemoveRequest,
 		onSetTrayIcon,
+		onMoveEarlier,
+		onMoveLater,
 		onFocus,
 		splitPreview,
 		splitBusy,
 		noSplitProposal,
 		undoable,
+		allowSplitRequest = true,
+		allowBoundsAdjustment = false,
+		sourceWidth = 0,
+		sourceHeight = 0,
 		onSplitRequest,
+		onBoundsApply = () => {},
 		onSplitAccept,
 		onSplitDiscard,
 		onSplitUndo
@@ -32,16 +45,25 @@
 		position: number;
 		total: number;
 		isTrayIcon: boolean;
+		canMoveEarlier: boolean;
+		canMoveLater: boolean;
 		sizeOf?: (id: string) => StickerSizeInfo | undefined;
 		active: boolean;
 		onRemoveRequest: () => void;
 		onSetTrayIcon: () => void;
+		onMoveEarlier: () => void;
+		onMoveLater: () => void;
 		onFocus: () => void;
 		splitPreview: Sticker[] | null;
 		splitBusy: boolean;
 		noSplitProposal: boolean;
 		undoable: boolean;
+		allowSplitRequest?: boolean;
+		allowBoundsAdjustment?: boolean;
+		sourceWidth?: number;
+		sourceHeight?: number;
 		onSplitRequest: () => void;
+		onBoundsApply?: (sticker: Sticker) => void;
 		onSplitAccept: () => void;
 		onSplitDiscard: () => void;
 		onSplitUndo: () => void;
@@ -49,6 +71,7 @@
 	let canvas: HTMLCanvasElement;
 	const size = $derived(sizeOf?.(sticker.id));
 	const formattedPosition = $derived(formatNumber(position));
+	let boundsOpen = $state(false);
 	$effect(() => {
 		canvas.getContext('2d')?.putImageData(sticker.pixels, 0, 0);
 	});
@@ -107,11 +130,52 @@
 	<div class="flex flex-wrap justify-end gap-1">
 		<Button
 			variant="outline"
-			size="sm"
+			size="icon"
 			tabindex={active ? 0 : -1}
-			disabled={splitBusy}
-			onclick={onSplitRequest}>{splitBusy ? m.tool_split_working() : m.tool_split_request()}</Button
+			disabled={!canMoveEarlier}
+			aria-label={m.tool_move_earlier()}
+			onclick={onMoveEarlier}><ArrowUp aria-hidden="true" /></Button
 		>
+		<Button
+			variant="outline"
+			size="icon"
+			tabindex={active ? 0 : -1}
+			disabled={!canMoveLater}
+			aria-label={m.tool_move_later()}
+			onclick={onMoveLater}><ArrowDown aria-hidden="true" /></Button
+		>
+		{#if allowBoundsAdjustment}
+			<Dialog.Root bind:open={boundsOpen}>
+				<Button
+					variant="outline"
+					size="sm"
+					tabindex={active ? 0 : -1}
+					onclick={() => (boundsOpen = true)}>{m.tool_bounds_open()}</Button
+				>
+				<Dialog.Content class="max-h-[calc(100dvh_-_2rem)] overflow-y-auto sm:max-w-2xl">
+					<Dialog.Title class="sr-only">{m.tool_bounds_title()}</Dialog.Title>
+					<Dialog.Description class="sr-only">{m.tool_bounds_help()}</Dialog.Description>
+					<StickerBoundsEditor
+						{sticker}
+						{sourceWidth}
+						{sourceHeight}
+						onCancel={() => (boundsOpen = false)}
+						onApply={(updated) => {
+							onBoundsApply(updated);
+							boundsOpen = false;
+						}}
+					/>
+				</Dialog.Content>
+			</Dialog.Root>
+		{/if}
+		{#if allowSplitRequest}<Button
+				variant="outline"
+				size="sm"
+				tabindex={active ? 0 : -1}
+				disabled={splitBusy}
+				onclick={onSplitRequest}
+				>{splitBusy ? m.tool_split_working() : m.tool_split_request()}</Button
+			>{/if}
 		<Tooltip.Provider
 			><Tooltip.Root
 				><Tooltip.Trigger>

@@ -91,6 +91,16 @@ implement behavior that contradicts a spec without changing the spec first.
 
 ## Multi-agent issue lifecycle
 
+Before using the GitHub Project, verify that GitHub CLI is authenticated as the
+intended repository owner and can read the repository, create remote refs, and
+read and update the existing project. Project operations require the account or
+token to have project access; repository operations require write access to
+the repository and permission to create the claim and feature branches. Check
+the authenticated account and effective access before starting. If a required
+permission, project field, or API operation is unavailable, stop before any
+issue/project mutation or implementation; do not substitute labels or comments
+for a lock. Never print or commit authentication tokens.
+
 When selecting work from the repository's existing GitHub Project, take only
 an open issue in `Todo` with no active claim ref. Labels, assignees, comments,
 and project fields are tracking mirrors; none is an exclusive lock.

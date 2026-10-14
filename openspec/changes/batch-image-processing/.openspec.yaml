@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-10-12
+goal: Import multiple images, retain per-image outcomes, and export their
+  combined stickers while keeping memory bounded and data local.

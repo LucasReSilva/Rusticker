@@ -4,15 +4,21 @@
 	import { getEditor } from '$lib/state.svelte';
 	import { detectionErrorMessage } from '$lib/detection';
 	import DropZone from '$lib/components/DropZone.svelte';
+	import BatchQueue from '$lib/components/BatchQueue.svelte';
+	import BatchNotifications from '$lib/components/BatchNotifications.svelte';
 	import Preview from '$lib/components/Preview.svelte';
 	import Controls from '$lib/components/Controls.svelte';
 	import Grid from '$lib/components/Grid.svelte';
 	import Export from '$lib/components/Export.svelte';
+	import TelegramExport from '$lib/components/TelegramExport.svelte';
 	import { stickerSizes } from '$lib/export';
 	import { m } from '$lib/paraglide/messages';
+	import HistoryRecorder from '$lib/history/HistoryRecorder.svelte';
 	const editor = getEditor();
+	let processingMode = $state<'automatic' | 'advanced'>('automatic');
 	$effect(() => {
-		stickerSizes.sync(editor.stickers);
+		stickerSizes.sync(editor.batchStickers);
+		editor.syncActiveBatch();
 	});
 	let seenError = 0;
 	$effect(() => {
@@ -24,9 +30,11 @@
 				? m.tool_error_unsupported_file()
 				: code === 'DecodeFailed'
 					? m.tool_error_decode_failed()
-					: code === 'Unknown'
-						? m.tool_error_unknown()
-						: detectionErrorMessage(code)
+					: code === 'BatchLimitExceeded'
+						? m.tool_error_batch_limit()
+						: code === 'Unknown'
+							? m.tool_error_unknown()
+							: detectionErrorMessage(code)
 		);
 	});
 	onMount(() => {
@@ -40,7 +48,7 @@
 				?.getAsFile();
 			if (image) {
 				event.preventDefault();
-				void editor.loadFile(image);
+				editor.addBatchFiles([image]);
 			} else if (items.some((item) => item.kind === 'file')) editor.rejectFile();
 		}
 		window.addEventListener('paste', paste);
@@ -54,12 +62,25 @@
 </svelte:head>
 
 <div class="mx-auto flex max-w-7xl min-w-0 flex-col gap-6 p-4 sm:p-6">
+	<HistoryRecorder />
 	<h1 class="font-display text-3xl font-bold">{m.app_tool_heading()}</h1>
 	<DropZone
 		compact={!!editor.source}
-		onFile={(file) => void editor.loadFile(file)}
+		multiple={true}
+		onFiles={(files) => editor.addBatchFiles(files)}
 		onReject={() => editor.rejectFile()}
 	/>
+	<BatchQueue
+		entries={editor.batchEntries}
+		activeId={editor.activeBatchId}
+		running={editor.batchRunning}
+		onActivate={(id) => editor.activateBatchEntry(id)}
+		onRetry={(id) => editor.retryBatchEntry(id)}
+		onRemove={(id) => editor.removeBatchEntry(id)}
+		onCancel={() => editor.cancelBatch()}
+		onClear={() => editor.clearBatch()}
+	/>
+	<BatchNotifications entries={editor.batchEntries} running={editor.batchRunning} />
 	{#if editor.source}
 		<div class="grid min-w-0 items-start gap-6 lg:grid-cols-2">
 			<div class="flex min-w-0 flex-col gap-4 lg:sticky lg:top-4">
@@ -71,6 +92,7 @@
 					boxes={editor.stickers.map((sticker) => sticker.bbox)}
 					background={editor.background}
 					busy={editor.isProcessing}
+					advanced={processingMode === 'advanced'}
 					onPick={(color) => editor.setBackground(color)}
 				/>
 				<Controls
@@ -78,6 +100,8 @@
 					background={editor.background}
 					busy={editor.isProcessing}
 					hasImage={!!editor.source}
+					mode={processingMode}
+					onModeChange={(mode) => (processingMode = mode)}
 					onToleranceChange={(value) => editor.setTolerance(value)}
 				/>
 			</div>
@@ -90,26 +114,33 @@
 				<Grid
 					stickers={editor.stickers}
 					sizeOf={stickerSizes.get}
-					trayIconId={editor.trayIconId}
+					trayIconId={editor.batchTrayIconId}
 					busy={editor.isProcessing}
 					pending={editor.isProcessing && !editor.detected.length}
 					onRemove={(id) => editor.removeSticker(id)}
 					onSetTrayIcon={(id) => editor.setTrayIcon(id)}
+					onReorder={(id, index) => editor.reorderSticker(id, index)}
 					splitPreview={editor.splitPreview}
 					splitBusyId={editor.splitBusyId}
 					noSplitProposalId={editor.noSplitProposalId}
 					undoableStickerIds={editor.undoableStickerIds}
+					allowSplitRequest={processingMode === 'advanced'}
+					allowBoundsAdjustment={processingMode === 'advanced'}
+					sourceWidth={editor.source.width}
+					sourceHeight={editor.source.height}
 					onSplitRequest={(id) => void editor.requestSplit(id)}
+					onBoundsApply={(sticker) => editor.updateStickerBounds(sticker.id, sticker.bbox)}
 					onSplitAccept={() => editor.acceptSplit()}
 					onSplitDiscard={() => editor.discardSplit()}
 					onSplitUndo={(id) => editor.undoSplit(id)}
 				/>
 				<section data-slot="export" aria-label={m.tool_export_region_label()}>
 					<Export
-						stickers={editor.stickers}
-						trayIconId={editor.trayIconId}
+						stickers={editor.batchStickers}
+						trayIconId={editor.batchTrayIconId}
 						detecting={editor.isProcessing}
 					/>
+					<TelegramExport stickers={editor.batchStickers} disabled={editor.isProcessing} />
 				</section>
 			</div>
 		</div>
@@ -119,6 +150,8 @@
 			background={editor.background}
 			busy={true}
 			hasImage={false}
+			mode={processingMode}
+			onModeChange={(mode) => (processingMode = mode)}
 			onToleranceChange={(value) => editor.setTolerance(value)}
 		/>
 		<Grid
@@ -129,10 +162,12 @@
 			pending={true}
 			onRemove={(id) => editor.removeSticker(id)}
 			onSetTrayIcon={(id) => editor.setTrayIcon(id)}
+			onReorder={(id, index) => editor.reorderSticker(id, index)}
 			splitPreview={editor.splitPreview}
 			splitBusyId={editor.splitBusyId}
 			noSplitProposalId={editor.noSplitProposalId}
 			undoableStickerIds={editor.undoableStickerIds}
+			allowSplitRequest={processingMode === 'advanced'}
 			onSplitRequest={(id) => void editor.requestSplit(id)}
 			onSplitAccept={() => editor.acceptSplit()}
 			onSplitDiscard={() => editor.discardSplit()}
