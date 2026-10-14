@@ -182,6 +182,7 @@
 						<div class="flex flex-wrap gap-2">
 							{#each badgeVariantList as variant (variant)}
 								<Badge {variant}>{m.design_sample_badge()}</Badge>
+								<Badge {variant} href="#main-content">{m.design_sample_action()}</Badge>
 							{/each}
 						</div>
 					</section>

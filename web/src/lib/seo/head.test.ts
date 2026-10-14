@@ -14,7 +14,7 @@ describe('headTags', () => {
 		expect(attrs['alternate-x-default'].href).toBe(`${site}/como-usar`);
 		expect(attrs.manifest.href).toBe('/Rusticker/manifest-es.webmanifest');
 		expect(attrs['apple-touch-icon'].href).toBe('/Rusticker/icons/apple-touch-icon-180x180.png');
-		expect(attrs['theme-color'].content).toBe('#B65329');
+		expect(attrs['theme-color'].content).toBe('#CA430E');
 	});
 
 	it('keeps the trailing slash on tool URLs', () => {
