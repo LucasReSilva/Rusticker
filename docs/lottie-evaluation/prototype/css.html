@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>CSS motion baseline</title>
+		<style>
+			:root { color-scheme: light dark; font: 16px system-ui, sans-serif; }
+			body { max-width: 36rem; margin: 3rem auto; padding: 0 1rem; }
+			.pulse { width: 4rem; height: 4rem; margin: 3rem auto; background: CanvasText; border-radius: 50%; animation: pulse 700ms ease-in-out 1 forwards; }
+			@keyframes pulse { to { transform: scale(.45); opacity: .35; } }
+			@media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+		</style>
+		<script>
+			const longTasks = [];
+			if (PerformanceObserver.supportedEntryTypes.includes('longtask')) new PerformanceObserver((list) => longTasks.push(...list.getEntries().map(({ duration }) => duration))).observe({ type: 'longtask', buffered: true });
+			window.addEventListener('load', () => setTimeout(() => {
+				const resources = performance.getEntriesByType('resource');
+				document.documentElement.dataset.metrics = JSON.stringify({ fcpMs: performance.getEntriesByName('first-contentful-paint')[0]?.startTime ?? null, tbtMs: longTasks.reduce((sum, duration) => sum + Math.max(0, duration - 50), 0), resourceBytes: resources.reduce((sum, item) => sum + item.transferSize, 0), externalResourceCount: resources.filter((item) => new URL(item.name).origin !== location.origin).length });
+			}, 100));
+		</script>
+	</head>
+	<body>
+		<h1>CSS pulse</h1><p>State: complete.</p>
+		<div class="pulse" aria-hidden="true"></div><a href="index.html">All options</a>
+	</body>
+</html>

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Rusticker local animation prototype</title>
+		<style>
+			:root { color-scheme: light dark; font: 16px system-ui, sans-serif; }
+			body { max-width: 52rem; margin: 3rem auto; padding: 0 1rem; }
+			main { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+			article { border: 1px solid GrayText; border-radius: 0.75rem; padding: 1rem; }
+			canvas, .animation { display: block; width: 8rem; height: 8rem; margin: auto; }
+			.css-check { width: 4rem; height: 4rem; margin: 2rem auto; background: CanvasText; border-radius: 50%; animation: pulse 700ms ease-in-out 3 alternate; }
+			@keyframes pulse { to { transform: scale(.45); opacity: .35; } }
+			@media (prefers-reduced-motion: reduce) { .css-check { animation: none; } }
+			@media (prefers-reduced-motion: reduce) { [data-motion] { display: none; } }
+			p { min-height: 3em; }
+		</style>
+	</head>
+	<body>
+		<h1>Offline animation prototype</h1>
+		<p>All animation code and data are local. Each card runs the same decorative pulse; the text carries the outcome.</p>
+		<ul><li><a href="css.html">CSS baseline</a></li><li><a href="svg.html">lottie-web SVG</a></li><li><a href="dotlottie.html">dotLottie canvas</a></li></ul>
+	</body>
+</html>
