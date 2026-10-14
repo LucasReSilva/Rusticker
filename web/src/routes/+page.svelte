@@ -106,6 +106,14 @@
 				/>
 			</div>
 			<div class="flex min-w-0 flex-col gap-4">
+				<section data-slot="export" aria-label={m.tool_export_region_label()}>
+					<Export
+						stickers={editor.batchStickers}
+						trayIconId={editor.batchTrayIconId}
+						detecting={editor.isProcessing}
+					/>
+					<TelegramExport stickers={editor.batchStickers} disabled={editor.isProcessing} />
+				</section>
 				<p aria-live="polite" aria-atomic="true" data-detected-count>
 					{editor.isProcessing
 						? m.tool_processing_label()
@@ -134,14 +142,6 @@
 					onSplitDiscard={() => editor.discardSplit()}
 					onSplitUndo={(id) => editor.undoSplit(id)}
 				/>
-				<section data-slot="export" aria-label={m.tool_export_region_label()}>
-					<Export
-						stickers={editor.batchStickers}
-						trayIconId={editor.batchTrayIconId}
-						detecting={editor.isProcessing}
-					/>
-					<TelegramExport stickers={editor.batchStickers} disabled={editor.isProcessing} />
-				</section>
 			</div>
 		</div>
 	{:else if editor.isProcessing}
