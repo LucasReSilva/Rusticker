@@ -5,6 +5,8 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import Star from '@lucide/svelte/icons/star';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
+	import ArrowUp from '@lucide/svelte/icons/arrow-up';
+	import ArrowDown from '@lucide/svelte/icons/arrow-down';
 	import type { Sticker } from '$lib/detection';
 	import type { StickerSizeInfo } from '$lib/tool/size';
 	import { formatKilobytes, formatNumber } from '$lib/format';
@@ -16,10 +18,14 @@
 		position,
 		total,
 		isTrayIcon,
+		canMoveEarlier,
+		canMoveLater,
 		sizeOf,
 		active,
 		onRemoveRequest,
 		onSetTrayIcon,
+		onMoveEarlier,
+		onMoveLater,
 		onFocus,
 		splitPreview,
 		splitBusy,
@@ -39,10 +45,14 @@
 		position: number;
 		total: number;
 		isTrayIcon: boolean;
+		canMoveEarlier: boolean;
+		canMoveLater: boolean;
 		sizeOf?: (id: string) => StickerSizeInfo | undefined;
 		active: boolean;
 		onRemoveRequest: () => void;
 		onSetTrayIcon: () => void;
+		onMoveEarlier: () => void;
+		onMoveLater: () => void;
 		onFocus: () => void;
 		splitPreview: Sticker[] | null;
 		splitBusy: boolean;
@@ -118,6 +128,22 @@
 			>{/if}
 	</div>
 	<div class="flex flex-wrap justify-end gap-1">
+		<Button
+			variant="outline"
+			size="icon"
+			tabindex={active ? 0 : -1}
+			disabled={!canMoveEarlier}
+			aria-label={m.tool_move_earlier()}
+			onclick={onMoveEarlier}><ArrowUp aria-hidden="true" /></Button
+		>
+		<Button
+			variant="outline"
+			size="icon"
+			tabindex={active ? 0 : -1}
+			disabled={!canMoveLater}
+			aria-label={m.tool_move_later()}
+			onclick={onMoveLater}><ArrowDown aria-hidden="true" /></Button
+		>
 		{#if allowBoundsAdjustment}
 			<Dialog.Root bind:open={boundsOpen}>
 				<Button
