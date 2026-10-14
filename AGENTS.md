@@ -137,6 +137,31 @@ or unclear, fail closed and ask a maintainer. Delete with an expected old lock
 SHA, then compete to create a fresh lock without force. If the SHA changed, do
 not delete it; do not reuse the previous owner's branch or worktree.
 
+## Machine-local shared agent memory
+
+Agents MAY use `.agents/memory.local.md` to pass concise operational context
+and handovers across linked worktrees. It is optional: if absent or unavailable,
+continue from the repository and issue state. For linked worktrees, resolve the
+absolute Git common directory (`git rev-parse --path-format=absolute
+--git-common-dir`) and inspect `git worktree list --porcelain`. The main worktree
+is the entry whose `.git` file resolves to that common directory (rather than
+the `.git` directory of a linked worktree); use
+`<main-worktree>/.agents/memory.local.md` as the canonical file. Separate clones
+have separate memory files.
+
+Keep the file in Markdown with a schema version, UTC update time, agent identity,
+active issue/branch/worktree mappings, and short handovers with sources or
+validity notes. A coordinating agent is the sole writer for a session; delegated
+agents send proposed updates to that coordinator instead of writing concurrently.
+Verify time-sensitive notes against live sources and supersede stale entries.
+GitHub issues, project fields, and atomic claim refs remain authoritative;
+memory never creates ownership or replaces a claim.
+
+The file is Git-ignored. Never force-add, commit, push, or attach it. Do not put
+credentials, user images or sticker pixels, private archives, raw transcripts or
+logs, or other sensitive user data in it. Keep only the minimum operational
+context needed for handover; the developer may delete the file at any time.
+
 ## Hard rules (architecture)
 
 - The Rust core **never returns user-facing text**. Errors and warnings are
