@@ -2,6 +2,7 @@
 	import { Download, Info } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
 	import { Progress } from '$lib/components/ui/progress';
 	import type { Sticker } from '$lib/detection/types';
 	import {
@@ -69,19 +70,23 @@
 		<Download aria-hidden="true" />
 		{label}
 	</Button>
-	{#if controller.plan.stickerCount < MIN_STICKERS_PER_PACK}
-		<p class="text-sm text-muted-foreground">
-			{m.export_min_stickers_notice({ min: number(MIN_STICKERS_PER_PACK) })}
-		</p>
-	{/if}
-	{#if controller.plan.packSizes.length > 1}
-		<p class="flex items-start gap-2 text-sm text-muted-foreground">
-			<Info class="size-4 shrink-0" aria-hidden="true" />
-			{m.export_split_notice({
-				count: number(controller.plan.stickerCount),
-				packs: number(controller.plan.packSizes.length)
-			})}
-		</p>
+	{#if controller.plan.stickerCount < MIN_STICKERS_PER_PACK || controller.plan.packSizes.length > 1}
+		<Card.Root class="bg-secondary py-3 text-secondary-foreground">
+			<Card.Content class="space-y-2">
+				{#if controller.plan.stickerCount < MIN_STICKERS_PER_PACK}
+					<p>{m.export_min_stickers_notice({ min: number(MIN_STICKERS_PER_PACK) })}</p>
+				{/if}
+				{#if controller.plan.packSizes.length > 1}
+					<p class="flex items-start gap-2">
+						<Info class="size-4 shrink-0" aria-hidden="true" />
+						{m.export_split_notice({
+							count: number(controller.plan.stickerCount),
+							packs: number(controller.plan.packSizes.length)
+						})}
+					</p>
+				{/if}
+			</Card.Content>
+		</Card.Root>
 	{/if}
 	{#if controller.phase === 'exporting'}
 		<Progress

@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-14
+goal: Assess whether locally bundled Lottie micro-interactions fit Rusticker's
+  performance, offline, and accessibility requirements
+skip_specs: true
