@@ -24,10 +24,10 @@ Inputs must be strictly validated in application code, with small bounded schema
 
 Keep the first implementation to at most two narrowly scoped tools:
 
-| Tool | Behavior | Output / constraints |
-|---|---|---|
+| Tool                | Behavior                                                                                          | Output / constraints                                                                                                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `open-image-picker` | Opens the existing image-selection control; the person chooses a file through the browser picker. | Fixed generic status only. Never accepts a file path or bytes. If browser activation rules prevent opening it, return an actionable generic failure and keep the visible picker available. |
-| `get-editor-status` | Reads a coarse application workflow state. | One of `empty`, `image-loaded`, `reviewing-results`, or `ready-to-export`; no counts, names, hashes, settings, dimensions, or content. Mark read-only. |
+| `get-editor-status` | Reads a coarse application workflow state.                                                        | One of `empty`, `image-loaded`, `reviewing-results`, or `ready-to-export`; no counts, names, hashes, settings, dimensions, or content. Mark read-only.                                     |
 
 Do not expose processing, sticker editing, reorder, or pack download in the first implementation. Revisit a single explicit `start-detection` tool only if an evaluation demonstrates a useful user-directed workflow, the user has already selected the image, work stays in the existing worker, output remains generic, cancellation is honored, and the UI visibly reflects progress and completion. Do not expose an export/download tool: it creates a file from user content and the browser's agent-mediated confirmation behavior is not sufficiently interoperable to serve as the app's authorization boundary. The user can always complete these actions through the existing UI.
 
@@ -44,9 +44,9 @@ Do not expose processing, sticker editing, reorder, or pack download in the firs
 
 The editor page now connects `open-image-picker` to the existing hidden file input through `showPicker()`, which reports unavailable when the browser denies activation or lacks the method. `get-editor-status` maps local editor state to `empty`, `image-loaded`, `reviewing-results`, or `ready-to-export`; counts and underlying state are never returned. Both tools use localized static metadata, require an empty input object, and register with an abort signal. The ordinary upload, detection, review, and export UI remains the fallback.
 
-Automated tests cover the adapter, bounded status mapping, and picker activation failure. A browser smoke test with Chrome's WebMCP Origin Trial or local testing flag remains environment-dependent; it must be run in a browser configured for the experimental API before claiming that browser integration was manually verified.
+Automated tests cover the adapter, bounded status mapping, and picker activation failure. On 2026-10-16, automated browser smoke tests passed in Chrome 155.0.8059.79 using an isolated temporary profile with WebMCP enabled and disabled. The enabled scenario used the real browser API to discover and execute the two tools, reject extra input, and verify registration after a locale change. Both scenarios completed a synthetic image-to-pack flow and downloaded a valid ZIP offline. See the [browser smoke evidence](../openspec/changes/webmcp-selected-workflows/README.md) for flags, checks, and environmental limitations.
 
-On 2026-10-12, this development environment had Chrome 155 installed, but its normal profile was not modified to enable the WebMCP flag. An automated attempt to inspect `chrome://flags/#enable-webmcp-testing` with an isolated temporary profile did not reach the page evaluation and was stopped. Therefore, the Chrome API registration and end-to-end browser smoke remain unverified. Enable the documented local flag in a disposable Chrome profile or use an Origin Trial-enabled deployment, then verify tool discovery, both fixed outputs, picker activation failure, and the normal image-to-pack path.
+The earlier 2026-10-12 attempt did not reach page evaluation. The successful 2026-10-16 run used the project's Playwright CLI through Bun; directly launching Playwright from the Bun runtime timed out while connecting to Chrome's debugging pipe on Windows. No normal Chrome profile was changed. Picker activation failure remains covered by focused automated tests; the real browser execution in this smoke returned `picker-opened`.
 
 ## Primary references
 
