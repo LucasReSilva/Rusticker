@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import Preview from './Preview.svelte';
 import { image, installDomMocks } from '$lib/tool/test-support';
+import { m } from '$lib/paraglide/messages';
 
 beforeEach(installDomMocks);
 afterEach(() => {
@@ -31,7 +32,7 @@ it('draws boxes in source coordinates and keeps the inactive overlay decorative'
 it('clamps the keyboard crosshair, picks the source neighborhood and returns focus', async () => {
 	const onPick = vi.fn();
 	const { container } = render(Preview, { ...props, advanced: true, onPick });
-	const toggle = screen.getByRole('button');
+	const toggle = screen.getByRole('button', { name: m.tool_eyedropper_label() });
 	await fireEvent.click(toggle);
 	const area = screen.getByRole('application');
 	expect(area).toHaveFocus();
@@ -46,7 +47,7 @@ it('clamps the keyboard crosshair, picks the source neighborhood and returns foc
 it('Escape cancels without sampling', async () => {
 	const onPick = vi.fn();
 	render(Preview, { ...props, advanced: true, onPick });
-	const toggle = screen.getByRole('button');
+	const toggle = screen.getByRole('button', { name: m.tool_eyedropper_label() });
 	await fireEvent.click(toggle);
 	await fireEvent.keyDown(screen.getByRole('application'), { key: 'Escape' });
 	expect(onPick).not.toHaveBeenCalled();
@@ -54,6 +55,24 @@ it('Escape cancels without sampling', async () => {
 });
 it('hides the eyedropper in automatic mode', () => {
 	render(Preview, { ...props, onPick: vi.fn() });
-	expect(screen.queryByRole('button')).not.toBeInTheDocument();
+	expect(screen.queryByRole('button', { name: m.tool_eyedropper_label() })).not.toBeInTheDocument();
+});
+it('keeps boxes aligned while zooming and pans the focused image with arrow keys', async () => {
+	const { container } = render(Preview, { ...props, onPick: vi.fn() });
+	const area = screen.getByRole('region', { name: m.tool_inspector_area() });
+	Object.defineProperties(area, {
+		clientWidth: { value: 200 },
+		clientHeight: { value: 100 },
+		scrollWidth: { value: 400 },
+		scrollHeight: { value: 200 }
+	});
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_inspector_zoom_in() }));
+	expect(area).toHaveAttribute('data-zoom', '2');
+	expect(container.querySelector('[data-detection-box]')).toHaveAttribute('x', '1');
+	area.scrollLeft = 0;
+	await fireEvent.keyDown(area, { key: 'ArrowRight' });
+	expect(area.scrollLeft).toBe(50);
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_inspector_zoom_reset() }));
+	expect(area).toHaveAttribute('data-zoom', '1');
 });
 import '@testing-library/jest-dom/vitest';

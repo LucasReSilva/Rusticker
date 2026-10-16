@@ -24,6 +24,7 @@
 		undoableStickerIds = new Set<string>(),
 		allowSplitRequest = true,
 		allowBoundsAdjustment = false,
+		sourceUrl = '',
 		sourceWidth = 0,
 		sourceHeight = 0,
 		onSplitRequest = () => {},
@@ -46,6 +47,7 @@
 		undoableStickerIds?: ReadonlySet<string>;
 		allowSplitRequest?: boolean;
 		allowBoundsAdjustment?: boolean;
+		sourceUrl?: string;
 		sourceWidth?: number;
 		sourceHeight?: number;
 		onSplitRequest?: (id: string) => void;
@@ -223,6 +225,7 @@
 						undoable={undoableStickerIds.has(sticker.id)}
 						{allowSplitRequest}
 						{allowBoundsAdjustment}
+						{sourceUrl}
 						{sourceWidth}
 						{sourceHeight}
 						onSplitRequest={() => onSplitRequest(sticker.id)}
