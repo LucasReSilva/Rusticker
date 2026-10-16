@@ -33,6 +33,7 @@
 		undoable,
 		allowSplitRequest = true,
 		allowBoundsAdjustment = false,
+		sourceUrl = '',
 		sourceWidth = 0,
 		sourceHeight = 0,
 		onSplitRequest,
@@ -60,6 +61,7 @@
 		undoable: boolean;
 		allowSplitRequest?: boolean;
 		allowBoundsAdjustment?: boolean;
+		sourceUrl?: string;
 		sourceWidth?: number;
 		sourceHeight?: number;
 		onSplitRequest: () => void;
@@ -158,6 +160,7 @@
 					<Dialog.Description class="sr-only">{m.tool_bounds_help()}</Dialog.Description>
 					<StickerBoundsEditor
 						{sticker}
+						{sourceUrl}
 						{sourceWidth}
 						{sourceHeight}
 						onCancel={() => (boundsOpen = false)}
