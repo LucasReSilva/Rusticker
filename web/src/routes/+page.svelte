@@ -134,6 +134,7 @@
 					undoableStickerIds={editor.undoableStickerIds}
 					allowSplitRequest={processingMode === 'advanced'}
 					allowBoundsAdjustment={processingMode === 'advanced'}
+					sourceUrl={editor.source.url}
 					sourceWidth={editor.source.width}
 					sourceHeight={editor.source.height}
 					onSplitRequest={(id) => void editor.requestSplit(id)}
