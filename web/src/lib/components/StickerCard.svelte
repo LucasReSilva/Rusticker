@@ -33,6 +33,7 @@
 		undoable,
 		allowSplitRequest = true,
 		allowBoundsAdjustment = false,
+		sourceUrl = '',
 		sourceWidth = 0,
 		sourceHeight = 0,
 		onSplitRequest,
@@ -60,6 +61,7 @@
 		undoable: boolean;
 		allowSplitRequest?: boolean;
 		allowBoundsAdjustment?: boolean;
+		sourceUrl?: string;
 		sourceWidth?: number;
 		sourceHeight?: number;
 		onSplitRequest: () => void;
@@ -91,11 +93,12 @@
 	<!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role -->
 	<canvas
 		bind:this={canvas}
+		data-sticker-preview
 		width={sticker.pixels.width}
 		height={sticker.pixels.height}
 		role="img"
 		aria-label={m.tool_sticker_alt({ position: formattedPosition })}
-		class="aspect-square h-auto w-full rounded-md bg-checkerboard"
+		class="aspect-square h-auto w-full rounded-md bg-checkerboard duration-300 motion-safe:animate-in motion-safe:fade-in-0"
 	></canvas>
 	<div class="flex min-h-6 flex-wrap items-center gap-1">
 		{#if isTrayIcon}<Badge variant="secondary" class="whitespace-normal"
@@ -157,6 +160,7 @@
 					<Dialog.Description class="sr-only">{m.tool_bounds_help()}</Dialog.Description>
 					<StickerBoundsEditor
 						{sticker}
+						{sourceUrl}
 						{sourceWidth}
 						{sourceHeight}
 						onCancel={() => (boundsOpen = false)}

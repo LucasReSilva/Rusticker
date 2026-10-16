@@ -17,3 +17,4 @@ bun.lockb
 /test-results/
 /playwright-report/
 /blob-report/
+/storybook-static/

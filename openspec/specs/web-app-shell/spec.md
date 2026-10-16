@@ -18,7 +18,12 @@ The web app SHALL build to a directory of static files that any static file host
 - **THEN** every network request goes to the site's own origin and base path
 
 ### Requirement: Page set
-The web app SHALL provide exactly three public pages: the tool page, a how-to-use page that explains step by step how to import the generated pack into WhatsApp, and an about page that explains the privacy model. The about page SHALL state that all image processing happens on the user's device and that images are never uploaded. Each page SHALL be available in every supported locale, at the localized URLs defined by the localization capability.
+The web app SHALL provide a localized tool page, how-to-use page, about page, and processing-history page. The how-to-use page SHALL explain step by step how to import the generated pack into WhatsApp, and the about page SHALL explain the privacy model. The processing-history page SHALL present only local processing summaries and SHALL NOT provide access to source or output images. The about page SHALL state that all image processing happens on the user's device and that images are never uploaded. Each page SHALL be available in every supported locale, at the localized URLs defined by the localization capability.
+
+#### Scenario: Processing history has a localized URL
+- **WHEN** a user opens the history page in any supported locale
+- **THEN** the page is available at that locale's localized history URL
+- **AND** the shared header keeps links in the active locale
 
 #### Scenario: About page states the privacy model
 - **WHEN** a user opens the about page in any supported locale
@@ -27,6 +32,11 @@ The web app SHALL provide exactly three public pages: the tool page, a how-to-us
 #### Scenario: How-to-use page explains the import
 - **WHEN** a user opens the how-to-use page in any supported locale
 - **THEN** the page lists, in that locale, the steps from preparing the image to importing the pack into WhatsApp
+
+#### Scenario: History contains summaries only
+- **WHEN** a user opens a processing-history entry
+- **THEN** the page displays its localized summary
+- **AND** it does not restore or link to source-image pixels or prior pack files
 
 ### Requirement: Shared navigation header
 Every page SHALL show a header with the official application logo, app name, and links to the tool page, the how-to-use page, and the about page. Each link SHALL point to that page in the active locale.
@@ -102,3 +112,20 @@ Every push and pull request that changes the web app or the image-processing cor
 #### Scenario: Merge to main publishes the site
 - **WHEN** a commit is pushed to the main branch and the build succeeds
 - **THEN** the site is published to the static host under the repository's sub-path
+
+### Requirement: Shared release footer
+Every public page SHALL show a semantic footer after its main content. The footer SHALL display the current application version, a reminder that image processing remains on the user's device, and links to the localized privacy page, the project repository, and its changelog. All footer text and accessible labels SHALL exist in every supported locale. The footer SHALL remain readable and operable with keyboard navigation, at viewport widths of at least 375 pixels, and on pages whose content is shorter than the viewport.
+
+#### Scenario: Version and links on every page
+- **WHEN** a user opens any public page in a supported locale
+- **THEN** the footer shows the version of the application build and localized text for the privacy reminder and links
+- **AND** the privacy link opens the about page in the current locale
+
+#### Scenario: Footer without scripts
+- **WHEN** a user opens a prerendered content page with scripts disabled
+- **THEN** the footer, version, reminder, and links are present in the page's HTML
+
+#### Scenario: Narrow and short page
+- **WHEN** a user opens a short page at a 375-pixel viewport width
+- **THEN** the footer remains below the main content without horizontal overflow or overlap
+- **AND** its links remain focusable and visibly focused
