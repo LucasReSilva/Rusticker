@@ -10,6 +10,7 @@ node_modules/
 # SvelteKit / Vite
 web/.svelte-kit/
 web/build/
+web/storybook-static/
 vite.config.*.timestamp-*
 
 # Local-only sample images (private; never commit)
