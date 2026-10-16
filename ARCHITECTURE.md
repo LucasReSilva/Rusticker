@@ -172,16 +172,19 @@ Web only as a measured compatibility fallback. No ONNX model has been tested
 against Rusticker's sticker fixtures, so neither model-assisted behavior nor
 runtime compatibility is claimed today.
 
-### WebMCP: feasibility only
+### WebMCP: optional experimental tools
 
-WebMCP is an experimental Community Group draft, and the current browser
-documentation describes a Chrome Origin Trial and local testing flag. It is
-not required for the app to work. The [WebMCP evaluation](docs/webmcp-evaluation.md)
-recommends feature detection and an isolated adapter if issue #51 proceeds.
-Any initial tools should expose only coarse workflow status and the existing
-image picker; they must never accept or return user image bytes, file names,
-hashes, sticker pixels, or derived metadata. Do not expose pack downloads as
-agent tools. No WebMCP tools are currently implemented.
+WebMCP is an experimental Community Group draft, and current Chrome
+documentation describes an Origin Trial and local testing flag. It is not
+required for the app to work. The [WebMCP evaluation](docs/webmcp-evaluation.md)
+limits the initial tool surface to the existing image picker and coarse editor
+status. An isolated adapter in `web/src/lib/webmcp/` feature-detects
+`document.modelContext` and registers those two tools with bounded inputs and
+outputs. The editor page connects the callbacks to its existing picker and
+state; unsupported browsers register no tools and retain the full UI. Tool
+status is reduced to four fixed workflow states. Tools must never accept or
+return user image bytes, file names, hashes, sticker pixels, or derived
+metadata. Do not expose pack downloads as agent tools.
 
 ```mermaid
 flowchart LR
