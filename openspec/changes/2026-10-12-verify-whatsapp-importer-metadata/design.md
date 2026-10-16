@@ -17,10 +17,10 @@ dependent feature yet.
 
 - The archived [`laggykiller/wastickers_creater` repository](https://github.com/laggykiller/wastickers_creater) says its `.wastickers` output is a ZIP with `author.txt`, `title.txt`, sticker image files and a PNG cover, and instructs users to share that file with Sticker Maker before adding the pack to WhatsApp. The repository is archived and its README says it is no longer maintained. This documents an authoring/import workflow, but does not contain Sticker Maker's implementation or a test result.
 - [`laggykiller/sticker-whatsapp-bridge`](https://github.com/laggykiller/sticker-whatsapp-bridge) independently labels `.wastickers` as the format exported by Sticker Maker and lists root `title.txt` and `author.txt` as pack title and author. It is a third-party converter, not the importer itself; its README does not pin a Sticker Maker app version.
-- The [Google Play listing for Sticker maker by Viko & Co](https://play.google.com/store/apps/details?id=com.marsvard.stickermakerforwhatsapp) identifies package `com.marsvard.stickermakerforwhatsapp` and shows an update date of September 5, 2026, but the listing does not expose an application version in the captured page. It describes creating and publishing packs, not importing `.wastickers` files.
+- The [Google Play listing for Sticker maker by Viko & Co](https://play.google.com/store/apps/details?id=com.marsvard.stickermakerforwhatsapp), rechecked on October 16, 2026, identifies package `com.marsvard.stickermakerforwhatsapp` and shows an update date of September 17, 2026, but the listing does not expose an application version in the captured page. It describes creating and publishing packs, not importing `.wastickers` files.
 
 Accordingly, an app name and package can be identified, but a reproducible
-app-version result cannot be claimed. Confidence in the *documented convention*
+app-version result cannot be claimed. Confidence in the _documented convention_
 is medium; confidence that a current Sticker Maker build recognizes both files
 is low until a fixture is opened in a versioned app build.
 
@@ -50,11 +50,17 @@ copies in a subdirectory. No output format was changed during this research.
 
 The acceptance test requires opening a locally generated archive in a named,
 versioned importer and observing the title and author shown in its preview or
-imported pack. This environment has no connected Android device or configured
-AVD. `adb devices -l` could not initialize its Android user directory, and no
-AVD was present in the user's AVD directory. No importer APK was installed or
-run, and no app-version-specific result is available. Thus this acceptance
-criterion remains open; do not infer success from the repositories above.
+imported pack. On October 16, 2026, the synthetic fixture was built and its
+image constraints, ZIP layout, and metadata round-trip were checked locally.
+See [runtime verification](runtime-verification.md) for the reproducible command,
+observations, and device test procedure.
+
+No accessible device or configured AVD could be established: `emulator.exe
+-list-avds` returned no names, and `adb devices -l` failed before listing devices
+because it could not create its Android user directory. This does not prove that
+no physical device exists. No importer APK or WhatsApp instance was installed or
+run, and no app-version-specific result is available. Tasks 3 and 4 remain open;
+do not infer importer success from the fixture checks or repositories above.
 
 ## Recommendation
 
