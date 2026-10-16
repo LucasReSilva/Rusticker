@@ -2,6 +2,120 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-10-14
+
+### Bug Fixes
+
+#### Core
+
+- Preserve alpha in sticker detection
+- Reduce selected-background edge spill
+
+#### Web
+
+- Prevent telegram export button overflow on narrow viewports
+- Prevent telegram export button overflow on narrow viewports
+
+### Documentation
+
+#### Agents
+
+- Verify atomic claim lifecycle
+
+#### Core
+
+- Evaluate ONNX split assistance
+
+#### Openspec
+
+- Prepare post-release roadmap
+- Extend post-release roadmap
+- Prefer Rust WASM for ONNX
+- Prioritize technical documentation
+- Archive post-release roadmap
+- Archive technical documentation audit
+- Archive palette specification
+- Archive transparent detection change
+- Archive reviewed sticker split change
+- Archive edge halo change
+- Record ONNX assistance evaluation
+- Design private processing history
+- Archive agent coordination roadmap
+- Archive merged editor and batch changes
+- Archive Telegram static export change
+
+#### Unscoped
+
+- Audit implementation and update architecture guide
+
+#### Web
+
+- Evaluate safe WebMCP support
+
+### Features
+
+#### Core
+
+- Add reviewed sticker split assistance
+
+#### Ui
+
+- Apply Rust and WhatsApp palette
+
+#### Web
+
+- Process multiple images in a batch
+- Add automatic and advanced processing modes
+- Add local processing history page
+- Notify when image batches finish
+- Mount batch notifications in editor
+- Add sticker ordering primitives
+- Reorder stickers in the editor
+- Allow manual sticker crop adjustment
+- Connect manual sticker bounds to editor
+- Add static Telegram sticker export
+- Wire telegram export into tool page
+- Add static Telegram sticker export
+- Mount Telegram export in editor
+- Show batch processing progress
+
+### Miscellaneous Tasks
+
+#### Openspec
+
+- Merge develop into archive merged changes
+- Merge develop into archive merged changes
+
+#### Web
+
+- Merge develop into sticker reordering
+- Merge develop into telegram export
+- Merge develop into Telegram export branch
+- Merge develop into animated processing feature
+- Merge develop into animated processing feature
+- Merge develop into animated processing feature
+
+### Styling
+
+#### Web
+
+- Format local history files
+
+### Testing
+
+#### Core
+
+- Characterize transparent and non-green backgrounds
+- Evaluate watershed split candidates
+- Tighten watershed evaluation
+
+#### Web
+
+- Cover combined batch export feedback
+- Align editor e2e with advanced mode
+- Cover history routes in end-to-end checks
+- Scope image processing progressbar in editor e2e test
+
 ## [0.2.1] - 2026-10-12
 
 ### Bug Fixes

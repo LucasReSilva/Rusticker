@@ -34,6 +34,88 @@ async function load(page: Page): Promise<void> {
 	await expect(page.locator('[data-detected-count]')).toHaveText('6 figurinhas selecionadas');
 }
 
+test('sticker previews fade in without layout shifts and skip animation for reduced motion', async ({
+	page
+}) => {
+	await page.emulateMedia({ reducedMotion: 'no-preference' });
+	await load(page);
+	const preview = page.locator('[data-sticker-preview]').first();
+	const animationName = await preview.evaluate(
+		(element) => getComputedStyle(element).animationName
+	);
+	expect(animationName).not.toBe('none');
+	const initialBounds = await preview.boundingBox();
+	await page.waitForTimeout(350);
+	const finalBounds = await preview.boundingBox();
+	expect(finalBounds?.width).toBe(initialBounds?.width);
+	expect(finalBounds?.height).toBe(initialBounds?.height);
+
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await load(page);
+	const reducedPreview = page.locator('[data-sticker-preview]').first();
+	expect(await reducedPreview.evaluate((element) => getComputedStyle(element).animationName)).toBe(
+		'none'
+	);
+	expect(await reducedPreview.boundingBox()).not.toBeNull();
+});
+
+test('zoomed source inspection and crop adjustment work at mobile width', async ({ page }) => {
+	await page.setViewportSize({ width: 375, height: 812 });
+	await load(page);
+	const sourceInspector = page.locator('[data-source-inspector]');
+	await page.getByRole('button', { name: 'Ampliar' }).click();
+	await expect(sourceInspector).toHaveAttribute('data-zoom', '2');
+	const initialScroll = await sourceInspector.evaluate((element) => element.scrollLeft);
+	const sourceArea = await sourceInspector.boundingBox();
+	expect(sourceArea).not.toBeNull();
+	await page.mouse.move(
+		sourceArea!.x + sourceArea!.width / 2,
+		sourceArea!.y + sourceArea!.height / 2
+	);
+	await page.mouse.down();
+	await page.mouse.move(
+		sourceArea!.x + sourceArea!.width / 2 - 24,
+		sourceArea!.y + sourceArea!.height / 2
+	);
+	await page.mouse.up();
+	expect(await sourceInspector.evaluate((element) => element.scrollLeft)).toBeGreaterThan(
+		initialScroll
+	);
+	await expect(page.locator('[data-detection-box]').first()).toHaveAttribute('x', '40');
+	await page.getByRole('button', { name: /Avan/ }).click();
+	await page
+		.locator('[data-sticker-card]')
+		.first()
+		.getByRole('button', { name: 'Ajustar recorte' })
+		.click();
+	const dialog = page.getByRole('dialog');
+	const cropInspector = dialog.locator('[data-crop-inspector]');
+	await expect(
+		dialog.getByRole('img', { name: 'Imagem original com recorte ajustável' })
+	).toBeVisible();
+	await dialog.getByRole('button', { name: 'Ampliar' }).click();
+	await expect(cropInspector).toHaveAttribute('data-zoom', '2');
+	const box = dialog.locator('[data-crop-box]');
+	await expect(box).toHaveAttribute('data-x', '40');
+	await dialog.getByRole('button', { name: 'Mover recorte' }).focus();
+	await page.keyboard.press('ArrowRight');
+	await expect(box).toHaveAttribute('data-x', '41');
+	const move = dialog.getByRole('button', { name: 'Mover recorte' });
+	await move.scrollIntoViewIfNeeded();
+	const moveArea = await move.boundingBox();
+	expect(moveArea).not.toBeNull();
+	await page.mouse.move(moveArea!.x + moveArea!.width / 2, moveArea!.y + moveArea!.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(moveArea!.x + moveArea!.width / 2 + 20, moveArea!.y + moveArea!.height / 2);
+	await page.mouse.up();
+	await expect.poll(async () => Number(await box.getAttribute('data-x'))).toBeGreaterThan(41);
+	const finalX = await box.getAttribute('data-x');
+	await dialog.getByRole('button', { name: 'Aplicar recorte' }).click();
+	await expect(page.locator('[data-detection-box]').first()).toHaveAttribute('x', finalX!);
+	const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+	expect(overflow).toBe(false);
+});
+
 test('click chooser, keyboard eyedropper and debounced tolerance use the real worker locally', async ({
 	page
 }) => {
@@ -70,7 +152,7 @@ test('click chooser, keyboard eyedropper and debounced tolerance use the real wo
 	});
 	await expect(slider).toHaveAttribute('aria-valuenow', '53');
 	await expect(page.locator('[data-detected-count]')).toHaveText('Processando imagem');
-	const progress = page.getByRole('progressbar');
+	const progress = page.getByRole('progressbar', { name: 'Processando imagem' });
 	await expect(progress).toHaveAttribute('data-state', 'indeterminate');
 	await expect(progress).not.toHaveAttribute('aria-valuenow');
 	const indicator = progress.locator('[data-slot=progress-indicator]');
@@ -192,6 +274,15 @@ test('the dark editor fits a 375px viewport with reduced motion', async ({ page 
 	await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
 	await load(page);
 	await expect(page.locator('html')).toHaveClass(/dark/);
+	expect(
+		await page.locator('[data-slot="export"]').evaluate((region) => {
+			const firstSticker = document.querySelector('[data-sticker-card]');
+			return Boolean(
+				firstSticker &&
+				region.compareDocumentPosition(firstSticker) & Node.DOCUMENT_POSITION_FOLLOWING
+			);
+		})
+	).toBe(true);
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
 		true
 	);

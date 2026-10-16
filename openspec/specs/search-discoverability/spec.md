@@ -13,12 +13,13 @@ The site SHALL expose exactly these public pages, each in every supported locale
 | tool       | `/`             | `/en/`           | `/es/`          |
 | how to use | `/como-usar`    | `/en/how-to-use` | `/es/como-usar` |
 | about      | `/sobre`        | `/en/about`      | `/es/acerca-de` |
+| history    | `/historico`    | `/en/history`    | `/es/historial` |
 
 These exact forms (tool pages with a trailing slash, content pages without) are the canonical URLs used in every canonical link, alternate link, and sitemap entry. Each of these URLs MUST be served as a successful page response from the static build (not only as a not-found fallback), with the page content in its locale.
 
 #### Scenario: Every variant exists in the build
 - **WHEN** the production build output is inspected
-- **THEN** a page document exists for each of the 9 URLs in the table
+- **THEN** a page document exists for each of the 12 URLs in the table
 
 ### Requirement: Absolute URLs use the configured site origin
 All absolute URLs emitted for search engines (canonical links, alternate links, sitemap entries, the sitemap reference in the robots file) SHALL be built from the configured public site URL, which includes the deployment base path, followed by the page path from the URL table. The base path MUST appear exactly once.
@@ -63,7 +64,7 @@ The site SHALL serve a sitemap at `<base path>/sitemap.xml` that lists every URL
 
 #### Scenario: Sitemap content
 - **WHEN** the built `sitemap.xml` is parsed
-- **THEN** it contains exactly 9 URL entries, one per page-locale pair, each with 3 language alternates and one `x-default`
+- **THEN** it contains exactly 12 URL entries, one per page-locale pair, each with 3 language alternates and one `x-default`
 
 ### Requirement: Robots file points to the sitemap
 The site SHALL serve a robots file at `<base path>/robots.txt` that allows crawling of public pages and references the absolute sitemap URL.
