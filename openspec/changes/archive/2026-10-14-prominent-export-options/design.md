@@ -17,4 +17,3 @@ See proposal.md for motivation. The tool page currently renders the detected-cou
 ## Risks / Trade-offs
 
 - Export actions may take more vertical space above the grid on mobile. The controls are already compact and wrapping; the grid remains directly below them.
-
