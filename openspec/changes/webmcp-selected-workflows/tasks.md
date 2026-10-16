@@ -10,5 +10,5 @@
 
 - [x] 2.1 Add focused tests for unsupported API, registration, cleanup, strict input rejection, bounded output, invalid state, and registration failure.
 - [x] 2.2 Document the implemented tool boundary and update references to the current primary API surface.
-- [ ] 2.3 Run a browser smoke test with Chrome's WebMCP Origin Trial or local testing flag and verify the normal image-to-pack flow. This requires an environment where the experimental API is enabled; record the browser version and flag/trial setup when completed.
+- [x] 2.3 Run a browser smoke test with Chrome's WebMCP Origin Trial or local testing flag and verify the normal image-to-pack flow. This requires an environment where the experimental API is enabled; record the browser version and flag/trial setup when completed. See [browser smoke evidence](README.md).
 - [x] 2.4 Run focused unit tests, web checks, localization/design checks, and strict OpenSpec validation.
