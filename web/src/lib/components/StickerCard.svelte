@@ -13,6 +13,7 @@
 	import { m } from '$lib/paraglide/messages';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import StickerBoundsEditor from './StickerBoundsEditor.svelte';
+	import StickerBrushEditor from './StickerBrushEditor.svelte';
 	let {
 		sticker,
 		position,
@@ -33,11 +34,15 @@
 		undoable,
 		allowSplitRequest = true,
 		allowBoundsAdjustment = false,
+		allowBrushEdit = false,
+		sourceImage,
+		brushResetPixels,
 		sourceUrl = '',
 		sourceWidth = 0,
 		sourceHeight = 0,
 		onSplitRequest,
 		onBoundsApply = () => {},
+		onBrushApply = () => {},
 		onSplitAccept,
 		onSplitDiscard,
 		onSplitUndo
@@ -61,11 +66,15 @@
 		undoable: boolean;
 		allowSplitRequest?: boolean;
 		allowBoundsAdjustment?: boolean;
+		allowBrushEdit?: boolean;
+		sourceImage?: ImageData;
+		brushResetPixels?: ImageData;
 		sourceUrl?: string;
 		sourceWidth?: number;
 		sourceHeight?: number;
 		onSplitRequest: () => void;
 		onBoundsApply?: (sticker: Sticker) => void;
+		onBrushApply?: (sticker: Sticker) => void;
 		onSplitAccept: () => void;
 		onSplitDiscard: () => void;
 		onSplitUndo: () => void;
@@ -74,6 +83,7 @@
 	const size = $derived(sizeOf?.(sticker.id));
 	const formattedPosition = $derived(formatNumber(position));
 	let boundsOpen = $state(false);
+	let brushOpen = $state(false);
 	$effect(() => {
 		canvas.getContext('2d')?.putImageData(sticker.pixels, 0, 0);
 	});
@@ -170,6 +180,34 @@
 						}}
 					/>
 				</Dialog.Content>
+			</Dialog.Root>
+		{/if}
+		{#if allowBrushEdit && sourceImage}
+			<Dialog.Root bind:open={brushOpen}>
+				<Button
+					variant="outline"
+					size="sm"
+					tabindex={active ? 0 : -1}
+					onclick={() => (brushOpen = true)}
+				>
+					{m.tool_brush_title()}
+				</Button>
+				{#if brushOpen}
+					<Dialog.Content class="max-h-[calc(100dvh_-_2rem)] overflow-y-auto sm:max-w-2xl">
+						<Dialog.Title class="sr-only">{m.tool_brush_title()}</Dialog.Title>
+						<Dialog.Description class="sr-only">{m.tool_brush_help()}</Dialog.Description>
+						<StickerBrushEditor
+							{sticker}
+							source={sourceImage}
+							resetPixels={brushResetPixels ?? sticker.pixels}
+							onCancel={() => (brushOpen = false)}
+							onApply={(pixels) => {
+								onBrushApply({ ...sticker, pixels });
+								brushOpen = false;
+							}}
+						/>
+					</Dialog.Content>
+				{/if}
 			</Dialog.Root>
 		{/if}
 		{#if allowSplitRequest}<Button

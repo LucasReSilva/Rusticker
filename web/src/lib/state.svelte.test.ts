@@ -170,6 +170,29 @@ it('keeps split proposals separate until accepted and supports undo', async () =
 	expect(editor.stickers).toEqual([original]);
 	expect(editor.undoableStickerIds.size).toBe(0);
 });
+
+it('preserves the brush reset baseline when undoing a split of an edited sticker', async () => {
+	editor.dispose();
+	detector = createMockDetector({ count: 1, splitCount: 2 });
+	editor = createEditorState({ detector, decode });
+	await editor.loadFile(file());
+	const original = editor.stickers[0];
+	const resetPixels = original.pixels;
+	const editedPixels = new ImageData(
+		new Uint8ClampedArray(original.pixels.data),
+		original.pixels.width,
+		original.pixels.height
+	);
+	editedPixels.data[3] = 0;
+	editor.updateStickerPixels(original.id, editedPixels);
+
+	await editor.requestSplit(original.id);
+	editor.acceptSplit();
+	editor.undoSplit(editor.stickers[0].id);
+
+	expect(editor.stickers[0].pixels).not.toBe(resetPixels);
+	expect(editor.brushResetPixels(original.id)).toBe(resetPixels);
+}, 15_000);
 it('undoes nested splits with their descendants when restoring an ancestor', async () => {
 	editor.dispose();
 	detector = createMockDetector({ count: 1, splitCount: 2 });
@@ -385,6 +408,26 @@ it('keeps adjusted sticker pixels and bounds in the active batch export data', a
 
 	expect(editor.batchStickers[0].bbox).toEqual(bounds);
 	expect(editor.batchStickers[0].pixels).not.toBe(original.pixels);
+});
+
+it('keeps brushed sticker pixels in the active batch export data', async () => {
+	editor.addBatchFiles([file()]);
+	await vi.waitFor(() => expect(editor.batchEntries[0]?.status).toBe('done'));
+	const original = editor.batchStickers[0];
+	const resetPixels = editor.brushResetPixels(original.id);
+	const pixels = new ImageData(
+		new Uint8ClampedArray(original.pixels.data),
+		original.pixels.width,
+		original.pixels.height
+	);
+	pixels.data[3] = 0;
+
+	editor.updateStickerPixels(original.id, pixels);
+	editor.syncActiveBatch();
+
+	expect(editor.stickers[0].pixels).toBe(pixels);
+	expect(editor.batchStickers[0].pixels).toBe(pixels);
+	expect(editor.brushResetPixels(original.id)).toBe(resetPixels);
 });
 
 it('keeps successful results when another image fails and retries only the failed row', async () => {

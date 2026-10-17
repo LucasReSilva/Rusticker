@@ -1,4 +1,4 @@
-import { SvelteSet } from 'svelte/reactivity';
+import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import {
 	createDetector,
 	DetectionError,
@@ -74,7 +74,9 @@ export class EditorState {
 	splitPreview = $state.raw<{ source: Sticker; candidates: Sticker[] } | null>(null);
 	splitBusyId = $state<string | null>(null);
 	noSplitProposalId = $state<string | null>(null);
-	splitUndo = $state.raw<Array<{ original: Sticker; replacements: Sticker[] }>>([]);
+	splitUndo = $state.raw<
+		Array<{ original: Sticker; replacements: Sticker[]; brushResetPixels?: ImageData }>
+	>([]);
 	status = $state<EditorStatus>('idle');
 	completedRunSequence = $state(0);
 	lastError = $state<EditorErrorCode | null>(null);
@@ -117,6 +119,7 @@ export class EditorState {
 	private readonly detector: Detector;
 	private readonly decode: (blob: Blob) => Promise<DecodedImage>;
 	private readonly debounceMs: number;
+	private readonly brushResetPixelsById = new SvelteMap<string, ImageData>();
 
 	constructor({ detector, decode = decodeImage, debounceMs = 300 }: Dependencies) {
 		this.detector = detector;
@@ -286,6 +289,7 @@ export class EditorState {
 		this.splitBusyId = null;
 		this.noSplitProposalId = null;
 		this.splitUndo = [];
+		this.brushResetPixelsById.clear();
 		this.status = 'idle';
 	}
 
@@ -322,6 +326,7 @@ export class EditorState {
 			url: URL.createObjectURL(blob)
 		};
 		this.detected = [];
+		this.brushResetPixelsById.clear();
 		this.splitPreview = null;
 		this.splitBusyId = null;
 		this.noSplitProposalId = null;
@@ -363,6 +368,7 @@ export class EditorState {
 			});
 			if (sequence !== this.sequence || this.disposed) return;
 			this.detected = result;
+			this.brushResetPixelsById.clear();
 			this.stickerOrder = result.map((sticker) => sticker.id);
 			this.splitPreview = null;
 			this.splitBusyId = null;
@@ -375,6 +381,7 @@ export class EditorState {
 		} catch (error) {
 			if (sequence !== this.sequence || this.disposed || isCancelled(error)) return;
 			this.detected = [];
+			this.brushResetPixelsById.clear();
 			this.stickerOrder = [];
 			this.splitPreview = null;
 			this.splitBusyId = null;
@@ -389,6 +396,7 @@ export class EditorState {
 
 	removeSticker(id: string): void {
 		if (!this.stickers.some((sticker) => sticker.id === id)) return;
+		this.brushResetPixelsById.delete(id);
 		if (this.splitPreview?.source.id === id) this.splitPreview = null;
 		if (this.noSplitProposalId === id) this.noSplitProposalId = null;
 		this.removedIds.add(id);
@@ -414,12 +422,50 @@ export class EditorState {
 		const adjusted = adjustStickerBounds(current, bounds, source.width, source.height);
 		if (!adjusted || adjusted === current) return;
 		this.detected = this.detected.map((sticker) => (sticker.id === id ? adjusted : sticker));
+		const resetPixels = this.brushResetPixelsById.get(id);
+		if (resetPixels) {
+			const adjustedReset = adjustStickerBounds(
+				{ ...current, pixels: resetPixels },
+				bounds,
+				source.width,
+				source.height
+			);
+			if (adjustedReset) this.brushResetPixelsById.set(id, adjustedReset.pixels);
+		}
 		this.splitUndo = this.splitUndo.map((group) => ({
 			...group,
 			replacements: group.replacements.map((sticker) => (sticker.id === id ? adjusted : sticker))
 		}));
 		if (this.splitPreview?.source.id === id) this.splitPreview = null;
 		if (this.noSplitProposalId === id) this.noSplitProposalId = null;
+	}
+
+	updateStickerPixels(id: string, pixels: ImageData): void {
+		const current = this.stickers.find((sticker) => sticker.id === id);
+		if (
+			!current ||
+			this.disposed ||
+			pixels.width !== current.pixels.width ||
+			pixels.height !== current.pixels.height ||
+			pixels.data.length !== pixels.width * pixels.height * 4
+		)
+			return;
+		if (!this.brushResetPixelsById.has(id)) this.brushResetPixelsById.set(id, current.pixels);
+		const updated = { ...current, pixels };
+		this.detected = this.detected.map((sticker) => (sticker.id === id ? updated : sticker));
+		this.splitUndo = this.splitUndo.map((group) => ({
+			...group,
+			replacements: group.replacements.map((sticker) => (sticker.id === id ? updated : sticker))
+		}));
+		if (this.splitPreview?.source.id === id) this.splitPreview = null;
+		if (this.noSplitProposalId === id) this.noSplitProposalId = null;
+	}
+
+	brushResetPixels(id: string): ImageData | undefined {
+		return (
+			this.brushResetPixelsById.get(id) ??
+			this.stickers.find((sticker) => sticker.id === id)?.pixels
+		);
 	}
 
 	async requestSplit(id: string): Promise<void> {
@@ -473,7 +519,12 @@ export class EditorState {
 			...replacements,
 			...this.detected.slice(sourceIndex + 1)
 		].map((sticker, index) => ({ ...sticker, index }));
-		this.splitUndo = [...this.splitUndo, { original: proposal.source, replacements }];
+		const brushResetPixels = this.brushResetPixelsById.get(proposal.source.id);
+		this.brushResetPixelsById.delete(proposal.source.id);
+		this.splitUndo = [
+			...this.splitUndo,
+			{ original: proposal.source, replacements, brushResetPixels }
+		];
 		this.removedIds.delete(proposal.source.id);
 		if (this.trayIconId === proposal.source.id) this.trayIconId = replacements[0]?.id ?? null;
 		this.splitPreview = null;
@@ -524,6 +575,10 @@ export class EditorState {
 			group.original,
 			...this.detected.slice(firstIndex).filter((sticker) => !replacementIds.has(sticker.id))
 		].map((sticker, index) => ({ ...sticker, index }));
+		for (const replacementId of replacementIds) this.brushResetPixelsById.delete(replacementId);
+		if (group.brushResetPixels) {
+			this.brushResetPixelsById.set(group.original.id, group.brushResetPixels);
+		}
 		this.splitUndo = this.splitUndo.filter(
 			(_, index) => index !== groupIndex && !affectedIds.has(this.splitUndo[index].original.id)
 		);
@@ -557,6 +612,7 @@ export class EditorState {
 		this.splitBusyId = null;
 		this.noSplitProposalId = null;
 		this.splitUndo = [];
+		this.brushResetPixelsById.clear();
 		this.status = 'idle';
 		this.detector.dispose();
 	}
