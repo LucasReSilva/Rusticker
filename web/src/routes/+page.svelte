@@ -11,6 +11,7 @@
 	import Grid from '$lib/components/Grid.svelte';
 	import Export from '$lib/components/Export.svelte';
 	import TelegramExport from '$lib/components/TelegramExport.svelte';
+	import StaticExport from '$lib/components/StaticExport.svelte';
 	import { stickerSizes } from '$lib/export';
 	import { m } from '$lib/paraglide/messages';
 	import HistoryRecorder from '$lib/history/HistoryRecorder.svelte';
@@ -130,6 +131,7 @@
 						detecting={editor.isProcessing}
 					/>
 					<TelegramExport stickers={editor.batchStickers} disabled={editor.isProcessing} />
+					<StaticExport stickers={editor.batchStickers} disabled={editor.isProcessing} />
 				</section>
 				<p aria-live="polite" aria-atomic="true" data-detected-count>
 					{editor.isProcessing
