@@ -46,7 +46,7 @@ test('upscales one local image and downloads a PNG under the deployment base pat
 		/\/Rusticker\/ampliar\/$/
 	);
 
-	await page.locator('input[type=file]').setInputFiles({
+	await page.getByLabel('Escolher uma imagem').setInputFiles({
 		name: 'tiny.png',
 		mimeType: 'image/png',
 		buffer: await tinyPng(page)
@@ -80,7 +80,7 @@ test('rejects image dimensions outside the supported bounds before preview decod
 	view.setUint32(16, 8193);
 	view.setUint32(20, 1);
 	bytes.set(new TextEncoder().encode('IDAT'), 37);
-	await page.locator('input[type=file]').setInputFiles({
+	await page.getByLabel('Choose an image').setInputFiles({
 		name: 'too-wide.png',
 		mimeType: 'image/png',
 		buffer: Buffer.from(bytes)
@@ -91,7 +91,7 @@ test('rejects image dimensions outside the supported bounds before preview decod
 
 test('cancels an upscale and lets the user retry', async ({ page }) => {
 	await page.goto('ampliar/');
-	await page.locator('input[type=file]').setInputFiles({
+	await page.getByLabel('Escolher uma imagem').setInputFiles({
 		name: 'medium.png',
 		mimeType: 'image/png',
 		buffer: await mediumPng(page)
