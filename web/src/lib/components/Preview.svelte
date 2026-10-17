@@ -97,7 +97,8 @@
 				event.pointerType === 'touch' ||
 				event.button !== 0 ||
 				active ||
-				(event.target instanceof Element && event.target.closest('svg'))
+				(event.target instanceof Element &&
+					event.target.closest('[data-candidate-box], [data-resize-handle]'))
 			)
 				return;
 			panDrag = { x: event.clientX, y: event.clientY, left: node.scrollLeft, top: node.scrollTop };
