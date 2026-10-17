@@ -2,6 +2,68 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-10-17
+
+### Bug Fixes
+
+#### Web
+
+- Allow hashed app chunks in seo check
+
+### Documentation
+
+#### Agents
+
+- Add shared local handover memory protocol
+
+#### Openspec
+
+- Archive shared agent memory protocol
+- Include change metadata
+- Archive color and export layout changes
+- Archive completed UI changes
+- Archive integrated zoom and catalog changes
+- Archive completed WebMCP change
+
+#### Unscoped
+
+- Evaluate lottie micro-interactions
+- Add repeatable Lottie startup benchmark
+
+#### Web
+
+- Record verified WebMCP browser flow
+
+### Features
+
+#### Ui
+
+- Refine Rust orange and WhatsApp green palette
+
+#### Web
+
+- Add isolated WebMCP workflow tools
+- Integrate selected WebMCP workflows
+- Move export actions above sticker grid
+- Show localized release footer
+- Fade in sticker previews
+- Add zoom and pan source inspector
+- Add Storybook component catalog
+- Add advanced sticker brush editor
+
+### Miscellaneous Tasks
+
+#### Web
+
+- Merge develop into webmcp branch
+- Merge develop into WebMCP workflow
+
+### Styling
+
+#### Web
+
+- Format export prominence tests
+
 ## [0.3.0] - 2026-10-14
 
 ### Bug Fixes
