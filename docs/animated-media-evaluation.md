@@ -8,7 +8,7 @@
 
 On the tested Windows desktop Chromium builds, native `ImageDecoder` decoded all generated GIF, APNG, and animated WebP frames with the expected 100 ms timestamps. Native video APIs exposed VP9, H.264, and VP8 configurations, and the video element decoded the transparent VP9/WebM fixture. This is useful feasibility evidence for a follow-up prototype; it is not a supported-product matrix.
 
-Do not ship animation support on this evidence. No physical Android or iOS browser was tested, MP4 frame extraction did not reach `loadeddata`, no target-profile animated file was assembled and validated, and no real target importer was exercised. In both tested browsers `VideoEncoder` emitted VP9 chunks when alpha was discarded, but rejected the same configuration with `alpha: "keep"`. WebCodecs emits encoded chunks and does not itself produce a WebM container. The tested canvas path only produced a still WebP. The required transparent WebM muxing and animated WebP encoding therefore remain unproven.
+Do not ship animation support on this evidence. No physical Android or iOS browser was tested, MP4 frame extraction did not reach `loadeddata`, and no real target importer was exercised. A local native animated-WebP file passed browser frame, timing, alpha, size, and dimension checks, but it was never tested in WhatsApp. A VP9/WebM file passed container, codec, frame-rate, duration, size, and no-audio checks but decoded as completely transparent, so it is invalid output. In both tested browsers `VideoEncoder` emitted VP9 chunks when alpha was discarded, but rejected the same configuration with `alpha: "keep"`. WebCodecs emits encoded chunks and does not itself produce a WebM container. The tested canvas path only produced a still WebP. Transparent VP9/WebM output remains unproven.
 
 For a separate prototype, keep browser-native frame decode as the first path and compare it with a locally bundled, deliberately reduced `libwebp` WASM build for animated WebP encoding. Treat Telegram VP9 WebM output as a separate, higher-risk path requiring an alpha-capable encoder and a local WebM muxer. Do not add either runtime until real Android/iOS tests, target-file inspection, resource/cancellation tests, and bundle/offline measurements pass. `ffmpeg.wasm` is a broader alternative to screen, but its upstream architecture fetches a separate WASM core into a worker; its size and cold-start cost were not measured here.
 
@@ -24,7 +24,7 @@ Telegram's official video-sticker guide and import documentation require VP9 in 
 
 ## Test environment and fixtures
 
-The probes used headless desktop Chrome 155.0.8059.79 and Microsoft Edge 155.0.4283.45 on Windows 10 Pro (reported Windows version 2009; OS build was unavailable). Both were run with SwiftShader/software rendering (`--headless=new --disable-gpu --use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader`) against a temporary loopback-only fixture server. Their reported user agents identify the HeadlessChrome/Headless Chromium 155 engine family. Edge's suffix was `Edg/155.0.0.0`. These runs are not mobile-browser tests or hardware-performance measurements.
+The original API probes used headless desktop Chrome 155.0.8059.79 and Microsoft Edge 155.0.4283.45 on Windows 10 Pro (reported Windows version 2009; OS build was unavailable). Both were run with SwiftShader/software rendering (`--headless=new --disable-gpu --use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader`) against a temporary loopback-only fixture server. Their reported user agents identify the HeadlessChrome/Headless Chromium 155 engine family. Edge's suffix was `Edg/155.0.0.0`. The additional local encode probe used headless Chrome 155.0.8059.79. These runs are not mobile-browser tests or hardware-performance measurements.
 
 Fixtures were synthetic: 128 × 128 moving geometric shapes, 10 frames at 10 FPS for image animations and 1 second for video. APNG and one animated WebP had transparent corners; GIF and the other WebP were opaque. The MP4 contained H.264 video and AAC audio. The WebM contained VP9 video and no audio. FFmpeg/ffprobe version was `8.1.2-full_build-www.gyan.dev`.
 
@@ -68,10 +68,21 @@ The animated WebP fixtures' dimensions and frame count were verified by browser 
 | GIF, APNG, animated WebP input | Prototype as optional inputs behind runtime API checks and actual decode | 10-frame synthetic fixtures decoded on Chrome/Edge desktop. Physical iOS/Android, larger files, disposal/blend edge cases, malformed media, memory, and cancellation remain untested. |
 | MP4 input | Do not promise support yet | Metadata and capability preflight passed, but `loadeddata` and seek/frame extraction timed out in headless runs. Audio-bearing source handling and explicit audio stripping were not exercised end-to-end. |
 | WebM input | Prototype separately behind runtime checks | This synthetic VP9 alpha fixture decoded a first frame. Other VP9 profiles, VP8, AV1, hardware paths, seeking, timing drift, and mobile implementations remain untested. |
-| WhatsApp animated WebP output | Candidate for a separate local WebP animation encoder prototype; not supported now | Current canvas produces only still WebP. No animated WebP encoder/container output or official sample-app import was exercised. A local libwebp WASM build is a candidate, not a selected dependency. |
-| Telegram VP9 WebM output | No-go until alpha-capable encode and mux are demonstrated on target devices | Tested WebCodecs VP9 encoder refused `alpha: "keep"`; produced chunks are not a WebM file. No muxer, audio-track validation of generated output, size/profile validation, or Telegram importer was tested. |
+| WhatsApp animated WebP output | Candidate for a separate local WebP animation encoder prototype; not supported now | A native FFmpeg `libwebp_anim` output decoded as 10 transparent 512 × 512 frames with 100 ms timing and was below 500 KB. It was not generated in WASM or submitted to an official importer. |
+| Telegram VP9 WebM output | No-go until alpha-capable encode and mux are demonstrated on target devices | Tested WebCodecs VP9 encoder refused `alpha: "keep"`; a native FFmpeg VP9/WebM output had no audio and fit basic size, frame-rate, dimension, and duration limits but decoded as fully transparent. No valid Telegram output or importer pass was produced. |
 
 No optional WASM codec build was installed or run, so codecs/build flags, compressed and expanded bundle bytes, cold start, cancellation, peak memory, offline behavior, and performance remain unresolved. No user media was used or uploaded. The probe served generated files only from loopback. No actual phone/tablet or Firefox/Safari browser was available. Mobile user-agent emulation would not close this gap and was not counted as testing.
+
+## Additional local encode and container probe
+
+This offline baseline was run on 2026-10-17 with FFmpeg/ffprobe `8.1.2-full_build-www.gyan.dev` and headless Chrome `155.0.8059.79` on Windows 10 Pro (reported version 2009). The reproducible harness is `tools/animated-media-evaluation/run-local-encode-probe.ps1`; it generates transparent moving bars in memory, writes outputs under `%TEMP%`, probes the containers, hashes the files, and decodes the outputs in the local browser. It uses no user media or network service.
+
+| Native output candidate | Local result | Evaluation |
+| --- | --- | --- |
+| Animated WebP, FFmpeg `libwebp_anim` | 604 bytes; SHA-256 `51715FCD2C968830567E535C89DB2BC56F9B0082E307B5499F9A694BA5FF9D45`; Chrome `ImageDecoder` found 10 frames at 512 × 512, 100,000 µs per frame, with frame 0 at 0 µs and frame 9 at 900,000 µs; transparent corner and opaque bar pixels were verified on both sampled frames | Passes local container decode, sample alpha, timing, dimensions, and file-size checks for this synthetic 1-second file. `ffprobe` reports `image data not found` for this animated WebP, so Chrome was the verifier. This is a native encoder baseline, not a WASM result or WhatsApp-import pass. |
+| VP9/WebM, FFmpeg `libvpx-vp9` | 9,246 bytes; 30 frames at 512 × 512 and 30 FPS; 1 second; `ffprobe` identifies Matroska/WebM and VP9 with no audio stream; Chrome loaded the video, but an alpha scan of its first decoded frame found min/max alpha 0 and zero nontransparent pixels | Fails usable output: the artifact is fully transparent. `ffprobe` reports `yuv420p`, and FFmpeg `alphaextract` reports that no alpha plane is available. The size and container checks do not compensate for the missing sticker pixels. |
+
+The local environment had no `emcc`, `emcmake`, or Docker executable and no cached `libwebp` WASM or `ffmpeg.wasm` package. Therefore no reduced WASM build could be reproduced from the available local toolchain and cache. The native FFmpeg results above do not stand in for a WASM codec comparison. WASM compressed/expanded bytes, offline loading, cold start, cancellation, memory, and performance remain unmeasured.
 
 Any follow-up output must be inspected locally after encoding, not accepted from an API support result: verify container and codec, dimensions, encoded bytes, frame count and per-frame timing, total duration and looping, alpha after decoding representative frames, and absence of audio for Telegram WebM. Run the appropriate official importer workflow on real target devices before claiming platform compatibility. Bound peak live decoded frames and release `VideoFrame`/decoder resources; measure cancellation latency, peak memory, cold start, initial and lazy-loaded bundle bytes, and offline operation on named devices. None of those resource or importer gates passed in this evaluation.
 
@@ -94,3 +105,13 @@ With the fixtures served from `127.0.0.1:8765`, the browser probes used the stan
 - [WHATWG HTML media standard](https://html.spec.whatwg.org/multipage/media.html): `canPlayType()` capability hint semantics.
 - [libwebp animation encoder API](https://github.com/webmproject/libwebp/blob/main/doc/api.md): upstream animated WebP encoder candidate.
 - [ffmpeg.wasm architecture](https://github.com/ffmpegwasm/ffmpeg.wasm/blob/main/apps/website/docs/overview.md): upstream worker and WASM core loading model. No Rusticker-specific build size or runtime measurement was made.
+
+### Offline local encode reproduction
+
+Regenerate the additional native encoder/container baseline with the local FFmpeg and Chrome installations:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/animated-media-evaluation/run-local-encode-probe.ps1
+```
+
+The script stores generated binaries and the Chrome profile in `%TEMP%\rusticker-animated-media-local-probe`. `ffprobe` cannot inspect the resulting animated WebP in this FFmpeg build; the browser probe checks its frame count, first/last timestamps, dimensions, duration, and representative transparent/opaque pixels instead. The WebM alpha scan examines the decoded first frame and reports the observed all-transparent output. No optional codec download or WASM build is part of this reproduction.
