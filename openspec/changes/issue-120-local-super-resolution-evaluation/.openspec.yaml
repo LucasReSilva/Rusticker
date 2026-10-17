@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-17
+goal: Produce reproducible evidence and a go/no-go decision for super-resolution
+  in the existing Rust/WASM architecture.
+skip_specs: true
