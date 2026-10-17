@@ -4,8 +4,42 @@
 <pre id="result">pending</pre>
 <script type="module">
   const result = document.querySelector('#result');
+  const size = Number(new URL(location.href).searchParams.get('size') ?? 64);
+  if (!Number.isInteger(size) || size < 1 || size > 512) {
+    result.textContent = JSON.stringify({ status: 'error', message: 'size must be an integer from 1 to 512' });
+    throw new Error('Invalid evaluation size');
+  }
+  const memoryApi = performance.measureUserAgentSpecificMemory;
+  let memoryBefore;
+  if (memoryApi && crossOriginIsolated) {
+    try {
+      memoryBefore = await memoryApi.call(performance);
+    } catch (error) {
+      memoryBefore = { unavailable: String(error) };
+    }
+  }
   const worker = new Worker('./ort-worker.js', { type: 'module' });
-  worker.onmessage = ({ data }) => {
+  worker.onmessage = async ({ data }) => {
+    if (memoryBefore?.bytes !== undefined) {
+      try {
+        const after = await memoryApi.call(performance);
+        data.browserMemory = {
+          api: 'performance.measureUserAgentSpecificMemory',
+          beforeBytes: memoryBefore.bytes,
+          afterBytes: after.bytes,
+          deltaBytes: after.bytes - memoryBefore.bytes,
+          scope: 'user-agent-attributed memory for the isolated page context; includes browser-attributed memory, not a direct WASM heap measurement',
+        };
+      } catch (error) {
+        data.browserMemory = { unavailable: String(error) };
+      }
+    } else {
+      data.browserMemory = {
+        available: false,
+        crossOriginIsolated,
+        apiAvailable: Boolean(memoryApi),
+      };
+    }
     result.textContent = JSON.stringify(data);
     document.title = data.status;
     worker.terminate();
@@ -15,5 +49,5 @@
     document.title = 'error';
     worker.terminate();
   };
-  worker.postMessage(null);
+  worker.postMessage({ size });
 </script>

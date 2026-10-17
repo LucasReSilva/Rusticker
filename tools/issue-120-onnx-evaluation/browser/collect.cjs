@@ -1,5 +1,6 @@
 const endpoint = process.argv[2] ?? 'http://127.0.0.1:9237';
-const pageUrl = process.argv[3] ?? 'http://127.0.0.1:4179/';
+const pageUrl = process.argv[3] ?? 'http://127.0.0.1:4179/ort.html?size=64';
+const timeoutSeconds = Number(process.argv[4] ?? 180);
 const targets = await (await fetch(`${endpoint}/json`)).json();
 const page = targets.find((target) => target.type === 'page' && target.url === pageUrl);
 if (!page) throw new Error('Evaluation page is not open in the browser');
@@ -31,7 +32,7 @@ async function evaluate(expression) {
   return response;
 }
 
-for (let attempt = 0; attempt < 180; attempt += 1) {
+for (let attempt = 0; attempt < timeoutSeconds; attempt += 1) {
   const response = await evaluate("document.querySelector('#result')?.textContent");
   const result = response.result?.result?.value;
   if (result && result !== 'pending') {

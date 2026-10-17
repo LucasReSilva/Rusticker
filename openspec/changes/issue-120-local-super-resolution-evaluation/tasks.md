@@ -11,6 +11,7 @@
 - [ ] Verify an upstream export/quantization recipe and complete redistribution notices for a candidate suitable for evaluation.
 - [x] Run the pinned SkillSafe graph in an isolated CPU-WASM browser module worker and record its cold smoke result; this does not verify integration with the app's detector worker.
 - [x] Evaluate ONNX Runtime Web WASM for the BrowserSnip graph after its measured native `tract` shape-analysis blocker.
+- [x] Run the BrowserSnip graph in HeadlessChrome at 512x512 input, record repeated inference timings and an available browser-memory API measurement.
 - [ ] Generate deterministic fixtures; compare resize and candidate quality, alpha, and seams.
 - [ ] Measure cold/warm latency and peak memory on documented desktop and low-resource devices; record output and commands.
 - [ ] Extend the runnable harness with deterministic fixtures and conventional resizing; update the recommendation when all visual and device gates have evidence.

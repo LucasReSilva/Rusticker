@@ -23,6 +23,8 @@ http.createServer((request, response) => {
     response.writeHead(404).end();
     return;
   }
+  response.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  response.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
   response.setHeader('Content-Type', file.endsWith('.wasm')
     ? 'application/wasm'
     : file.endsWith('.onnx') ? 'application/octet-stream'

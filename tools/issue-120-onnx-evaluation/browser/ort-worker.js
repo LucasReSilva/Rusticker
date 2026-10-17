@@ -1,6 +1,6 @@
 import * as ort from './ort.wasm.min.mjs';
 
-self.onmessage = async () => {
+self.onmessage = async ({ data: { size } }) => {
   try {
     const startedAt = performance.now();
     ort.env.wasm.numThreads = 1;
@@ -12,18 +12,18 @@ self.onmessage = async () => {
     const session = await ort.InferenceSession.create(model, { executionProviders: ['wasm'] });
     const readyAt = performance.now();
 
-    const pixels = new Float32Array(3 * 64 * 64);
+    const pixels = new Float32Array(3 * size * size);
     for (let channel = 0; channel < 3; channel += 1) {
-      for (let y = 0; y < 64; y += 1) {
-        for (let x = 0; x < 64; x += 1) {
-          const base = x < 32 ? 0.15 : 0.75;
-          pixels[(channel * 64 + y) * 64 + x] = Math.abs(x - y) < 2 ? 1 : base;
+      for (let y = 0; y < size; y += 1) {
+        for (let x = 0; x < size; x += 1) {
+          const base = x < size / 2 ? 0.15 : 0.75;
+          pixels[(channel * size + y) * size + x] = Math.abs(x - y) < 2 ? 1 : base;
         }
       }
     }
 
     const inputName = session.inputNames[0];
-    const input = new ort.Tensor('float32', pixels, [1, 3, 64, 64]);
+    const input = new ort.Tensor('float32', pixels, [1, 3, size, size]);
     const firstStartedAt = performance.now();
     const first = await session.run({ [inputName]: input });
     const firstFinishedAt = performance.now();
@@ -40,7 +40,8 @@ self.onmessage = async () => {
     }
 
     self.postMessage({
-      status: finite && output.dims.join(',') === '1,3,256,256' ? 'passed' : 'failed',
+      status: finite && output.dims.join(',') === `1,3,${4 * size},${4 * size}` ? 'passed' : 'failed',
+      inputShape: [1, 3, size, size],
       runtime: 'onnxruntime-web',
       version: ort.env.versions.web,
       provider: 'wasm',
