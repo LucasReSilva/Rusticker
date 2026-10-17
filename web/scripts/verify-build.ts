@@ -36,7 +36,11 @@ function existsInBuild(buildDir: string, path: string): boolean {
 	});
 }
 
-const headingKey = { howToUse: 'page_how_to_use_heading', about: 'page_about_heading' } as const;
+const headingKey = {
+	howToUse: 'page_how_to_use_heading',
+	about: 'page_about_heading',
+	upscaler: 'upscaler_heading'
+} as const;
 
 /** Checks a build directory and returns one message per failed assertion. */
 export function verifyBuild(webDir: string, base: string): string[] {

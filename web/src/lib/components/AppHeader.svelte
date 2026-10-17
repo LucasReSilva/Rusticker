@@ -15,14 +15,16 @@
 	const routeIds: Record<string, PageId> = {
 		'/how-to-use': 'howToUse',
 		'/about': 'about',
-		'/history': 'history'
+		'/history': 'history',
+		'/upscaler': 'upscaler'
 	};
 	const active = $derived(page.route.id ? routeIds[page.route.id] : undefined);
 
 	const links = $derived<Array<{ id: PageId; label: string }>>([
 		{ id: 'howToUse', label: m.nav_how_to_use({}, opts) },
 		{ id: 'about', label: m.nav_about({}, opts) },
-		{ id: 'history', label: m.nav_history({}, opts) }
+		{ id: 'history', label: m.nav_history({}, opts) },
+		{ id: 'upscaler', label: m.nav_upscaler({}, opts) }
 	]);
 
 	/** Moves focus to the main landmark (a plain fragment link would only scroll). */
