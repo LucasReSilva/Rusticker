@@ -418,3 +418,86 @@ The editor SHALL show the number of batch images whose processing has ended out 
 #### Scenario: Reduced motion
 - **WHEN** the user prefers reduced motion
 - **THEN** all batch states remain readable without non-essential animation
+
+### Requirement: Export actions are prominent in the editor
+The editor SHALL display its WhatsApp pack and Telegram static-file export controls before the sticker curation grid in the editor's reading and visual order. The controls SHALL remain within the viewport width on screens at least 375 CSS pixels wide, without horizontal page scrolling.
+
+#### Scenario: Export controls precede sticker curation
+- **WHEN** a source image has finished processing
+- **THEN** the WhatsApp and Telegram export controls appear before the sticker grid
+- **AND** the grid remains available for curation below the export controls
+
+#### Scenario: Editor fits a narrow viewport
+- **WHEN** the editor is shown at a viewport width of 375 CSS pixels
+- **THEN** export controls, sticker cards, and curation controls fit within the page
+- **AND** the document has no horizontal overflow
+
+### Requirement: Sticker previews enter without layout shifts
+Newly rendered sticker preview cards SHALL fade in with a brief, non-essential opacity transition. The preview SHALL reserve its final dimensions before the transition begins, so the grid does not shift as it appears. When the user prefers reduced motion, previews SHALL render immediately without the transition. Sticker pixels and all editor behavior SHALL remain available regardless of motion preference.
+
+#### Scenario: Newly detected sticker previews appear
+- **WHEN** detection completes with one or more stickers
+- **THEN** each new preview fades from transparent to fully visible
+- **AND** the grid retains the preview's final layout space throughout
+
+#### Scenario: Reduced motion is preferred
+- **WHEN** the user's system requests reduced motion before or while sticker previews render
+- **THEN** each preview is shown fully visible without an animated transition
+- **AND** the grid and sticker controls remain usable
+
+### Requirement: Inspect the source image at multiple magnifications
+The editor SHALL let users zoom into and out of the original source image and pan across it with pointer, touch, or keyboard while keeping detected sticker boxes aligned with their source-image coordinates. Zoom, pan, and reset controls SHALL have localized accessible names in every supported locale. Zooming or panning SHALL NOT alter detected stickers or the source image.
+
+#### Scenario: Inspect a small detected sticker
+- **WHEN** a user zooms into the source preview and pans to a small sticker
+- **THEN** the original pixels and the sticker's bounding box remain aligned and can be inspected at a larger displayed size
+
+#### Scenario: Navigate without a pointer
+- **WHEN** a keyboard user focuses the source inspector and presses arrow keys
+- **THEN** the visible source region pans without altering sticker data
+
+#### Scenario: Navigate by touch
+- **WHEN** a touch user zooms with the provided controls and swipes the source inspector
+- **THEN** the visible source region pans without losing access to the zoom controls
+
+### Requirement: Adjust crop bounds on the magnified source
+In Advanced mode, the crop editor SHALL show the original source image with the selected sticker's crop box. Users SHALL be able to zoom, pan, move the box, and resize it with pointer, touch, and keyboard controls. Dragging and keyboard adjustments SHALL produce integer source-image bounds clamped within the source image; the bounds SHALL remain aligned at every zoom level. The existing numeric controls and apply, reset, and cancel behavior SHALL remain available. All new action labels and instructions SHALL be localized in every supported locale. Image data SHALL remain on the device.
+
+#### Scenario: Adjust a crop while zoomed
+- **WHEN** a user zooms into the crop editor and drags a box corner
+- **THEN** the draft bounds change by the corresponding source-image pixels while remaining valid, and applying uses the existing crop adjustment behavior
+
+#### Scenario: Adjust a crop using only the keyboard
+- **WHEN** a user focuses the move or resize control and presses arrow keys
+- **THEN** the draft crop moves or resizes in source-image pixels within valid bounds, and the user can apply it without pointer input
+
+#### Scenario: Reset and cancel visual adjustment
+- **WHEN** a user moves or resizes the crop and then resets or cancels
+- **THEN** reset restores the detected bounds and cancel leaves the kept sticker unchanged
+
+### Requirement: Erase and restore sticker pixels with a brush
+In Advanced mode, the editor SHALL offer a brush tool for each kept sticker that lets the user erase pixels to transparent or restore original source pixels within the sticker crop. The tool SHALL provide brush size adjustment, zoom/pan controls, undo and redo of stroke operations, and a reset action to restore the detected cutout. Applied edits SHALL update the sticker image, checkerboard card preview, and exported pack. Reset SHALL restore the detected cutout even after an edit has been applied and the brush editor reopened. All pixel manipulation SHALL be performed locally in browser memory without sending data over any network.
+
+#### Scenario: Erase pixels
+- **WHEN** the user strokes with the erase brush over opaque sticker pixels
+- **THEN** the brushed pixels become transparent
+
+#### Scenario: Restore pixels
+- **WHEN** the user strokes with the restore brush over transparent areas within the sticker crop
+- **THEN** the original source image pixels and opacity are restored
+
+#### Scenario: Undo and reset
+- **WHEN** the user triggers undo or reset in the brush editor
+- **THEN** previous stroke states are restored or all manual brush edits are cleared back to the detected state
+
+#### Scenario: Applied edits reflect in preview and export
+- **WHEN** the user applies brush adjustments
+- **THEN** the updated sticker pixels are used in the checkerboard card preview and export pack
+
+#### Scenario: Reset after reopening
+- **WHEN** the user applies brush adjustments, reopens the brush editor, and resets
+- **THEN** the detected cutout is restored and can be applied again
+
+#### Scenario: Local processing
+- **WHEN** brush editing is performed
+- **THEN** all canvas operations remain on-device and no network requests are dispatched

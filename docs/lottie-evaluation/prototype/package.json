@@ -1,0 +1,15 @@
+{
+	"name": "rusticker-lottie-evaluation-prototype",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "vite build && bun run src/copy-wasm.mjs",
+		"bench": "bun run src/benchmark.mjs",
+		"preview": "vite preview --host 127.0.0.1"
+	},
+	"devDependencies": {
+		"@lottiefiles/dotlottie-web": "0.81.0",
+		"lottie-web": "5.13.0",
+		"vite": "8.0.16"
+	}
+}

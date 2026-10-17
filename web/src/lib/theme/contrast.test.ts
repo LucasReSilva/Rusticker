@@ -59,10 +59,12 @@ describe('theme tokens in app.css', () => {
 			const primary = resolveColor(tokens[theme], 'primary');
 			expect(primary.h, `${theme} primary hue`).toBeGreaterThanOrEqual(30);
 			expect(primary.h, `${theme} primary hue`).toBeLessThanOrEqual(55);
+			expect(primary.c, `${theme} saturated Ferris orange`).toBeGreaterThanOrEqual(0.16);
+			expect(resolveColor(tokens[theme], 'ring')).toEqual(primary);
 
 			for (const name of ['secondary', 'accent']) {
 				const color = resolveColor(tokens[theme], name);
-				expect(color.h, `${theme} ${name} hue`).toBeGreaterThanOrEqual(120);
+				expect(color.h, `${theme} ${name} hue`).toBeGreaterThanOrEqual(145);
 				expect(color.h, `${theme} ${name} hue`).toBeLessThanOrEqual(160);
 				expect(color.c, `${theme} ${name} chroma`).toBeGreaterThan(0.04);
 			}

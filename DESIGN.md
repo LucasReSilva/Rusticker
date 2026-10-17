@@ -59,27 +59,33 @@ following the shadcn-svelte pattern: variants declared with
 Tokens in `src/app.css` are mapped through Tailwind v4 `@theme inline`.
 The light palette applies to `:root, .light`; `.dark` defines the dark palette.
 OKLCH values are the source of truth; approximate sRGB hex values below are reference only.
-| Token | Light (`:root`, `.light`) | ≈ hex | Dark (`.dark`) | ≈ hex |
+| Token | Light (`:root`, `.light`) | Approx. sRGB | Dark (`.dark`) | Approx. sRGB |
 |---|---|---|---|---|
 | `background` | `oklch(0.99 0.005 85)` | `#fdfcf8` | `oklch(0.17 0.02 145)` | `#0a120a` |
 | `foreground` | `oklch(0.2 0.02 70)` | `#1c140c` | `oklch(0.97 0.008 110)` | `#f5f6f0` |
-| `card` / `popover` | `oklch(1 0 0)` | `#ffffff` | `oklch(0.21 0.025 145)` | `#111b11` |
-| `card-foreground` / `popover-foreground` | = `foreground` | | = `foreground` | |
-| `primary` (Rust orange) | `oklch(0.56 0.14 42)` | `#b65329` | `oklch(0.75 0.12 42)` | `#ee9370` |
-| `primary-foreground` | `oklch(0.99 0.005 90)` | `#fdfcf8` | = `background` | `#0a120a` |
-| `secondary` (WhatsApp green surface) | `oklch(0.94 0.05 145)` | `#d7f5d7` | `oklch(0.28 0.06 145)` | `#133015` |
-| `secondary-foreground` | `oklch(0.32 0.08 145)` | `#133d17` | `oklch(0.93 0.03 145)` | `#dceedc` |
+| `card` | `oklch(1 0 0)` | `#ffffff` | `oklch(0.21 0.025 145)` | `#111b11` |
+| `card-foreground` | `var(--foreground)` | `#1c140c` | `var(--foreground)` | `#f5f6f0` |
+| `popover` | `oklch(1 0 0)` | `#ffffff` | `oklch(0.21 0.025 145)` | `#111b11` |
+| `popover-foreground` | `var(--foreground)` | `#1c140c` | `var(--foreground)` | `#f5f6f0` |
+| `primary` | `oklch(0.57 0.18 38)` | `#ca430e` | `oklch(0.74 0.16 42)` | `#fd8453` |
+| `primary-hover` | `oklch(0.53 0.17 38)` | `#b83b07` | `oklch(0.78 0.13 42)` | `#fd9a73` |
+| `primary-foreground` | `oklch(0.99 0.005 90)` | `#fdfcf8` | `var(--background)` | `#0a120a` |
+| `secondary` | `oklch(0.94 0.05 153)` | `#d3f6dc` | `oklch(0.28 0.055 153)` | `#0f311b` |
+| `secondary-hover` | `oklch(0.9 0.07 153)` | `#bbecc8` | `oklch(0.33 0.065 153)` | `#163f25` |
+| `secondary-foreground` | `oklch(0.32 0.08 153)` | `#033e1e` | `oklch(0.93 0.035 153)` | `#d7efdd` |
 | `muted` | `oklch(0.96 0.01 100)` | `#f3f2eb` | `oklch(0.26 0.03 145)` | `#1b281b` |
 | `muted-foreground` | `oklch(0.48 0.025 110)` | `#5e5f4f` | `oklch(0.74 0.03 120)` | `#a8ae99` |
-| `accent` (green hover surfaces) | `oklch(0.92 0.07 148)` | `#c6f2cb` | `oklch(0.32 0.07 148)` | `#153c1d` |
-| `accent-foreground` | `oklch(0.3 0.07 148)` | `#0f3718` | `oklch(0.96 0.02 145)` | `#eaf6ea` |
+| `accent` | `oklch(0.92 0.08 153)` | `#bcf5cc` | `oklch(0.32 0.07 153)` | `#0f3d21` |
+| `accent-foreground` | `oklch(0.3 0.07 153)` | `#08381c` | `oklch(0.96 0.02 153)` | `#e8f6ec` |
 | `destructive` | `oklch(0.55 0.22 27)` | `#d40c1a` | `oklch(0.68 0.19 25)` | `#f75d59` |
-| `destructive-foreground` | `oklch(0.99 0.005 90)` | `#fdfcf8` | = `background` | `#0a120a` |
-| `border` (decorative) | `oklch(0.9 0.015 100)` | `#e0ded3` | `oklch(0.32 0.025 145)` | `#2b362b` |
-| `input` (control borders) | `oklch(0.62 0.03 125)` | `#828a76` | `oklch(0.5 0.03 145)` | `#596859` |
-| `ring` | = `primary` | `#b65329` | = `primary` | `#ee9370` |
+| `destructive-hover` | `oklch(0.51 0.2 27)` | `#be1219` | `oklch(0.72 0.16 25)` | `#f97770` |
+| `destructive-foreground` | `oklch(0.99 0.005 90)` | `#fdfcf8` | `var(--background)` | `#0a120a` |
+| `border` | `oklch(0.9 0.015 100)` | `#e0ded3` | `oklch(0.32 0.025 145)` | `#2b362b` |
+| `input` | `oklch(0.62 0.03 125)` | `#828a76` | `oklch(0.57 0.03 153)` | `#6a7d6f` |
+| `ring` | `var(--primary)` | `#ca430e` | `var(--primary)` | `#fd8453` |
 | `checkerboard-a` | `oklch(0.97 0.004 100)` | `#f6f5f2` | `oklch(0.3 0.015 145)` | `#293029` |
 | `checkerboard-b` | `oklch(0.88 0.008 100)` | `#d8d8d2` | `oklch(0.24 0.012 145)` | `#1c211c` |
+
 
 Contrast ratios (WCAG 2.x), computed from these values:
 
@@ -87,18 +93,36 @@ Contrast ratios (WCAG 2.x), computed from these values:
 |---|---|---|---|
 | foreground / background | 17.62 | 17.49 | 4.5 |
 | foreground / card | 18.13 | 16.17 | 4.5 |
+| card-foreground / card | 18.13 | 16.17 | 4.5 |
+| popover-foreground / popover | 18.13 | 16.17 | 4.5 |
 | muted-foreground / background | 6.32 | 8.33 | 4.5 |
 | muted-foreground / muted | 5.79 | 6.72 | 4.5 |
-| primary-foreground / primary | 4.80 | 8.22 | 4.5 |
-| primary / background (links, indicators) | 4.80 | 8.22 | 4.5 |
-| secondary-foreground / secondary | 10.49 | 11.75 | 4.5 |
-| accent-foreground / accent | 10.74 | 11.05 | 4.5 |
+| primary-foreground / primary | 4.71 | 7.80 | 4.5 |
+| primary-foreground / primary-hover | 5.55 | 9.11 | 4.5 |
+| primary / background | 4.71 | 7.80 | 4.5 |
+| secondary-foreground / secondary | 10.47 | 11.78 | 4.5 |
+| secondary-foreground / secondary-hover | 9.33 | 9.79 | 4.5 |
+| accent-foreground / accent | 10.77 | 11.04 | 4.5 |
 | destructive-foreground / destructive | 5.28 | 6.06 | 4.5 |
+| destructive-foreground / destructive-hover | 6.20 | 7.17 | 4.5 |
 | destructive / background | 5.28 | 6.06 | 4.5 |
-| ring / background | 4.80 | 8.22 | 3.0 |
-| input / background | 3.51 | 3.22 | 3.0 |
+| ring / background | 4.71 | 7.80 | 3.0 |
+| ring / card | 4.84 | 7.21 | 3.0 |
+| ring / popover | 4.84 | 7.21 | 3.0 |
+| ring / muted | 4.32 | 6.30 | 3.0 |
+| ring / secondary | 4.14 | 5.85 | 3.0 |
+| ring / secondary-hover | 3.69 | 4.86 | 3.0 |
+| ring / accent | 3.93 | 5.04 | 3.0 |
+| input / background | 3.51 | 4.33 | 3.0 |
+| input / card | 3.61 | 4.00 | 3.0 |
+| input / popover | 3.61 | 4.00 | 3.0 |
+| input / muted | 3.21 | 3.50 | 3.0 |
 | foreground / checkerboard-b | 12.64 | 15.05 | 4.5 |
 
+The saturated primary orange follows Ferris, with theme-specific lightness for AA text.
+Secondary and accent greens support WhatsApp pack guidance and secondary downloads.
+Filled buttons and linked badges use opaque `*-hover` tokens; primary and destructive
+controls separate their orange focus ring from the fill with a background-colored offset.
 
 Decorative `border` is intentionally subtle; meaningful control boundaries use `input`.
 `bun run test` checks all contrast pairs and sRGB gamut. `bun run lint:design`

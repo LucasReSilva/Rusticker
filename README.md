@@ -103,6 +103,11 @@ existing detector; no model or runtime is shipped. User images remain on the
 device. See [the roadmap proposal](openspec/changes/2026-10-12-post-release-agent-coordination/proposal.md)
 for issue-level acceptance criteria.
 
+The [Lottie feasibility evaluation](docs/lottie-evaluation.md) recommends
+native CSS or SVG for current micro-interactions. Any later Lottie use must
+bundle its player and WASM locally, honor reduced motion, and retain a static
+accessible state.
+
 ## Repository layout
 
 ```text
