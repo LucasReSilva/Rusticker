@@ -14,7 +14,22 @@
 	import { stickerSizes } from '$lib/export';
 	import { m } from '$lib/paraglide/messages';
 	import HistoryRecorder from '$lib/history/HistoryRecorder.svelte';
+	import WebMcpTools from '$lib/webmcp/WebMcpTools.svelte';
+	import { mapEditorWorkflowStatus } from '$lib/webmcp/editorStatus';
+	import type { WebMcpActions } from '$lib/webmcp/registry';
+	import { MIN_STICKERS_PER_PACK } from '$lib/export';
 	const editor = getEditor();
+	let dropZone: { openPicker: () => boolean } | undefined;
+	const webmcpActions: WebMcpActions = {
+		openImagePicker: () => dropZone?.openPicker() ?? false,
+		getEditorStatus: () =>
+			mapEditorWorkflowStatus({
+				hasImage: !!editor.source || editor.batchEntries.some((entry) => entry.status === 'done'),
+				isProcessing: editor.isProcessing || editor.batchRunning,
+				isReady: editor.status === 'ready',
+				canExport: editor.batchStickers.length >= MIN_STICKERS_PER_PACK
+			})
+	};
 	let processingMode = $state<'automatic' | 'advanced'>('automatic');
 	$effect(() => {
 		stickerSizes.sync(editor.batchStickers);
@@ -62,9 +77,11 @@
 </svelte:head>
 
 <div class="mx-auto flex max-w-7xl min-w-0 flex-col gap-6 p-4 sm:p-6">
+	<WebMcpTools actions={webmcpActions} />
 	<HistoryRecorder />
 	<h1 class="font-display text-3xl font-bold">{m.app_tool_heading()}</h1>
 	<DropZone
+		bind:this={dropZone}
 		compact={!!editor.source}
 		multiple={true}
 		onFiles={(files) => editor.addBatchFiles(files)}
@@ -106,6 +123,14 @@
 				/>
 			</div>
 			<div class="flex min-w-0 flex-col gap-4">
+				<section data-slot="export" aria-label={m.tool_export_region_label()}>
+					<Export
+						stickers={editor.batchStickers}
+						trayIconId={editor.batchTrayIconId}
+						detecting={editor.isProcessing}
+					/>
+					<TelegramExport stickers={editor.batchStickers} disabled={editor.isProcessing} />
+				</section>
 				<p aria-live="polite" aria-atomic="true" data-detected-count>
 					{editor.isProcessing
 						? m.tool_processing_label()
@@ -126,22 +151,19 @@
 					undoableStickerIds={editor.undoableStickerIds}
 					allowSplitRequest={processingMode === 'advanced'}
 					allowBoundsAdjustment={processingMode === 'advanced'}
+					allowBrushEdit={processingMode === 'advanced'}
+					sourceImage={editor.source.imageData}
+					brushResetPixelsFor={(id) => editor.brushResetPixels(id)}
+					sourceUrl={editor.source.url}
 					sourceWidth={editor.source.width}
 					sourceHeight={editor.source.height}
 					onSplitRequest={(id) => void editor.requestSplit(id)}
 					onBoundsApply={(sticker) => editor.updateStickerBounds(sticker.id, sticker.bbox)}
+					onBrushApply={(sticker) => editor.updateStickerPixels(sticker.id, sticker.pixels)}
 					onSplitAccept={() => editor.acceptSplit()}
 					onSplitDiscard={() => editor.discardSplit()}
 					onSplitUndo={(id) => editor.undoSplit(id)}
 				/>
-				<section data-slot="export" aria-label={m.tool_export_region_label()}>
-					<Export
-						stickers={editor.batchStickers}
-						trayIconId={editor.batchTrayIconId}
-						detecting={editor.isProcessing}
-					/>
-					<TelegramExport stickers={editor.batchStickers} disabled={editor.isProcessing} />
-				</section>
 			</div>
 		</div>
 	{:else if editor.isProcessing}
