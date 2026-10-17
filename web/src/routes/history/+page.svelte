@@ -96,8 +96,12 @@
 	<meta name="description" content={m.meta_history_description()} />
 </svelte:head>
 
-<div class="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6">
-	<h1 class="font-display text-3xl font-bold">{m.history_page_heading()}</h1>
+<div class="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 sm:py-12">
+	<header class="border-s-2 border-primary ps-4 sm:ps-6">
+		<h1 class="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+			{m.history_page_heading()}
+		</h1>
+	</header>
 
 	{#if unavailable}
 		<p role="status" class="rounded-md border border-border bg-muted p-4 text-sm">
