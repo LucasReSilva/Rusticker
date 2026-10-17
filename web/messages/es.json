@@ -346,5 +346,48 @@
 	"static_export_button": "Descargar archivos estáticos de stickers",
 	"static_export_success": "Se prepararon {count} archivos estáticos de stickers.",
 	"static_export_jpeg_background_required": "Elige un color de fondo antes de exportar archivos JPEG.",
-	"static_export_failed": "No se pudieron preparar los archivos estáticos. Inténtalo de nuevo."
+	"static_export_failed": "No se pudieron preparar los archivos estáticos. Inténtalo de nuevo.",
+	"pdf_sheet_heading": "Hojas de stickers para imprimir (PDF)",
+	"pdf_sheet_paper_label": "Tamaño del papel",
+	"pdf_sheet_a4": "A4",
+	"pdf_sheet_letter": "Carta (EE. UU.)",
+	"pdf_sheet_orientation_label": "Orientación de la página",
+	"pdf_sheet_portrait": "Vertical",
+	"pdf_sheet_landscape": "Horizontal",
+	"pdf_sheet_margin_label": "Márgenes: {value} mm",
+	"pdf_sheet_margin_decrease": "Reducir los márgenes de la página",
+	"pdf_sheet_margin_increase": "Aumentar los márgenes de la página",
+	"pdf_sheet_spacing_label": "Espacio entre stickers: {value} mm",
+	"pdf_sheet_spacing_decrease": "Reducir el espacio entre stickers",
+	"pdf_sheet_spacing_increase": "Aumentar el espacio entre stickers",
+	"pdf_sheet_page_size": "Tamaño de la página: {width} × {height} mm",
+	"pdf_sheet_edit_instructions": "Selecciona un sticker y arrástralo en la vista previa, o usa los controles para moverlo y cambiar su tamaño. Con la vista previa enfocada, usa las flechas para moverlo y + o − para cambiar su tamaño.",
+	"pdf_sheet_empty": "Detecta stickers para ver una hoja imprimible.",
+	"pdf_sheet_page_label": "Página {page} de {total}",
+	"pdf_sheet_edit_controls_label": "Mover y cambiar el tamaño del sticker seleccionado",
+	"pdf_sheet_move_left": "Mover sticker a la izquierda",
+	"pdf_sheet_move_up": "Mover sticker hacia arriba",
+	"pdf_sheet_move_down": "Mover sticker hacia abajo",
+	"pdf_sheet_move_right": "Mover sticker a la derecha",
+	"pdf_sheet_resize_smaller": "Reducir el tamaño del sticker",
+	"pdf_sheet_resize_larger": "Aumentar el tamaño del sticker",
+	"pdf_sheet_select_sticker": "Seleccionar sticker {sticker}",
+	"pdf_sheet_export_button": "Descargar hojas en PDF",
+	"pdf_sheet_export_progress": "Preparando PDF…",
+	"pdf_sheet_export_success": [
+		{
+			"declarations": [
+				"input pages",
+				"local pagesPlural = pages: plural",
+				"local pagesNumber = pages: number"
+			],
+			"selectors": ["pagesPlural"],
+			"match": {
+				"pagesPlural=one": "Se preparó 1 página en PDF.",
+				"pagesPlural=other": "Se prepararon {pagesNumber} páginas en PDF."
+			}
+		}
+	],
+	"pdf_sheet_export_unsupported": "Este navegador no puede preparar hojas en PDF. Prueba otro navegador.",
+	"pdf_sheet_export_failed": "No se pudieron preparar las hojas en PDF. Inténtalo de nuevo."
 }

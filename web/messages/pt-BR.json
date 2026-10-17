@@ -346,5 +346,48 @@
 	"static_export_button": "Baixar arquivos estáticos de figurinhas",
 	"static_export_success": "{count} arquivos estáticos de figurinhas preparados.",
 	"static_export_jpeg_background_required": "Escolha uma cor de fundo antes de exportar arquivos JPEG.",
-	"static_export_failed": "Não foi possível preparar os arquivos estáticos. Tente novamente."
+	"static_export_failed": "Não foi possível preparar os arquivos estáticos. Tente novamente.",
+	"pdf_sheet_heading": "Folhas de figurinhas para impressão (PDF)",
+	"pdf_sheet_paper_label": "Tamanho do papel",
+	"pdf_sheet_a4": "A4",
+	"pdf_sheet_letter": "Carta (EUA)",
+	"pdf_sheet_orientation_label": "Orientação da página",
+	"pdf_sheet_portrait": "Retrato",
+	"pdf_sheet_landscape": "Paisagem",
+	"pdf_sheet_margin_label": "Margens: {value} mm",
+	"pdf_sheet_margin_decrease": "Diminuir margens da página",
+	"pdf_sheet_margin_increase": "Aumentar margens da página",
+	"pdf_sheet_spacing_label": "Espaçamento entre figurinhas: {value} mm",
+	"pdf_sheet_spacing_decrease": "Diminuir espaçamento entre figurinhas",
+	"pdf_sheet_spacing_increase": "Aumentar espaçamento entre figurinhas",
+	"pdf_sheet_page_size": "Tamanho da página: {width} × {height} mm",
+	"pdf_sheet_edit_instructions": "Selecione uma figurinha e arraste-a na prévia, ou use os controles para mover e redimensionar. Com a prévia em foco, use as setas para mover e + ou − para redimensionar.",
+	"pdf_sheet_empty": "Detecte figurinhas para ver uma folha de impressão.",
+	"pdf_sheet_page_label": "Página {page} de {total}",
+	"pdf_sheet_edit_controls_label": "Mover e redimensionar a figurinha selecionada",
+	"pdf_sheet_move_left": "Mover figurinha para a esquerda",
+	"pdf_sheet_move_up": "Mover figurinha para cima",
+	"pdf_sheet_move_down": "Mover figurinha para baixo",
+	"pdf_sheet_move_right": "Mover figurinha para a direita",
+	"pdf_sheet_resize_smaller": "Diminuir figurinha",
+	"pdf_sheet_resize_larger": "Aumentar figurinha",
+	"pdf_sheet_select_sticker": "Selecionar figurinha {sticker}",
+	"pdf_sheet_export_button": "Baixar folhas em PDF",
+	"pdf_sheet_export_progress": "Preparando PDF…",
+	"pdf_sheet_export_success": [
+		{
+			"declarations": [
+				"input pages",
+				"local pagesPlural = pages: plural",
+				"local pagesNumber = pages: number"
+			],
+			"selectors": ["pagesPlural"],
+			"match": {
+				"pagesPlural=one": "1 página em PDF preparada.",
+				"pagesPlural=other": "{pagesNumber} páginas em PDF preparadas."
+			}
+		}
+	],
+	"pdf_sheet_export_unsupported": "Este navegador não consegue preparar folhas em PDF. Tente outro navegador.",
+	"pdf_sheet_export_failed": "Não foi possível preparar as folhas em PDF. Tente novamente."
 }
