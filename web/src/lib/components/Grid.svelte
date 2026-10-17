@@ -24,11 +24,15 @@
 		undoableStickerIds = new Set<string>(),
 		allowSplitRequest = true,
 		allowBoundsAdjustment = false,
+		allowBrushEdit = false,
+		sourceImage,
+		brushResetPixelsFor,
 		sourceUrl = '',
 		sourceWidth = 0,
 		sourceHeight = 0,
 		onSplitRequest = () => {},
 		onBoundsApply = () => {},
+		onBrushApply = () => {},
 		onSplitAccept = () => {},
 		onSplitDiscard = () => {},
 		onSplitUndo = () => {}
@@ -47,11 +51,15 @@
 		undoableStickerIds?: ReadonlySet<string>;
 		allowSplitRequest?: boolean;
 		allowBoundsAdjustment?: boolean;
+		allowBrushEdit?: boolean;
+		sourceImage?: ImageData;
+		brushResetPixelsFor?: (id: string) => ImageData | undefined;
 		sourceUrl?: string;
 		sourceWidth?: number;
 		sourceHeight?: number;
 		onSplitRequest?: (id: string) => void;
 		onBoundsApply?: (sticker: Sticker) => void;
+		onBrushApply?: (sticker: Sticker) => void;
 		onSplitAccept?: () => void;
 		onSplitDiscard?: () => void;
 		onSplitUndo?: (id: string) => void;
@@ -225,11 +233,15 @@
 						undoable={undoableStickerIds.has(sticker.id)}
 						{allowSplitRequest}
 						{allowBoundsAdjustment}
+						{allowBrushEdit}
+						{sourceImage}
+						brushResetPixels={brushResetPixelsFor?.(sticker.id) ?? sticker.pixels}
 						{sourceUrl}
 						{sourceWidth}
 						{sourceHeight}
 						onSplitRequest={() => onSplitRequest(sticker.id)}
 						{onBoundsApply}
+						{onBrushApply}
 						{onSplitAccept}
 						{onSplitDiscard}
 						onSplitUndo={() => onSplitUndo(sticker.id)}
