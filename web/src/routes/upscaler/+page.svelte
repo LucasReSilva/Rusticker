@@ -21,11 +21,18 @@
 		previewInWorker,
 		upscaleInWorker,
 		type UpscaleError,
-		type UpscaleStage
+		type UpscaleStage,
+		type UpscaleMode
 	} from '$lib/upscaling/process';
 
 	let input: HTMLInputElement;
+	let conventionalModeInput: HTMLInputElement;
+	let onnxModeInput: HTMLInputElement;
 	let file = $state<File>();
+	let modelFile = $state<File>();
+	let modelInput: HTMLInputElement;
+	let mode = $state<UpscaleMode>('conventional');
+	let tileProgress = $state<{ completed: number; total: number }>();
 	let sourceUrl = $state('');
 	let resultUrl = $state('');
 	let sourceDimensions = $state<ImageDimensions>();
@@ -42,7 +49,7 @@
 	const outputDimensions = $derived.by(() => {
 		if (!sourceDimensions) return undefined;
 		try {
-			return scaledDimensions(sourceDimensions, scale);
+			return scaledDimensions(sourceDimensions, mode === 'onnx' ? 4 : scale);
 		} catch {
 			return undefined;
 		}
@@ -50,11 +57,18 @@
 	const stageLabel = $derived(
 		stage === 'decoding'
 			? m.upscaler_progress_decode()
-			: stage === 'resizing'
-				? m.upscaler_progress_resize()
-				: stage === 'encoding'
-					? m.upscaler_progress_encode()
-					: m.upscaler_progress_waiting()
+			: stage === 'loading-model'
+				? m.upscaler_progress_model()
+				: stage === 'inference'
+					? m.upscaler_progress_inference({
+							completed: tileProgress?.completed ?? 0,
+							total: tileProgress?.total ?? 0
+						})
+					: stage === 'resizing'
+						? m.upscaler_progress_resize()
+						: stage === 'encoding'
+							? m.upscaler_progress_encode()
+							: m.upscaler_progress_waiting()
 	);
 	$effect(() => {
 		scaleSlider?.querySelector('[role="slider"]')?.setAttribute('aria-valuetext', `${scale}×`);
@@ -72,6 +86,7 @@
 		activePreview = undefined;
 		busy = false;
 		stage = undefined;
+		tileProgress = undefined;
 	}
 
 	async function selectFile(selected?: File) {
@@ -82,6 +97,8 @@
 		if (sourceUrl) URL.revokeObjectURL(sourceUrl);
 		sourceUrl = '';
 		file = selected;
+		modelFile = undefined;
+		if (modelInput) modelInput.value = '';
 		sourceDimensions = undefined;
 		error = undefined;
 		previewing = true;
@@ -126,15 +143,30 @@
 				return m.upscaler_error_decode();
 			case 'EncodeFailed':
 				return m.upscaler_error_encode();
+			case 'ModelInvalid':
+				return m.upscaler_error_model();
+			case 'InferenceFailed':
+				return m.upscaler_error_inference();
+			case 'MemoryLimit':
+				return m.upscaler_error_memory();
 			default:
 				return m.upscaler_error_generic();
 		}
 	}
 
 	async function run() {
-		if (!file || !sourceDimensions || busy || previewing || !outputDimensions) return;
+		if (
+			!file ||
+			!sourceDimensions ||
+			busy ||
+			previewing ||
+			!outputDimensions ||
+			(mode === 'onnx' && !modelFile)
+		)
+			return;
 		releaseResult();
 		error = undefined;
+		tileProgress = undefined;
 		busy = true;
 		try {
 			activeJob = upscaleInWorker(
@@ -142,7 +174,10 @@
 				{ width: sourceDimensions.width, height: sourceDimensions.height },
 				scale,
 				(next) => (stage = next),
-				(source) => (sourceDimensions = source)
+				(source) => (sourceDimensions = source),
+				mode,
+				modelFile,
+				(completed, total) => (tileProgress = { completed, total })
 			);
 			const blob = await activeJob.result;
 			resultUrl = URL.createObjectURL(blob);
@@ -187,6 +222,73 @@
 				aria-label={m.upscaler_select_image()}
 				onchange={(event) => void selectFile((event.currentTarget as HTMLInputElement).files?.[0])}
 			/>
+			<input
+				bind:this={modelInput}
+				type="file"
+				accept=".onnx,application/onnx,application/octet-stream"
+				class="sr-only"
+				aria-label={m.upscaler_model_select()}
+				onchange={(event) => {
+					modelFile = (event.currentTarget as HTMLInputElement).files?.[0];
+					error = undefined;
+					releaseResult();
+				}}
+			/>
+			<fieldset class="flex flex-col gap-3">
+				<legend class="font-medium">{m.upscaler_mode_label()}</legend>
+				<div class="flex flex-wrap gap-3">
+					<label
+						for="upscale-mode-conventional"
+						class="flex cursor-pointer items-center gap-2 rounded-md border border-border p-3"
+					>
+						<input
+							bind:this={conventionalModeInput}
+							id="upscale-mode-conventional"
+							type="radio"
+							name="upscale-mode"
+							value="conventional"
+							checked={mode === 'conventional'}
+							disabled={busy || previewing}
+							onchange={() => (mode = 'conventional')}
+						/>
+						<span>{m.upscaler_mode_conventional()}</span>
+					</label>
+					<label
+						for="upscale-mode-onnx"
+						class="flex cursor-pointer items-center gap-2 rounded-md border border-border p-3"
+					>
+						<input
+							bind:this={onnxModeInput}
+							id="upscale-mode-onnx"
+							type="radio"
+							name="upscale-mode"
+							value="onnx"
+							checked={mode === 'onnx'}
+							disabled={busy || previewing}
+							onchange={() => (mode = 'onnx')}
+						/>
+						<span>{m.upscaler_mode_onnx()}</span>
+					</label>
+				</div>
+				<p class="text-sm text-muted-foreground">
+					{mode === 'onnx' ? m.upscaler_onnx_disclosure() : m.upscaler_method_note()}
+				</p>
+				{#if mode === 'onnx'}
+					<p class="text-sm text-muted-foreground">{m.upscaler_onnx_scale_note()}</p>
+					<div class="flex flex-wrap items-center gap-3">
+						<Button
+							variant="outline"
+							onclick={() => modelInput?.click()}
+							disabled={busy || previewing}
+						>
+							{m.upscaler_model_select()}
+						</Button>
+						{#if modelFile}<p class="min-w-0 truncate text-sm text-muted-foreground">
+								{modelFile.name}
+							</p>{/if}
+					</div>
+				{/if}
+			</fieldset>
 			<div class="flex flex-wrap items-center gap-3">
 				<Button onclick={() => input?.click()} disabled={busy || previewing}>
 					<ImagePlus class="me-2 size-4" aria-hidden="true" />
@@ -239,35 +341,40 @@
 					</section>
 				</div>
 
-				<div class="flex flex-col gap-2">
-					<label for="upscaler-scale" class="font-medium">{m.upscaler_scale_label()}</label>
-					<div class="flex flex-wrap items-center gap-3">
-						<Slider
-							bind:ref={scaleSlider}
-							id="upscaler-scale"
-							type="single"
-							value={scale}
-							min={MIN_SCALE}
-							max={MAX_SCALE}
-							step={SCALE_STEP}
-							disabled={busy || previewing}
-							thumbLabel={m.upscaler_scale_label()}
-							aria-valuetext={`${scale}×`}
-							class="w-full max-w-md"
-							onValueChange={(value) => (scale = value)}
-						/>
-						<output for="upscaler-scale" class="font-medium">{scale}×</output>
+				{#if mode === 'conventional'}
+					<div class="flex flex-col gap-2">
+						<label for="upscaler-scale" class="font-medium">{m.upscaler_scale_label()}</label>
+						<div class="flex flex-wrap items-center gap-3">
+							<Slider
+								bind:ref={scaleSlider}
+								id="upscaler-scale"
+								type="single"
+								value={scale}
+								min={MIN_SCALE}
+								max={MAX_SCALE}
+								step={SCALE_STEP}
+								disabled={busy || previewing}
+								thumbLabel={m.upscaler_scale_label()}
+								aria-valuetext={`${scale}×`}
+								class="w-full max-w-md"
+								onValueChange={(value) => (scale = value)}
+							/>
+							<output for="upscaler-scale" class="font-medium">{scale}×</output>
+						</div>
+						<p class="text-sm text-muted-foreground">
+							{m.upscaler_limits({ side: MAX_IMAGE_SIDE, pixels: MAX_IMAGE_PIXELS })}
+						</p>
+						{#if !outputDimensions}<p role="alert" class="text-sm text-destructive">
+								{m.upscaler_output_limit_error()}
+							</p>{/if}
 					</div>
-					<p class="text-sm text-muted-foreground">
-						{m.upscaler_limits({ side: MAX_IMAGE_SIDE, pixels: MAX_IMAGE_PIXELS })}
-					</p>
-					{#if !outputDimensions}<p role="alert" class="text-sm text-destructive">
-							{m.upscaler_output_limit_error()}
-						</p>{/if}
-				</div>
+				{/if}
 
 				<div class="flex flex-wrap gap-2">
-					<Button onclick={() => void run()} disabled={busy || previewing || !outputDimensions}>
+					<Button
+						onclick={() => void run()}
+						disabled={busy || previewing || !outputDimensions || (mode === 'onnx' && !modelFile)}
+					>
 						{m.upscaler_run_action()}
 					</Button>
 					{#if busy}
