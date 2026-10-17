@@ -5,7 +5,7 @@
 // English and locale-neutral; localized slugs exist only here.
 
 /** @typedef {'pt-BR' | 'en' | 'es'} RouteLocale */
-/** @typedef {'tool' | 'howToUse' | 'about' | 'history'} PageId */
+/** @typedef {'tool' | 'howToUse' | 'about' | 'history' | 'upscaler'} PageId */
 /** @typedef {{ pattern: string, localized: Array<[RouteLocale, string]> }} UrlPattern */
 
 /** The base locale is served without a URL prefix. */
@@ -21,7 +21,8 @@ export const pages = {
 	tool: { 'pt-BR': '/', en: '/en/', es: '/es/' },
 	howToUse: { 'pt-BR': '/como-usar', en: '/en/how-to-use', es: '/es/como-usar' },
 	about: { 'pt-BR': '/sobre', en: '/en/about', es: '/es/acerca-de' },
-	history: { 'pt-BR': '/historico', en: '/en/history', es: '/es/historial' }
+	history: { 'pt-BR': '/historico', en: '/en/history', es: '/es/historial' },
+	upscaler: { 'pt-BR': '/ampliar/', en: '/en/upscaler/', es: '/es/escalar-imagen/' }
 };
 
 /**
@@ -32,7 +33,8 @@ export const internalPath = {
 	tool: '/',
 	howToUse: '/how-to-use',
 	about: '/about',
-	history: '/history'
+	history: '/history',
+	upscaler: '/upscaler'
 };
 
 /** @type {PageId[]} */
@@ -71,7 +73,8 @@ export function buildUrlPatterns(base) {
 		localized: routeLocales.map((locale) => {
 			const slug = pages[id][locale];
 			// Tool URLs work with or without the trailing slash (`/en` and `/en/`).
-			const pattern = id === 'tool' && slug !== '/' ? `${slug.replace(/\/$/, '')}{/}?` : slug;
+			const pattern =
+				['tool', 'upscaler'].includes(id) && slug !== '/' ? `${slug.replace(/\/$/, '')}{/}?` : slug;
 			return /** @type {[RouteLocale, string]} */ ([locale, base + pattern]);
 		})
 	}));
@@ -101,7 +104,10 @@ export function parseLocalizedPath(pathname) {
 	for (const locale of routeLocales) {
 		for (const id of pageIds) {
 			const slug = pages[id][locale];
-			if (pathname === slug || (id === 'tool' && pathname === slug.replace(/\/$/, ''))) {
+			if (
+				pathname === slug ||
+				(['tool', 'upscaler'].includes(id) && pathname === slug.replace(/\/$/, ''))
+			) {
 				return { locale, page: id, rest: internalPath[id] };
 			}
 		}

@@ -23,7 +23,12 @@ test('switchLocale keeps the page, query, and hash without reloading', async ({ 
 	await expect(page).toHaveURL(`${base}/en/how-to-use?x=1#step-3`);
 	await expect(page.locator('h1')).toHaveText('How to use');
 	await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-	await expect(page.locator('header nav a')).toHaveText(['How to use', 'About', 'History']);
+	await expect(page.locator('header nav a')).toHaveText([
+		'How to use',
+		'About',
+		'History',
+		'Upscaler'
+	]);
 	await expect(page.locator('header nav a').nth(0)).toHaveAttribute(
 		'href',
 		`${base}/en/how-to-use`
