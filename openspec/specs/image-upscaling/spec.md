@@ -1,8 +1,9 @@
-## Purpose
+# image-upscaling Specification
 
+## Purpose
 Lets users enlarge a local image with conventional resizing or optionally try learned detail reconstruction using a compatible ONNX model they provide, while retaining control over the result and keeping their data on-device.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Conventional enlargement remains the default
 The upscaler SHALL use its conventional high-quality resize mode by default. The user SHALL be able to select an experimental learned mode without replacing or disabling the conventional mode. The experimental mode SHALL not load its inference runtime until the user selects that mode.
@@ -17,7 +18,7 @@ The upscaler SHALL use its conventional high-quality resize mode by default. The
 - **AND** the conventional mode remains available for comparison
 
 ### Requirement: User supplies a compatible local ONNX model
-The user SHALL select the ONNX model file from their device. Rusticker MUST NOT upload, automatically download, or silently bundle model weights whose artifact-specific redistribution rights are unresolved. The first supported graph contract SHALL accept one RGB `float32` NCHW tensor with batch size one and normalized values in the range `[0, 1]`, and SHALL return RGB `float32` output at exactly four times the input width and height. The runtime SHALL reject incompatible graph inputs or outputs before replacing the current result.
+The user SHALL select the ONNX model file from their device. Rusticker MUST NOT upload, automatically download, or silently bundle model weights whose artifact-specific redistribution rights are unresolved. The first supported graph contract SHALL accept one RGB `float32` NCHW tensor with batch size one and normalized values in the range `[0, 1]`, and SHALL return RGB `float32` output at exactly four times the input width and height. The interface SHALL identify the selected file and show its size as information only. The runtime SHALL reject incompatible graph inputs or outputs before replacing the current result.
 
 #### Scenario: Compatible model is selected
 - **WHEN** the user selects an ONNX model with the supported input and output contract
@@ -32,7 +33,7 @@ The user SHALL select the ONNX model file from their device. Rusticker MUST NOT 
 - **THEN** no request contains the image pixels, model bytes, or inference output
 
 ### Requirement: Learned inference runs outside the interface thread
-Learned inference SHALL run in a dedicated worker using a CPU/WASM execution provider. The Rust/WASM ONNX path SHALL be preferred when it supports the selected graph; an evaluated browser WASM runtime MAY be used as an experimental fallback when a documented Rust/WASM blocker prevents execution. The selected backend SHALL be disclosed in the interface or its accessible details. Runtime assets SHALL be loaded only after learned mode is selected.
+Learned inference SHALL run in a dedicated worker using a CPU/WASM execution provider. The current implementation SHALL disclose that inference uses browser CPU/WASM. Runtime assets SHALL be loaded only after learned mode is selected. A future Rust/WASM backend MAY replace or supplement the current backend after it supports the selected graph contract.
 
 #### Scenario: Learned inference starts
 - **WHEN** the user starts learned upscaling with a compatible model
@@ -43,17 +44,17 @@ Learned inference SHALL run in a dedicated worker using a CPU/WASM execution pro
 - **THEN** the worker is terminated or the operation is cancelled, temporary buffers are released, and the original image remains available
 
 ### Requirement: Alpha is preserved independently
-The learned model SHALL process RGB without silently discarding the source alpha channel. Rusticker SHALL resize alpha independently to the actual model output dimensions and combine it with the learned RGB output. The comparison view SHALL display transparent results over light and dark surfaces.
+The learned model SHALL process RGB without silently discarding the source alpha channel. Rusticker SHALL resize alpha independently to the actual model output dimensions and combine it with the learned RGB output. Transparent results SHALL remain viewable using the application's light and dark themes.
 
 #### Scenario: Transparent input is upscaled
 - **WHEN** the user runs learned upscaling on an image with transparency
 - **THEN** the output retains an alpha channel at the output dimensions and can be inspected against light and dark backgrounds
 
 ### Requirement: Upscaling work is bounded and recoverable
-Before allocating output tensors, intermediate images, or result buffers, the upscaler SHALL validate input dimensions, model dimensions, scale, and estimated output memory against documented implementation limits. A failed model load, unsupported runtime, failed inference, invalid result, cancellation, or exceeded limit SHALL NOT replace or erase the source. The user SHALL be able to retry or return to conventional resizing.
+Before allocating output tensors, intermediate images, or result buffers, the upscaler SHALL validate input dimensions and the supported x4 output dimensions against its documented side and pixel limits. A failed model load, unsupported runtime, failed inference, invalid result, cancellation, or exceeded limit SHALL NOT replace or erase the source or the last completed result. The user SHALL be able to retry or return to conventional resizing. Runtime-specific allocation estimates MAY be used when available; model file size SHALL be informational and SHALL NOT determine whether the feature is available.
 
-#### Scenario: Output would exceed the memory budget
-- **WHEN** selected dimensions and scale exceed a documented output or memory limit
+#### Scenario: Output would exceed supported dimensions
+- **WHEN** selected dimensions and scale exceed the supported output side or pixel limit
 - **THEN** the operation is rejected before allocating the large output buffer and the source remains available
 
 #### Scenario: Inference fails

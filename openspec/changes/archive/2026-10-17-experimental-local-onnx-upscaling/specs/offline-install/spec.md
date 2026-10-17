@@ -22,3 +22,7 @@ After one successful online visit to any public page, the service worker SHALL h
 #### Scenario: Build without detection runtime
 - **WHEN** the site is built before the detection runtime exists in the build output
 - **THEN** the build succeeds and the offline cache covers every other listed asset
+
+#### Scenario: Build without detection runtime
+- **WHEN** the site is built before the detection runtime exists in the build output
+- **THEN** the build succeeds and the offline cache covers every other listed asset
