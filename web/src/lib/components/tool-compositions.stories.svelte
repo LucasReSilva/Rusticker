@@ -3,6 +3,8 @@
 	import DropZone from './DropZone.svelte';
 	import Controls from './Controls.svelte';
 	import StickerCard from './StickerCard.svelte';
+	import { Button } from './ui/button';
+	import * as Card from './ui/card';
 	import type { Sticker } from '$lib/detection';
 	import { m } from '$lib/paraglide/messages';
 
@@ -38,6 +40,44 @@
 	};
 </script>
 
+<Story name="Public page before">
+	<div class="mx-auto flex max-w-4xl flex-col gap-4">
+		<h1 class="font-display text-3xl font-bold">{m.page_about_heading()}</h1>
+		<p>{m.page_about_intro()}</p>
+		<h2 class="text-xl font-semibold">{m.page_about_privacy_heading()}</h2>
+		<p>{m.page_about_privacy_body()}</p>
+	</div>
+</Story>
+
+<Story name="Public page after">
+	<div class="mx-auto flex max-w-4xl flex-col gap-6">
+		<header class="max-w-2xl border-s-2 border-primary ps-4 sm:ps-6">
+			<h1 class="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+				{m.page_about_heading()}
+			</h1>
+			<p class="mt-3 text-lg text-muted-foreground">{m.page_about_intro()}</p>
+		</header>
+		<Card.Root class="max-w-2xl">
+			<Card.Header>
+				<Card.Title>{m.page_about_privacy_heading()}</Card.Title>
+				<Card.Description>{m.page_about_privacy_body()}</Card.Description>
+			</Card.Header>
+		</Card.Root>
+	</div>
+</Story>
+
+<Story name="Sticker actions before">
+	<div class="mx-auto flex max-w-sm flex-col gap-3 rounded-xl border border-border bg-card p-3">
+		<div class="aspect-square rounded-md bg-checkerboard" aria-hidden="true"></div>
+		<div class="flex flex-wrap justify-end gap-2">
+			<Button variant="outline" size="sm">{m.tool_move_earlier()}</Button>
+			<Button variant="outline" size="sm">{m.tool_move_later()}</Button>
+			<Button variant="ghost" size="sm">{m.tool_tray_icon_set()}</Button>
+			<Button variant="ghost" size="sm">{m.tool_remove_label({ position: '1' })}</Button>
+		</div>
+	</div>
+</Story>
+
 <Story name="Empty tool — upload">
 	<div class="mx-auto flex max-w-2xl flex-col gap-4">
 		<h1 class="font-display text-3xl font-bold">{m.app_tool_heading()}</h1>
@@ -45,7 +85,7 @@
 	</div>
 </Story>
 
-<Story name="Results — icon-only sticker actions">
+<Story name="Sticker actions after">
 	<div class="mx-auto max-w-sm">
 		<StickerCard
 			sticker={sampleSticker}

@@ -62,7 +62,7 @@
 						<a
 							href={localizedPath(link.id, locale.current)}
 							aria-current={active === link.id ? 'page' : undefined}
-							class="rounded-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none aria-[current=page]:font-medium aria-[current=page]:text-foreground"
+							class="rounded-sm text-muted-foreground underline-offset-4 hover:text-primary hover:underline focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none aria-[current=page]:font-semibold aria-[current=page]:text-primary aria-[current=page]:underline"
 						>
 							{link.label}
 						</a>

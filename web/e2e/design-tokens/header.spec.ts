@@ -14,7 +14,7 @@ for (const route of [
 ]) {
 	test(`header and skip link on ${route || '/'}`, async ({ page }) => {
 		await page.goto(route);
-		await expect(page.locator('header')).toBeVisible();
+		await expect(page.getByRole('banner')).toBeVisible();
 		await expect(page.getByTestId('theme-toggle')).toBeVisible();
 		await expect(page.getByTestId('language-switcher')).toBeVisible();
 		await page.keyboard.press('Tab');
