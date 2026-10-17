@@ -111,6 +111,14 @@
 					busy={editor.isProcessing}
 					advanced={processingMode === 'advanced'}
 					onPick={(color) => editor.setBackground(color)}
+					canUndoWorkspaceEdit={editor.canUndoWorkspaceEdit}
+					proposalBoxes={editor.splitProposalBoxes}
+					onAddBounds={(bounds) => void editor.addStickerFromBounds(bounds)}
+					onUpdateBounds={(index, bounds) => {
+						const sticker = editor.stickers[index];
+						if (sticker) void editor.updateStickerBoundsFromSource(sticker.id, bounds);
+					}}
+					onUndoWorkspaceEdit={() => editor.undoWorkspaceEdit()}
 				/>
 				<Controls
 					tolerance={editor.tolerance}

@@ -21,7 +21,7 @@ const props = {
 };
 it('draws boxes in source coordinates and keeps the inactive overlay decorative', () => {
 	const { container } = render(Preview, { ...props, onPick: vi.fn() });
-	const box = container.querySelector('rect')!;
+	const box = container.querySelector('[data-detection-box]')!;
 	expect(box).toHaveAttribute('x', '1');
 	expect(box).toHaveAttribute('y', '2');
 	expect(box).toHaveAttribute('width', '3');
@@ -74,5 +74,41 @@ it('keeps boxes aligned while zooming and pans the focused image with arrow keys
 	expect(area.scrollLeft).toBe(50);
 	await fireEvent.click(screen.getByRole('button', { name: m.tool_inspector_zoom_reset() }));
 	expect(area).toHaveAttribute('data-zoom', '1');
+});
+
+it('draws a new source box and commits integer bounds', async () => {
+	const onAddBounds = vi.fn();
+	const { container } = render(Preview, { ...props, onPick: vi.fn(), onAddBounds });
+	const overlay = container.querySelector('[data-source-inspector] svg')!;
+	vi.spyOn(overlay, 'getBoundingClientRect').mockReturnValue({
+		x: 0,
+		y: 0,
+		width: 100,
+		height: 100,
+		left: 0,
+		top: 0,
+		right: 100,
+		bottom: 100,
+		toJSON: () => ({})
+	} as DOMRect);
+	Object.defineProperty(overlay, 'setPointerCapture', { value: vi.fn() });
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_workspace_add() }));
+	expect(screen.getByRole('button', { name: m.tool_workspace_cancel_add() })).toHaveAttribute(
+		'aria-pressed',
+		'true'
+	);
+	await fireEvent.pointerDown(overlay, { button: 0, pointerId: 1, clientX: 25, clientY: 25 });
+	expect(container.querySelector('[data-draft-box]')).toBeInTheDocument();
+	await fireEvent.pointerMove(overlay, { pointerId: 1, clientX: 75, clientY: 75 });
+	await fireEvent.pointerUp(overlay, { pointerId: 1, clientX: 75, clientY: 75 });
+	expect(onAddBounds).toHaveBeenCalledExactlyOnceWith({ x: 1, y: 1, width: 2, height: 2 });
+});
+
+it('supports keyboard repositioning of source boxes', async () => {
+	const onUpdateBounds = vi.fn();
+	const { container } = render(Preview, { ...props, onPick: vi.fn(), onUpdateBounds });
+	const box = container.querySelector('[data-candidate-box]')!;
+	await fireEvent.keyDown(box, { key: 'ArrowLeft' });
+	expect(onUpdateBounds).toHaveBeenCalledExactlyOnceWith(0, { x: 0, y: 2, width: 3, height: 1 });
 });
 import '@testing-library/jest-dom/vitest';

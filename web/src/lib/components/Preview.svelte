@@ -4,6 +4,8 @@
 	import ZoomIn from '@lucide/svelte/icons/zoom-in';
 	import ZoomOut from '@lucide/svelte/icons/zoom-out';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
+	import Plus from '@lucide/svelte/icons/plus';
+	import Undo2 from '@lucide/svelte/icons/undo-2';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { BBox, Rgb } from '$lib/detection';
@@ -20,7 +22,12 @@
 		background,
 		busy,
 		advanced = false,
-		onPick
+		onPick,
+		canUndoWorkspaceEdit = false,
+		proposalBoxes = [],
+		onAddBounds = () => {},
+		onUpdateBounds = () => {},
+		onUndoWorkspaceEdit = () => {}
 	}: {
 		src: string;
 		width: number;
@@ -31,6 +38,11 @@
 		busy: boolean;
 		advanced?: boolean;
 		onPick: (color: Rgb) => void;
+		canUndoWorkspaceEdit?: boolean;
+		proposalBoxes?: BBox[];
+		onAddBounds?: (bounds: BBox) => void;
+		onUpdateBounds?: (index: number, bounds: BBox) => void;
+		onUndoWorkspaceEdit?: () => void;
 	} = $props();
 	const hintId = $props.id();
 	let active = $state(false);
@@ -40,6 +52,13 @@
 	let toggle = $state<HTMLButtonElement | null>(null);
 	let viewport: HTMLDivElement;
 	let zoom = $state<number>(1);
+	let drawMode = $state(false);
+	let draftBox = $state<BBox | null>(null);
+	let dragBoxDraft = $state<{ index: number; bounds: BBox } | null>(null);
+	let drawStart: Point | null = null;
+	let boxDrag = $state<{ index: number; start: Point; original: BBox; resize: boolean } | null>(
+		null
+	);
 	let panDrag: { x: number; y: number; left: number; top: number } | null = null;
 	$effect(() => {
 		if (!src) return;
@@ -74,7 +93,13 @@
 	}
 	function keyboardPan(node: HTMLDivElement) {
 		function start(event: PointerEvent) {
-			if (event.pointerType === 'touch' || event.button !== 0 || active) return;
+			if (
+				event.pointerType === 'touch' ||
+				event.button !== 0 ||
+				active ||
+				(event.target instanceof Element && event.target.closest('svg'))
+			)
+				return;
 			panDrag = { x: event.clientX, y: event.clientY, left: node.scrollLeft, top: node.scrollTop };
 			node.setPointerCapture(event.pointerId);
 		}
@@ -140,12 +165,153 @@
 			y: ((event.clientY - bounds.y) * height) / bounds.height
 		});
 	}
+	function sourcePoint(event: PointerEvent): Point {
+		const bounds = overlay.getBoundingClientRect();
+		return {
+			x: Math.max(0, Math.min(width, ((event.clientX - bounds.x) * width) / bounds.width)),
+			y: Math.max(0, Math.min(height, ((event.clientY - bounds.y) * height) / bounds.height))
+		};
+	}
+	function startDrawing(event: PointerEvent) {
+		if (!drawMode || busy || event.button !== 0) return;
+		event.preventDefault();
+		event.stopPropagation();
+		drawStart = sourcePoint(event);
+		draftBox = { x: drawStart.x, y: drawStart.y, width: 0, height: 0 };
+		overlay.setPointerCapture(event.pointerId);
+	}
+	function startBoxDrag(index: number, event: PointerEvent, resize: boolean) {
+		if (busy || drawMode || event.button !== 0) return;
+		const original = boxes[index];
+		if (!original) return;
+		event.preventDefault();
+		event.stopPropagation();
+		boxDrag = { index, start: sourcePoint(event), original: { ...original }, resize };
+		dragBoxDraft = { index, bounds: { ...original } };
+		overlay.setPointerCapture(event.pointerId);
+	}
+	function moveWorkspacePointer(event: PointerEvent) {
+		if (drawStart) {
+			const point = sourcePoint(event);
+			draftBox = {
+				x: Math.min(drawStart.x, point.x),
+				y: Math.min(drawStart.y, point.y),
+				width: Math.abs(point.x - drawStart.x),
+				height: Math.abs(point.y - drawStart.y)
+			};
+			return;
+		}
+		if (!boxDrag) return;
+		const point = sourcePoint(event);
+		const dx = Math.round(point.x - boxDrag.start.x);
+		const dy = Math.round(point.y - boxDrag.start.y);
+		const original = boxDrag.original;
+		const bounds = boxDrag.resize
+			? {
+					...original,
+					width: Math.max(1, Math.min(width - original.x, original.width + dx)),
+					height: Math.max(1, Math.min(height - original.y, original.height + dy))
+				}
+			: {
+					...original,
+					x: Math.max(0, Math.min(width - original.width, original.x + dx)),
+					y: Math.max(0, Math.min(height - original.height, original.y + dy))
+				};
+		dragBoxDraft = { index: boxDrag.index, bounds };
+	}
+	function finishWorkspacePointer() {
+		if (drawStart) {
+			const box = draftBox;
+			drawStart = null;
+			draftBox = null;
+			drawMode = false;
+			if (box && box.width >= 1 && box.height >= 1) {
+				const x = Math.floor(box.x);
+				const y = Math.floor(box.y);
+				onAddBounds({
+					x,
+					y,
+					width: Math.max(1, Math.ceil(box.x + box.width) - x),
+					height: Math.max(1, Math.ceil(box.y + box.height) - y)
+				});
+			}
+			return;
+		}
+		if (!boxDrag || !dragBoxDraft) return;
+		const { index, bounds } = dragBoxDraft;
+		boxDrag = null;
+		dragBoxDraft = null;
+		onUpdateBounds(index, bounds);
+	}
+	function boxKeydown(index: number, event: KeyboardEvent) {
+		if (!event.key.startsWith('Arrow') || busy) return;
+		event.preventDefault();
+		const current = boxes[index];
+		if (!current) return;
+		const step = event.shiftKey ? 10 : 1;
+		const next = event.shiftKey
+			? {
+					...current,
+					width: Math.max(
+						1,
+						Math.min(
+							width - current.x,
+							current.width +
+								(event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0)
+						)
+					),
+					height: Math.max(
+						1,
+						Math.min(
+							height - current.y,
+							current.height +
+								(event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0)
+						)
+					)
+				}
+			: {
+					...current,
+					x: Math.max(
+						0,
+						Math.min(
+							width - current.width,
+							current.x +
+								(event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0)
+						)
+					),
+					y: Math.max(
+						0,
+						Math.min(
+							height - current.height,
+							current.y + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0)
+						)
+					)
+				};
+		onUpdateBounds(index, next);
+	}
 </script>
 
 <section aria-busy={busy} class="flex min-w-0 flex-col gap-3">
 	<div class="flex items-center justify-between gap-2">
 		<h2 class="font-display text-xl font-semibold">{m.tool_preview_heading()}</h2>
 		<div class="flex flex-wrap items-center gap-1">
+			<Button
+				variant={drawMode ? 'default' : 'outline'}
+				aria-label={drawMode ? m.tool_workspace_cancel_add() : m.tool_workspace_add()}
+				aria-pressed={drawMode}
+				disabled={busy}
+				onclick={() => {
+					drawMode = !drawMode;
+					draftBox = null;
+				}}><Plus aria-hidden="true" />{m.tool_workspace_add()}</Button
+			>
+			<Button
+				variant="outline"
+				size="icon"
+				aria-label={m.tool_workspace_undo()}
+				disabled={!canUndoWorkspaceEdit || busy}
+				onclick={onUndoWorkspaceEdit}><Undo2 aria-hidden="true" /></Button
+			>
 			<Button
 				variant="outline"
 				size="icon"
@@ -204,30 +370,79 @@
 	>
 		<div class="relative min-w-full" style:width={`${zoom * 100}%`}>
 			<img {src} {width} {height} alt={m.tool_preview_alt()} class="block h-auto w-full" />
-			<!-- The application role exists only while the keyboard color picker is active. -->
-			<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 			<svg
 				bind:this={overlay}
 				viewBox="0 0 {width} {height}"
-				class="absolute inset-0 size-full focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
-				class:cursor-crosshair={active}
-				role={active ? 'application' : undefined}
+				class="pointer-events-auto absolute inset-0 size-full focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
+				class:cursor-crosshair={active || drawMode}
+				class:touch-none={drawMode || boxDrag !== null}
+				role={active ? 'application' : 'group'}
 				tabindex={active ? 0 : undefined}
-				aria-hidden={!active}
-				aria-label={active ? m.tool_eyedropper_area_label() : undefined}
-				aria-describedby={active ? hintId : undefined}
+				aria-label={active ? m.tool_eyedropper_area_label() : m.tool_inspector_area()}
+				aria-describedby={hintId}
 				onkeydown={keydown}
-				onpointerdown={pointer}
+				onpointerdown={(event) => {
+					if (drawMode) startDrawing(event);
+					else pointer(event);
+				}}
+				onpointermove={moveWorkspacePointer}
+				onpointerup={finishWorkspacePointer}
+				onpointercancel={finishWorkspacePointer}
 			>
-				{#each boxes as box, index (index)}<rect
+				<rect x="0" y="0" {width} {height} class="fill-transparent" aria-hidden="true" />
+				{#each boxes as box, index (index)}
+					{@const visibleBox = dragBoxDraft?.index === index ? dragBoxDraft.bounds : box}
+					<g
+						role="button"
+						tabindex="0"
+						aria-label={m.tool_workspace_box({ position: formatNumber(index + 1) })}
+						data-candidate-box={index}
+						onpointerdown={(event) => startBoxDrag(index, event, false)}
+						onkeydown={(event) => boxKeydown(index, event)}
+					>
+						<rect
+							x={visibleBox.x}
+							y={visibleBox.y}
+							width={visibleBox.width}
+							height={visibleBox.height}
+							vector-effect="non-scaling-stroke"
+							class="fill-none stroke-primary stroke-2 focus-visible:stroke-ring"
+							data-detection-box
+						/>
+						<circle
+							role="button"
+							tabindex="0"
+							aria-label={m.tool_bounds_resize_se()}
+							aria-keyshortcuts="Shift+ArrowRight Shift+ArrowDown"
+							cx={visibleBox.x + visibleBox.width}
+							cy={visibleBox.y + visibleBox.height}
+							r={5 / zoom}
+							vector-effect="non-scaling-stroke"
+							class="fill-background stroke-primary stroke-2"
+							data-resize-handle
+							onpointerdown={(event) => startBoxDrag(index, event, true)}
+							onkeydown={(event) => boxKeydown(index, event)}
+						/>
+					</g>
+				{/each}
+				{#each proposalBoxes as box, index (index)}<rect
 						x={box.x}
 						y={box.y}
 						width={box.width}
 						height={box.height}
 						vector-effect="non-scaling-stroke"
-						class="fill-none stroke-primary stroke-2"
-						data-detection-box
+						class="fill-accent/15 stroke-accent stroke-2"
+						data-split-proposal-box={index}
 					/>{/each}
+				{#if draftBox}<rect
+						x={draftBox.x}
+						y={draftBox.y}
+						width={draftBox.width}
+						height={draftBox.height}
+						vector-effect="non-scaling-stroke"
+						class="fill-primary/20 stroke-primary stroke-2"
+						data-draft-box
+					/>{/if}
 				{#if active}
 					<path
 						d="M {position.x} 0 V {height} M 0 {position.y} H {width}"
@@ -242,7 +457,11 @@
 		</div>
 	</div>
 	<p id={hintId} class={active ? 'text-sm text-muted-foreground' : 'sr-only'}>
-		{active ? m.tool_eyedropper_keyboard_hint() : m.tool_inspector_help()}
+		{active
+			? m.tool_eyedropper_keyboard_hint()
+			: drawMode
+				? m.tool_workspace_keyboard_help()
+				: m.tool_inspector_help()}
 	</p>
 	<p class="sr-only" aria-live="polite">{announcement}</p>
 	<span class="sr-only">{toHex(background)}</span>
