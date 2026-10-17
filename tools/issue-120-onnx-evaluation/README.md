@@ -76,3 +76,42 @@ The harness serves all assets with COOP `same-origin` and COEP `require-corp`, e
 Neither browser run integrates inference into the app's detector worker. The 64x64 runs are compatibility smokes; the 512x512 run is a generated-fixture runtime benchmark only, not visual-quality evidence. Alpha edges, tiled seams, synthetic multi-class quality comparisons, low-resource-device measurements, and peak memory remain unmeasured.
 
 Sources: [pinned exporter source](https://github.com/ningtoba/Browsersnip-Upscale/blob/8e7094416ad91ec7477e968d348cd78742e20dc6/scripts/export_onnx.py), [pinned ONNX artifact](https://github.com/ningtoba/Browsersnip-Upscale/blob/8e7094416ad91ec7477e968d348cd78742e20dc6/public/models/realesrgan-x4plus-anime.onnx), [project MIT license](https://github.com/ningtoba/Browsersnip-Upscale/blob/8e7094416ad91ec7477e968d348cd78742e20dc6/LICENSE), [upstream BSD-3-Clause license](https://github.com/xinntao/Real-ESRGAN/blob/a4abfb2979a7bbff3f69f58f58ae324608821e27/LICENSE), [ONNX Runtime MIT license](https://github.com/microsoft/onnxruntime/blob/v1.30.0/LICENSE).
+
+## Deterministic fixture comparison (2026-10-17)
+
+The browser harness now creates five deterministic 256x256 synthetic references (flat-color illustration, small glyph text, thin line art, a transparent antialiased circle, and seeded photo-like texture). It degrades them with an exact 4x4 box-area average to 64x64, then compares the pinned BrowserSnip graph at 4x with a separable Lanczos-3 resize. The model receives RGB; alpha is independently resized with Lanczos-3. For transparent edges, the generated source deliberately stores green RGB under fully transparent pixels, filters RGB in premultiplied-alpha space before unpremultiplying, and compares composites over black and white. Two 2x2 overlapping-tile runs compare retained tile output against whole-image inference on line art and alpha-edge fixtures.
+
+| Fixture | Lanczos-3 PSNR / global SSIM | ONNX PSNR / global SSIM | Observation |
+| --- | ---: | ---: | --- |
+| Illustration | 23.434 dB / 0.977054 | 30.040 dB / 0.995366 | Candidate improved both reported metrics. |
+| Text | 16.148 dB / 0.775826 | 28.414 dB / 0.991014 | Candidate improved both reported metrics. |
+| Line art | 15.910 dB / 0.296813 | 24.445 dB / 0.949515 | Candidate improved both reported metrics. |
+| Alpha edge RGB | 31.316 dB / 0.997155 | 36.526 dB / 0.999173 | Candidate RGB improved; shared resized alpha was 19.874 dB PSNR and 0.032601 MAE. |
+| Photo-like texture | 23.557 dB / 0.617914 | 23.305 dB / 0.569006 | Candidate regressed 0.252 dB PSNR and 0.048908 global SSIM. |
+
+These global SSIM values use whole-image/channel statistics and are descriptive, not a replacement for standard local-window SSIM or blinded human review. The quantitative quality gate therefore remains unverified: the photo-like fixture's global SSIM regression exceeds the 0.01 allowance, and visual review was not performed. The alpha-edge output had composite MAE 0.018098 over black and 0.028993 over white; Lanczos-3 had 0.014589 and 0.023754, respectively, so the candidate regressed the white-background composite despite better unassociated RGB PSNR. Its hidden transparent RGB mean was 0.040136 after clipping. Tiled-vs-whole mean/max absolute errors were 0.001395/0.120151 for line art and 0.001570/0.006234 for the alpha edge; these numeric comparisons do not establish that seams are invisible at 100% review.
+
+Reproduce the comparison on Windows from the repository root with Bun and Chrome installed:
+
+```powershell
+bun tools/issue-120-onnx-evaluation/fetch-model.cjs browserSnipAnime6b
+$env:ISSUE120_MODEL_PATH = Join-Path $env:TEMP 'rusticker-issue120-browserSnipAnime6b.onnx'
+$evalRoot = Join-Path $PWD 'tools/issue-120-onnx-evaluation'
+Start-Process -FilePath 'node.exe' -ArgumentList 'browser/server.cjs' -WorkingDirectory $evalRoot
+Start-Process -FilePath 'C:\Program Files\Google\Chrome\Application\chrome.exe' -ArgumentList '--headless=new --disable-gpu --disable-gpu-sandbox --no-sandbox --no-first-run --disable-extensions --disable-background-networking --user-data-dir=<unique-temp-profile> --remote-debugging-port=9239 http://127.0.0.1:4179/ort.html?size=64&mode=fixtures'
+bun tools/issue-120-onnx-evaluation/browser/collect.cjs http://127.0.0.1:9239 'http://127.0.0.1:4179/ort.html?size=64&mode=fixtures' 300
+```
+
+The run used HeadlessChrome 155 on Windows x64, ONNX Runtime Web 1.30.0 CPU-WASM, and one runtime thread. Session initialization was 402.6 ms. The browser memory API reported an 85,613,861-byte page-attributed increase after the fixtures and tiled runs; this is not a direct WASM heap or peak-memory measurement. The generated-fixture latency/memory sample is not a low-resource-device measurement and does not replace the earlier 512x512 runtime result.
+
+The fixture comparison task is complete. A blinded visual review and both documented device-class cold/warm latency and peak-memory measurements remain unverified. The recommendation remains **no-go for production integration**. Artifact provenance and redistribution notices for an independently reproducible export also remain unresolved; do not treat the model repository, exporter source, or model hash alone as permission to redistribute the graph.
+
+### Evidence still required before reconsidering the recommendation
+
+- The current quality evidence is one deterministic 64x64 input per synthetic class on one candidate, with a descriptive global SSIM. It does not satisfy the blinded review on at least four of five fixture classes or the standard local SSIM gate. The photo-like texture global-SSIM regression is 0.048908, above the allowed 0.01 regression; alpha composition over white also regresses. Repeat with a defined local-window metric and blinded reviewers, and resolve those regressions before a quality pass.
+- The tile comparison's maximum line-art error is 0.120151, but no 100%-scale visual review establishes whether that difference forms a visible seam. Review the generated crops and transparent edge at 100%, including compositing on light and dark backgrounds.
+- The 85.6 MB browser-attributed increase is one post-run page snapshot, not a peak or direct WASM heap measurement. The 64px sample is not a 512px cold/warm benchmark. Repeat the documented 512px cold/warm latency and peak-memory measurements on the stated desktop and low-resource devices; do not infer low-resource results from this workstation.
+- The BrowserSnip exporter source describes an upstream checkpoint and parity check, but exact byte-for-byte graph reproduction and complete model/export redistribution terms have not been independently verified. Pin and reproduce the conversion from upstream weights, review all artifact-specific notices, and record the resulting hashes before distribution is considered.
+- Recheck CPU-WASM runtime payload, exact graph compatibility, and the recorded 2.8 GiB browser-attributed increase from the prior 512px run. The existing ONNX Runtime Web fallback exceeded the desktop latency and memory gates in that run; a passing 64px fixture run does not override it.
+
+Until all of these items have evidence, keep this evaluation open and the PR in draft; do not add an ONNX production dependency or recommend a release based on the current results.

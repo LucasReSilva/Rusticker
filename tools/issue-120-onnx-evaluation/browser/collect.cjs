@@ -35,10 +35,11 @@ async function evaluate(expression) {
 for (let attempt = 0; attempt < timeoutSeconds; attempt += 1) {
   const response = await evaluate("document.querySelector('#result')?.textContent");
   const result = response.result?.result?.value;
-  if (result && result !== 'pending') {
+  const status = result?.startsWith('{') ? JSON.parse(result).status : null;
+  if (result && result !== 'pending' && status !== 'progress') {
     console.log(result);
     socket.close();
-    process.exitCode = result.includes('"status":"passed"') ? 0 : 1;
+    process.exitCode = result.includes('"status":"passed"') || result.includes('"status":"completed"') ? 0 : 1;
     process.exit();
   }
   await new Promise((resolve) => setTimeout(resolve, 1000));

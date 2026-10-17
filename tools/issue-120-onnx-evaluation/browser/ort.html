@@ -5,6 +5,7 @@
 <script type="module">
   const result = document.querySelector('#result');
   const size = Number(new URL(location.href).searchParams.get('size') ?? 64);
+  const mode = new URL(location.href).searchParams.get('mode') ?? 'smoke';
   if (!Number.isInteger(size) || size < 1 || size > 512) {
     result.textContent = JSON.stringify({ status: 'error', message: 'size must be an integer from 1 to 512' });
     throw new Error('Invalid evaluation size');
@@ -18,8 +19,12 @@
       memoryBefore = { unavailable: String(error) };
     }
   }
-  const worker = new Worker('./ort-worker.js', { type: 'module' });
+  const worker = new Worker(`./ort-worker.js?mode=${encodeURIComponent(mode)}`, { type: 'module' });
   worker.onmessage = async ({ data }) => {
+    if (data.status === 'progress') {
+      result.textContent = JSON.stringify(data);
+      return;
+    }
     if (memoryBefore?.bytes !== undefined) {
       try {
         const after = await memoryApi.call(performance);
@@ -41,7 +46,7 @@
       };
     }
     result.textContent = JSON.stringify(data);
-    document.title = data.status;
+    document.title = data.status === 'completed' ? 'evaluation-complete' : data.status;
     worker.terminate();
   };
   worker.onerror = (event) => {

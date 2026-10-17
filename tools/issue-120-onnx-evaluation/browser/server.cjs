@@ -10,6 +10,7 @@ const files = new Map([
   ['/worker.js', path.join(root, 'worker.js')],
   ['/onnx_eval_lib.wasm', wasm],
   ['/ort.html', path.join(root, 'ort.html')],
+  ['/fixtures.js', path.join(root, 'fixtures.js')],
   ['/ort-worker.js', path.join(root, 'ort-worker.js')],
   ['/ort.wasm.min.mjs', path.join(ortDist, 'ort.wasm.min.mjs')],
   ['/ort-wasm-simd-threaded.mjs', path.join(ortDist, 'ort-wasm-simd-threaded.mjs')],
