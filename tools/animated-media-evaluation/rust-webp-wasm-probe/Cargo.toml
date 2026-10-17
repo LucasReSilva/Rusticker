@@ -1,0 +1,20 @@
+[package]
+name = "rusticker-animated-webp-wasm-probe"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[[bin]]
+name = "verify-output"
+path = "src/bin/verify-output.rs"
+
+[dependencies]
+oxideav-webp = { version = "=0.3.1", git = "https://github.com/OxideAV/oxideav-webp", rev = "b8ab09d8e98af74aabaa30dacc8b1ba9076410ea", default-features = false }
+
+[patch.crates-io]
+oxideav-vp8 = { git = "https://github.com/OxideAV/oxideav-vp8", rev = "fb852a4896dd48f1d5d1a05c471ada8a0208b029" }
