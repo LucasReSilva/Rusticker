@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-10-17
+goal: Let users arrange detected stickers on exact-size A4 or US Letter pages
+  and download a locally generated PDF.

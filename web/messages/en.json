@@ -346,5 +346,48 @@
 	"static_export_button": "Download static sticker files",
 	"static_export_success": "Prepared {count} static sticker files.",
 	"static_export_jpeg_background_required": "Choose a background color before exporting JPEG files.",
-	"static_export_failed": "Couldn't prepare the static sticker files. Please try again."
+	"static_export_failed": "Couldn't prepare the static sticker files. Please try again.",
+	"pdf_sheet_heading": "Printable sticker sheets (PDF)",
+	"pdf_sheet_paper_label": "Paper size",
+	"pdf_sheet_a4": "A4",
+	"pdf_sheet_letter": "US Letter",
+	"pdf_sheet_orientation_label": "Page orientation",
+	"pdf_sheet_portrait": "Portrait",
+	"pdf_sheet_landscape": "Landscape",
+	"pdf_sheet_margin_label": "Margins: {value} mm",
+	"pdf_sheet_margin_decrease": "Decrease page margins",
+	"pdf_sheet_margin_increase": "Increase page margins",
+	"pdf_sheet_spacing_label": "Sticker spacing: {value} mm",
+	"pdf_sheet_spacing_decrease": "Decrease sticker spacing",
+	"pdf_sheet_spacing_increase": "Increase sticker spacing",
+	"pdf_sheet_page_size": "Page size: {width} × {height} mm",
+	"pdf_sheet_edit_instructions": "Select a sticker, drag it in the preview, or use the move and resize controls. On a focused preview, use arrow keys to move and + or − to resize.",
+	"pdf_sheet_empty": "Detect stickers to preview a printable sheet.",
+	"pdf_sheet_page_label": "Page {page} of {total}",
+	"pdf_sheet_edit_controls_label": "Move and resize selected sticker",
+	"pdf_sheet_move_left": "Move sticker left",
+	"pdf_sheet_move_up": "Move sticker up",
+	"pdf_sheet_move_down": "Move sticker down",
+	"pdf_sheet_move_right": "Move sticker right",
+	"pdf_sheet_resize_smaller": "Make sticker smaller",
+	"pdf_sheet_resize_larger": "Make sticker larger",
+	"pdf_sheet_select_sticker": "Select sticker {sticker}",
+	"pdf_sheet_export_button": "Download PDF sheets",
+	"pdf_sheet_export_progress": "Preparing PDF…",
+	"pdf_sheet_export_success": [
+		{
+			"declarations": [
+				"input pages",
+				"local pagesPlural = pages: plural",
+				"local pagesNumber = pages: number"
+			],
+			"selectors": ["pagesPlural"],
+			"match": {
+				"pagesPlural=one": "Prepared 1 PDF page.",
+				"pagesPlural=other": "Prepared {pagesNumber} PDF pages."
+			}
+		}
+	],
+	"pdf_sheet_export_unsupported": "This browser cannot prepare PDF sheets. Try another browser.",
+	"pdf_sheet_export_failed": "Could not prepare the PDF sheets. Please try again."
 }

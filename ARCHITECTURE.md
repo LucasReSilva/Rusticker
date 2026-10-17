@@ -263,6 +263,14 @@ Compression Streams API. Unsupported encoders or compression fail before a
 download, and this path does not change the WhatsApp pack defaults or the
 Telegram PNG/WEBP ZIP handoff.
 
+Printable PDF sheets use a separate local flow. The page preview supports A4
+and US Letter in either orientation, configurable margins and sticker spacing,
+automatic non-overlapping placement, pagination, and optional manual
+position/size edits. The PDF writer converts millimeters to points at the
+document boundary and embeds sticker color and alpha planes with PDF soft masks.
+Page geometry, layout, previews, and downloads stay in the browser; the PDF
+filename is locale-neutral.
+
 The worker's WASM file and other application resources are static site assets.
 The service worker can cache application files for offline use; this does not
 mean the application uploads user images.
@@ -292,6 +300,9 @@ no user-facing text.
 
 The detailed contract is in
 [`sticker-export`](openspec/specs/sticker-export/spec.md).
+The PDF sheet flow has its own contract in
+[`pdf-sticker-sheets`](openspec/changes/pdf-sticker-sheets/specs/pdf-sticker-sheets/spec.md)
+until the change is archived.
 
 ## Static app and tests
 

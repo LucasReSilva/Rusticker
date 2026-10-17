@@ -12,6 +12,7 @@
 	import Export from '$lib/components/Export.svelte';
 	import TelegramExport from '$lib/components/TelegramExport.svelte';
 	import StaticExport from '$lib/components/StaticExport.svelte';
+	import PdfSheetExport from '$lib/components/PdfSheetExport.svelte';
 	import { stickerSizes } from '$lib/export';
 	import { m } from '$lib/paraglide/messages';
 	import HistoryRecorder from '$lib/history/HistoryRecorder.svelte';
@@ -132,6 +133,7 @@
 					/>
 					<TelegramExport stickers={editor.batchStickers} disabled={editor.isProcessing} />
 					<StaticExport stickers={editor.batchStickers} disabled={editor.isProcessing} />
+					<PdfSheetExport stickers={editor.batchStickers} disabled={editor.isProcessing} />
 				</section>
 				<p aria-live="polite" aria-atomic="true" data-detected-count>
 					{editor.isProcessing
