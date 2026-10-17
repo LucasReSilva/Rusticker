@@ -118,9 +118,20 @@ This prevents Git Bash from converting `/Rusticker` to a Windows filesystem path
 | `bun run verify:build` | Checks the built site (run after `bun run build`, with the same `BASE_PATH`) |
 | `bun run build:wasm` | Rebuilds the Rust core with wasm-pack and reinstalls the local `rusticker-core` package *(after `wasm-worker`)* |
 | `bun run dev:all` | Builds the wasm package, then starts the dev server *(after `wasm-worker`)* |
+| `bun run storybook` | Starts the local component catalog at `http://localhost:6006` |
 | `bun run changelog:preview` | Previews the next changelog section using `git-cliff` across the workspace |
 | `bun run version:sync` | Synchronizes `web/package.json` version from `core/Cargo.toml` |
 | `bun run version:check` | Verifies that `web/package.json` and `core/Cargo.toml` versions match |
+
+### Storybook component catalog
+
+From `web/`, run `bun run storybook` and open
+`http://localhost:6006`. The catalog includes design-system primitives and
+representative tool compositions, including upload and processing states. Use
+the theme toolbar to compare light and dark themes. Stories use the app's
+Paraglide messages, theme tokens, and local assets; Storybook is a development
+tool and is excluded from the production site. Run `bun run build-storybook` to
+build the catalog and `bun run build` to verify the production app separately.
 
 ### End-to-end tests
 
