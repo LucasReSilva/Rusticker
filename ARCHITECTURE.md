@@ -275,6 +275,39 @@ The worker's WASM file and other application resources are static site assets.
 The service worker can cache application files for offline use; this does not
 mean the application uploads user images.
 
+## Optional learned upscaling
+
+The dedicated upscaler keeps conventional high-quality resizing as its default.
+Selecting its experimental learned mode lazily loads the browser ONNX Runtime
+CPU/WASM assets in a separate module worker. The current candidate could not be
+executed by the evaluated Rust/WASM path because its graph failed shape
+analysis, so the interface discloses the browser CPU/WASM backend. This backend
+does not change the Rust sticker-detection core.
+
+Users provide an ONNX model file locally. The first supported graph has one
+dynamic RGB `float32` NCHW input normalized to `[0, 1]` and one RGB `float32`
+output at exactly 4× dimensions. The interface shows the selected file name and
+size as information only; there is no model-size eligibility threshold. The
+model is neither bundled nor downloaded, persisted, uploaded, or stored by the
+service worker. App-owned runtime assets may be cached for offline use.
+
+Inference processes sequential 64 × 64 tiles on a 48-pixel stride with 16-pixel
+overlap, discarding the outer 8 input pixels on internal tile edges. Alpha is
+resized separately and recombined with learned RGB. The x4 result is checked
+against the output side and pixel limits before large output allocation. A
+failure retains the source and last completed result. Learned output may invent
+detail, halos, or tile artifacts; quality measurements are advisory, and the
+conventional result remains available for comparison.
+
+The BrowserSnip anime 6B evaluation took 113.7 seconds for the first 512 × 512
+inference and 166.1 seconds for a repeated run; browser-attributed memory delta
+was about 2.8 GB. These are measurements of one candidate in one environment,
+not performance guarantees or availability thresholds. They motivate explicit
+opt-in, visible progress, and cancellation. See the [ONNX Runtime Web
+deployment guide](https://onnxruntime.ai/docs/tutorials/web/deploy.html) for
+runtime asset deployment concepts; the model measurements and graph-support
+findings above are project evaluation results.
+
 ## Errors and user-facing messages
 
 The Rust core returns `NoStickers`, `ImageTooLarge`, or `InvalidInput` for
@@ -342,3 +375,4 @@ are established by the code, tests, and OpenSpec contracts.
 8. [Comlink](https://github.com/GoogleChromeLabs/comlink). Documents the proxy-based worker API used by the frontend.
 9. Min Bai and Raquel Urtasun, [“Deep Watershed Transform for Instance Segmentation”](https://arxiv.org/abs/1611.08303), arXiv:1611.08303 (2016). A comparison/future-work reference for watershed-based instance segmentation; Rusticker does not implement this method.
 10. Jizhizi Li, Jing Zhang, and Dacheng Tao, [“Deep Image Matting: A Comprehensive Survey”](https://arxiv.org/abs/2304.04672), arXiv:2304.04672 (2023). Surveys image-matting methods; Rusticker's local binary-mask average is not one of those learned matting methods.
+11. [ONNX Runtime Web: Deploy](https://onnxruntime.ai/docs/tutorials/web/deploy.html). Documents serving the browser runtime and its WebAssembly assets; it does not establish Rusticker-specific performance or model compatibility.

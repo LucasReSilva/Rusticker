@@ -164,7 +164,7 @@
 			(mode === 'onnx' && !modelFile)
 		)
 			return;
-		releaseResult();
+		if (mode === 'conventional') releaseResult();
 		error = undefined;
 		tileProgress = undefined;
 		busy = true;
@@ -180,6 +180,7 @@
 				(completed, total) => (tileProgress = { completed, total })
 			);
 			const blob = await activeJob.result;
+			releaseResult();
 			resultUrl = URL.createObjectURL(blob);
 		} catch (cause) {
 			if (cause !== 'Cancelled') {
@@ -284,7 +285,7 @@
 							{m.upscaler_model_select()}
 						</Button>
 						{#if modelFile}<p class="min-w-0 truncate text-sm text-muted-foreground">
-								{modelFile.name}
+								{m.upscaler_model_file_info({ name: modelFile.name, bytes: modelFile.size })}
 							</p>{/if}
 					</div>
 				{/if}
