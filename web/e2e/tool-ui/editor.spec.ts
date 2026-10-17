@@ -34,6 +34,39 @@ async function load(page: Page): Promise<void> {
 	await expect(page.locator('[data-detected-count]')).toHaveText('6 figurinhas selecionadas');
 }
 
+async function horizontalOverflowDiagnostics(page: Page): Promise<string> {
+	return JSON.stringify(
+		await page.evaluate(() => {
+			const viewport = window.innerWidth;
+			const elements = [...document.body.querySelectorAll<HTMLElement>('*')]
+				.map((element) => {
+					const rect = element.getBoundingClientRect();
+					return {
+						tag: element.tagName.toLowerCase(),
+						id: element.id,
+						className: typeof element.className === 'string' ? element.className : '',
+						right: Math.round(rect.right * 100) / 100,
+						left: Math.round(rect.left * 100) / 100,
+						width: Math.round(rect.width * 100) / 100,
+						scrollWidth: element.scrollWidth,
+						clientWidth: element.clientWidth,
+						overflowX: getComputedStyle(element).overflowX,
+						position: getComputedStyle(element).position
+					};
+				})
+				.filter((element) => element.right > viewport + 1)
+				.sort((left, right) => right.right - left.right)
+				.slice(0, 20);
+			return {
+				viewport,
+				documentWidth: document.documentElement.scrollWidth,
+				bodyWidth: document.body.scrollWidth,
+				elements
+			};
+		})
+	);
+}
+
 test('sticker previews fade in without layout shifts and skip animation for reduced motion', async ({
 	page
 }) => {
@@ -111,9 +144,10 @@ test('zoomed source inspection and crop adjustment work at mobile width', async 
 	await expect.poll(async () => Number(await box.getAttribute('data-x'))).toBeGreaterThan(41);
 	const finalX = await box.getAttribute('data-x');
 	await dialog.getByRole('button', { name: 'Aplicar recorte' }).click();
+	await expect(dialog).not.toBeVisible();
 	await expect(page.locator('[data-detection-box]').first()).toHaveAttribute('x', finalX!);
 	const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
-	expect(overflow).toBe(false);
+	expect(overflow, await horizontalOverflowDiagnostics(page)).toBe(false);
 });
 
 test('manual source candidates stay synchronized through bounds edits, undo, and export', async ({
@@ -320,7 +354,6 @@ test('the dark editor fits a 375px viewport with reduced motion', async ({ page 
 			);
 		})
 	).toBe(true);
-	expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
-		true
-	);
+	const fits = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
+	expect(fits, await horizontalOverflowDiagnostics(page)).toBe(true);
 });
