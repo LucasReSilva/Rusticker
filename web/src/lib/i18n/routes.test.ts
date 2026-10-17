@@ -38,13 +38,15 @@ describe('route table', () => {
 			tool: { 'pt-BR': '/', en: '/en/', es: '/es/' },
 			howToUse: { 'pt-BR': '/como-usar', en: '/en/how-to-use', es: '/es/como-usar' },
 			about: { 'pt-BR': '/sobre', en: '/en/about', es: '/es/acerca-de' },
-			history: { 'pt-BR': '/historico', en: '/en/history', es: '/es/historial' }
+			history: { 'pt-BR': '/historico', en: '/en/history', es: '/es/historial' },
+			upscaler: { 'pt-BR': '/ampliar/', en: '/en/upscaler/', es: '/es/escalar-imagen/' }
 		});
 		expect(internalPath).toEqual({
 			tool: '/',
 			howToUse: '/how-to-use',
 			about: '/about',
-			history: '/history'
+			history: '/history',
+			upscaler: '/upscaler'
 		});
 	});
 
@@ -55,7 +57,7 @@ describe('route table', () => {
 		}
 	});
 
-	it('lists the 12 localized paths as prerender entries', () => {
+	it('lists all localized paths as prerender entries', () => {
 		expect(prerenderEntries().sort()).toEqual(
 			[
 				'/',
@@ -69,7 +71,10 @@ describe('route table', () => {
 				'/es/acerca-de',
 				'/historico',
 				'/en/history',
-				'/es/historial'
+				'/es/historial',
+				'/ampliar/',
+				'/en/upscaler/',
+				'/es/escalar-imagen/'
 			].sort()
 		);
 	});
@@ -100,6 +105,10 @@ describe.each(['', '/Rusticker'])('URL patterns with base "%s"', (base) => {
 		['/historico', 'pt-BR', '/history'],
 		['/en/history', 'en', '/history'],
 		['/es/historial', 'es', '/history'],
+		['/ampliar/', 'pt-BR', '/upscaler'],
+		['/en/upscaler/', 'en', '/upscaler'],
+		['/en/upscaler', 'en', '/upscaler'],
+		['/es/escalar-imagen/', 'es', '/upscaler'],
 		['/en/sobre', 'en', '/sobre'],
 		['/es/unknown', 'es', '/unknown']
 	];

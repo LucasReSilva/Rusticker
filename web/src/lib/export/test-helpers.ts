@@ -12,6 +12,7 @@ export function fakeEncoder(size: (quality: number) => number = () => 42): Encod
 	return {
 		webp: async (_, quality) => new Blob([new Uint8Array(size(quality))], { type: 'image/webp' }),
 		png: async (pixels) => new Blob([pixels.data.slice(0, 16)], { type: 'image/png' }),
+		jpeg: async (pixels) => new Blob([pixels.data.slice(0, 16)], { type: 'image/jpeg' }),
 		trayIcon: async (pixels) =>
 			new Blob([pixels.data.slice(512 * 256 * 4, 512 * 256 * 4 + 16)], { type: 'image/png' })
 	};

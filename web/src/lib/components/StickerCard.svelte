@@ -7,6 +7,12 @@
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
 	import ArrowDown from '@lucide/svelte/icons/arrow-down';
+	import Crop from '@lucide/svelte/icons/crop';
+	import Paintbrush from '@lucide/svelte/icons/paintbrush';
+	import Scissors from '@lucide/svelte/icons/scissors';
+	import Check from '@lucide/svelte/icons/check';
+	import X from '@lucide/svelte/icons/x';
+	import Undo2 from '@lucide/svelte/icons/undo-2';
 	import type { Sticker } from '$lib/detection';
 	import type { StickerSizeInfo } from '$lib/tool/size';
 	import { formatKilobytes, formatNumber } from '$lib/format';
@@ -141,30 +147,55 @@
 			>{/if}
 	</div>
 	<div class="flex flex-wrap justify-end gap-1">
-		<Button
-			variant="outline"
-			size="icon"
-			tabindex={active ? 0 : -1}
-			disabled={!canMoveEarlier}
-			aria-label={m.tool_move_earlier()}
-			onclick={onMoveEarlier}><ArrowUp aria-hidden="true" /></Button
-		>
-		<Button
-			variant="outline"
-			size="icon"
-			tabindex={active ? 0 : -1}
-			disabled={!canMoveLater}
-			aria-label={m.tool_move_later()}
-			onclick={onMoveLater}><ArrowDown aria-hidden="true" /></Button
-		>
+		<Tooltip.Provider>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}<Button
+							{...props}
+							variant="outline"
+							size="icon-lg"
+							tabindex={active ? 0 : -1}
+							disabled={!canMoveEarlier}
+							aria-label={m.tool_move_earlier()}
+							onclick={onMoveEarlier}><ArrowUp aria-hidden="true" /></Button
+						>{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content>{m.tool_move_earlier()}</Tooltip.Content>
+			</Tooltip.Root>
+		</Tooltip.Provider>
+		<Tooltip.Provider>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}<Button
+							{...props}
+							variant="outline"
+							size="icon-lg"
+							tabindex={active ? 0 : -1}
+							disabled={!canMoveLater}
+							aria-label={m.tool_move_later()}
+							onclick={onMoveLater}><ArrowDown aria-hidden="true" /></Button
+						>{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content>{m.tool_move_later()}</Tooltip.Content>
+			</Tooltip.Root>
+		</Tooltip.Provider>
 		{#if allowBoundsAdjustment}
 			<Dialog.Root bind:open={boundsOpen}>
-				<Button
-					variant="outline"
-					size="sm"
-					tabindex={active ? 0 : -1}
-					onclick={() => (boundsOpen = true)}>{m.tool_bounds_open()}</Button
-				>
+				<Tooltip.Provider>
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							{#snippet child({ props })}<Button
+									{...props}
+									variant="outline"
+									size="icon-lg"
+									tabindex={active ? 0 : -1}
+									aria-label={m.tool_bounds_open()}
+									onclick={() => (boundsOpen = true)}><Crop aria-hidden="true" /></Button
+								>{/snippet}
+						</Tooltip.Trigger>
+						<Tooltip.Content>{m.tool_bounds_open()}</Tooltip.Content>
+					</Tooltip.Root>
+				</Tooltip.Provider>
 				<Dialog.Content class="max-h-[calc(100dvh_-_2rem)] overflow-y-auto sm:max-w-2xl">
 					<Dialog.Title class="sr-only">{m.tool_bounds_title()}</Dialog.Title>
 					<Dialog.Description class="sr-only">{m.tool_bounds_help()}</Dialog.Description>
@@ -184,14 +215,21 @@
 		{/if}
 		{#if allowBrushEdit && sourceImage}
 			<Dialog.Root bind:open={brushOpen}>
-				<Button
-					variant="outline"
-					size="sm"
-					tabindex={active ? 0 : -1}
-					onclick={() => (brushOpen = true)}
-				>
-					{m.tool_brush_title()}
-				</Button>
+				<Tooltip.Provider>
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							{#snippet child({ props })}<Button
+									{...props}
+									variant="outline"
+									size="icon-lg"
+									tabindex={active ? 0 : -1}
+									aria-label={m.tool_brush_title()}
+									onclick={() => (brushOpen = true)}><Paintbrush aria-hidden="true" /></Button
+								>{/snippet}
+						</Tooltip.Trigger>
+						<Tooltip.Content>{m.tool_brush_title()}</Tooltip.Content>
+					</Tooltip.Root>
+				</Tooltip.Provider>
 				{#if brushOpen}
 					<Dialog.Content class="max-h-[calc(100dvh_-_2rem)] overflow-y-auto sm:max-w-2xl">
 						<Dialog.Title class="sr-only">{m.tool_brush_title()}</Dialog.Title>
@@ -210,21 +248,33 @@
 				{/if}
 			</Dialog.Root>
 		{/if}
-		{#if allowSplitRequest}<Button
-				variant="outline"
-				size="sm"
-				tabindex={active ? 0 : -1}
-				disabled={splitBusy}
-				onclick={onSplitRequest}
-				>{splitBusy ? m.tool_split_working() : m.tool_split_request()}</Button
-			>{/if}
+		{#if allowSplitRequest}
+			<Tooltip.Provider>
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}<Button
+								{...props}
+								variant="outline"
+								size="icon-lg"
+								tabindex={active ? 0 : -1}
+								disabled={splitBusy}
+								aria-label={splitBusy ? m.tool_split_working() : m.tool_split_request()}
+								onclick={onSplitRequest}><Scissors aria-hidden="true" /></Button
+							>{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content>
+						{splitBusy ? m.tool_split_working() : m.tool_split_request()}
+					</Tooltip.Content>
+				</Tooltip.Root>
+			</Tooltip.Provider>
+		{/if}
 		<Tooltip.Provider
 			><Tooltip.Root
 				><Tooltip.Trigger>
 					{#snippet child({ props })}<Button
 							{...props}
 							variant="ghost"
-							size="icon"
+							size="icon-lg"
 							tabindex={active ? 0 : -1}
 							aria-pressed={isTrayIcon}
 							aria-label={m.tool_tray_icon_set()}
@@ -240,7 +290,7 @@
 							{...props}
 							data-remove-action
 							variant="ghost"
-							size="icon"
+							size="icon-lg"
 							tabindex={active ? 0 : -1}
 							aria-label={m.tool_remove_label({ position: formattedPosition })}
 							onclick={onRemoveRequest}><Trash2 aria-hidden="true" /></Button
@@ -269,15 +319,51 @@
 					></canvas>
 				{/each}
 			</div>
-			<div class="flex flex-wrap justify-end gap-2">
-				<Button variant="outline" size="sm" onclick={onSplitDiscard}
-					>{m.tool_split_discard()}</Button
-				>
-				<Button size="sm" onclick={onSplitAccept}>{m.tool_split_accept()}</Button>
+			<div class="flex flex-wrap justify-end gap-1">
+				<Tooltip.Provider>
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							{#snippet child({ props })}<Button
+									{...props}
+									variant="outline"
+									size="icon-lg"
+									aria-label={m.tool_split_discard()}
+									onclick={onSplitDiscard}><X aria-hidden="true" /></Button
+								>{/snippet}
+						</Tooltip.Trigger>
+						<Tooltip.Content>{m.tool_split_discard()}</Tooltip.Content>
+					</Tooltip.Root>
+				</Tooltip.Provider>
+				<Tooltip.Provider>
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							{#snippet child({ props })}<Button
+									{...props}
+									size="icon-lg"
+									aria-label={m.tool_split_accept()}
+									onclick={onSplitAccept}><Check aria-hidden="true" /></Button
+								>{/snippet}
+						</Tooltip.Trigger>
+						<Tooltip.Content>{m.tool_split_accept()}</Tooltip.Content>
+					</Tooltip.Root>
+				</Tooltip.Provider>
 			</div>
 		</div>
 	{/if}
-	{#if undoable}<Button variant="outline" size="sm" onclick={onSplitUndo}
-			>{m.tool_split_undo()}</Button
-		>{/if}
+	{#if undoable}
+		<Tooltip.Provider>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}<Button
+							{...props}
+							variant="outline"
+							size="icon-lg"
+							aria-label={m.tool_split_undo()}
+							onclick={onSplitUndo}><Undo2 aria-hidden="true" /></Button
+						>{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content>{m.tool_split_undo()}</Tooltip.Content>
+			</Tooltip.Root>
+		</Tooltip.Provider>
+	{/if}
 </Card.Root>

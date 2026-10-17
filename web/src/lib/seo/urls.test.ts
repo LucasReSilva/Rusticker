@@ -17,7 +17,8 @@ const table = {
 	'/': { 'pt-BR': '/', en: '/en/', es: '/es/' },
 	'/como-usar': { 'pt-BR': '/como-usar', en: '/en/how-to-use', es: '/es/como-usar' },
 	'/sobre': { 'pt-BR': '/sobre', en: '/en/about', es: '/es/acerca-de' },
-	'/historico': { 'pt-BR': '/historico', en: '/en/history', es: '/es/historial' }
+	'/historico': { 'pt-BR': '/historico', en: '/en/history', es: '/es/historial' },
+	'/ampliar/': { 'pt-BR': '/ampliar/', en: '/en/upscaler/', es: '/es/escalar-imagen/' }
 } as const;
 
 type Page = keyof typeof table;

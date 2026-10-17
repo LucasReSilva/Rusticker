@@ -13,8 +13,10 @@ const workersDir = fileURLToPath(new URL('../../build/_app/immutable/workers/', 
 test('the built worker loads its wasm under the base path and detects', async ({ page }) => {
 	const workerFile = readdirSync(workersDir).find((name) => /^worker-.*\.js$/.test(name));
 	expect(workerFile, 'built detection worker').toBeDefined();
-	const wasmFiles = readdirSync(`${workersDir}/assets`).filter((name) => name.endsWith('.wasm'));
-	// One hashed binary, precacheable as a normal static asset.
+	const wasmFiles = readdirSync(`${workersDir}/assets`).filter((name) =>
+		/^rusticker_core_bg-[\w-]+\.wasm$/.test(name)
+	);
+	// Detection's binary is hashed and precacheable as a normal static asset.
 	expect(wasmFiles).toHaveLength(1);
 	expect(wasmFiles[0]).toMatch(/^rusticker_core_bg-[\w-]+\.wasm$/);
 

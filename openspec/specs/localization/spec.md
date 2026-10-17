@@ -15,12 +15,13 @@ The app SHALL support the locales `pt-BR`, `en`, and `es`, with `pt-BR` as the b
 ### Requirement: Localized URLs with translated slugs
 Pages in the base locale SHALL be served without a locale prefix. Pages in every other locale SHALL be served under a prefix equal to the locale code. Page slugs SHALL be translated per locale, as follows (paths are relative to the site's base path):
 
-| page       | pt-BR        | en               | es              |
-|------------|--------------|------------------|-----------------|
-| tool       | `/`          | `/en`            | `/es`           |
-| how to use | `/como-usar` | `/en/how-to-use` | `/es/como-usar` |
-| about      | `/sobre`     | `/en/about`      | `/es/acerca-de` |
-| history    | `/historico` | `/en/history`    | `/es/historial` |
+| page       | pt-BR                 | en                    | es                       |
+|------------|-----------------------|-----------------------|--------------------------|
+| tool       | `/`                   | `/en`                 | `/es`                    |
+| how to use | `/como-usar`          | `/en/how-to-use`      | `/es/como-usar`          |
+| about      | `/sobre`              | `/en/about`           | `/es/acerca-de`          |
+| history    | `/historico`          | `/en/history`         | `/es/historial`          |
+| upscaler   | `/ampliar`            | `/en/upscaler`        | `/es/escalar-imagen`     |
 
 Every link the app generates SHALL use the localized URL of its target page in the active locale.
 
@@ -39,6 +40,10 @@ Every link the app generates SHALL use the localized URL of its target page in t
 #### Scenario: Base locale how-to-use page
 - **WHEN** a user with a saved `pt-BR` preference opens `/como-usar`
 - **THEN** the how-to-use page is displayed in Brazilian Portuguese
+
+#### Scenario: Upscaler follows the active locale
+- **WHEN** a user follows the upscaler link or opens its URL in any supported locale
+- **THEN** the upscaler page is displayed at `/ampliar`, `/en/upscaler`, or `/es/escalar-imagen` in that locale
 
 #### Scenario: Untranslated slug under a prefix
 - **WHEN** a user opens `/en/sobre`, which uses the Portuguese slug under the English prefix

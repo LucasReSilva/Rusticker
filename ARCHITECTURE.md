@@ -81,6 +81,7 @@ labels, and bounding boxes remain unchanged. Partially transparent source RGB,
 transparent-background edges, and ambiguous or textured colors pass through
 unchanged. This is a targeted decontamination heuristic, not general foreground
 matting.
+
 1. **Background classification** (`color.rs`, `mask.rs`). Fully transparent
    pixels are excluded from the foreground mask. At tolerance zero, visible
    pixels match only when their RGB exactly equals the selected color. At
@@ -254,9 +255,58 @@ the [Web Workers API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Worke
 [transferable objects](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects),
 and [Comlink](https://github.com/GoogleChromeLabs/comlink).
 
+The editor also offers a separate static-file download for workflows that need
+PNG, WEBP, or JPEG images in a ZIP or TAR.GZ container. JPEG requires an
+explicit background color and composites transparent pixels before Canvas
+encoding. ZIP uses JSZip; TAR.GZ uses a local USTAR writer and the browser's
+Compression Streams API. Unsupported encoders or compression fail before a
+download, and this path does not change the WhatsApp pack defaults or the
+Telegram PNG/WEBP ZIP handoff.
+
+Printable PDF sheets use a separate local flow. The page preview supports A4
+and US Letter in either orientation, configurable margins and sticker spacing,
+automatic non-overlapping placement, pagination, and optional manual
+position/size edits. The PDF writer converts millimeters to points at the
+document boundary and embeds sticker color and alpha planes with PDF soft masks.
+Page geometry, layout, previews, and downloads stay in the browser; the PDF
+filename is locale-neutral.
+
 The worker's WASM file and other application resources are static site assets.
 The service worker can cache application files for offline use; this does not
 mean the application uploads user images.
+
+## Optional learned upscaling
+
+The dedicated upscaler keeps conventional high-quality resizing as its default.
+Selecting its experimental learned mode lazily loads the browser ONNX Runtime
+CPU/WASM assets in a separate module worker. The current candidate could not be
+executed by the evaluated Rust/WASM path because its graph failed shape
+analysis, so the interface discloses the browser CPU/WASM backend. This backend
+does not change the Rust sticker-detection core.
+
+Users provide an ONNX model file locally. The first supported graph has one
+dynamic RGB `float32` NCHW input normalized to `[0, 1]` and one RGB `float32`
+output at exactly 4× dimensions. The interface shows the selected file name and
+size as information only; there is no model-size eligibility threshold. The
+model is neither bundled nor downloaded, persisted, uploaded, or stored by the
+service worker. App-owned runtime assets may be cached for offline use.
+
+Inference processes sequential 64 × 64 tiles on a 48-pixel stride with 16-pixel
+overlap, discarding the outer 8 input pixels on internal tile edges. Alpha is
+resized separately and recombined with learned RGB. The x4 result is checked
+against the output side and pixel limits before large output allocation. A
+failure retains the source and last completed result. Learned output may invent
+detail, halos, or tile artifacts; quality measurements are advisory, and the
+conventional result remains available for comparison.
+
+The BrowserSnip anime 6B evaluation took 113.7 seconds for the first 512 × 512
+inference and 166.1 seconds for a repeated run; browser-attributed memory delta
+was about 2.8 GB. These are measurements of one candidate in one environment,
+not performance guarantees or availability thresholds. They motivate explicit
+opt-in, visible progress, and cancellation. See the [ONNX Runtime Web
+deployment guide](https://onnxruntime.ai/docs/tutorials/web/deploy.html) for
+runtime asset deployment concepts; the model measurements and graph-support
+findings above are project evaluation results.
 
 ## Errors and user-facing messages
 
@@ -283,6 +333,9 @@ no user-facing text.
 
 The detailed contract is in
 [`sticker-export`](openspec/specs/sticker-export/spec.md).
+The PDF sheet flow has its own contract in
+[`pdf-sticker-sheets`](openspec/changes/pdf-sticker-sheets/specs/pdf-sticker-sheets/spec.md)
+until the change is archived.
 
 ## Static app and tests
 
@@ -291,6 +344,11 @@ CSS with SVG and canvas players. It recommends CSS or static SVG for current
 state changes; any future Lottie use must lazy-load its player, bundle WASM and
 JSON assets locally, honor reduced motion, and retain an accessible text state.
 No Lottie runtime is included in the application.
+
+The [animated-media feasibility evaluation](docs/animated-media-evaluation.md)
+records the tested browser-local image and video codec paths, target sticker
+profiles, and unresolved device and encoding gates. It is a research report;
+the app continues to import and export static sticker images only.
 
 The SvelteKit app is built as a static site for GitHub Pages. The service worker
 supports offline use after application assets have been cached. The relevant
@@ -307,7 +365,7 @@ These sources explain the named model, API, or comparison technique. They do
 not independently validate project-specific thresholds or outcomes; those
 are established by the code, tests, and OpenSpec contracts.
 
-1. Alvy Ray Smith, [“Color Gamut Transform Pairs”](https://doi.org/10.1145/965139.807361), *ACM SIGGRAPH Computer Graphics*, 1978. Defines RGB/HSV transform pairs; cited for color-space context only.
+1. Alvy Ray Smith, [“Color Gamut Transform Pairs”](https://doi.org/10.1145/965139.807361), _ACM SIGGRAPH Computer Graphics_, 1978. Defines RGB/HSV transform pairs; cited for color-space context only.
 2. [`imageproc 0.25.1`: `morphology::open`](https://docs.rs/imageproc/0.25.1/imageproc/morphology/fn.open.html). Documents erosion followed by dilation; Rusticker supplies the 3 × 3 square via `Norm::LInf` and radius 1.
 3. [`imageproc 0.25.1`: `region_labelling::connected_components`](https://docs.rs/imageproc/0.25.1/imageproc/region_labelling/fn.connected_components.html). Documents connected-component labeling; Rusticker selects `Connectivity::Eight`.
 4. [`image 0.25.10`: `FilterType::Lanczos3`](https://docs.rs/image/0.25.10/image/imageops/enum.FilterType.html). Identifies the Lanczos window-3 sampling filter used by the framing code; premultiplication is implemented by Rusticker.
@@ -317,3 +375,4 @@ are established by the code, tests, and OpenSpec contracts.
 8. [Comlink](https://github.com/GoogleChromeLabs/comlink). Documents the proxy-based worker API used by the frontend.
 9. Min Bai and Raquel Urtasun, [“Deep Watershed Transform for Instance Segmentation”](https://arxiv.org/abs/1611.08303), arXiv:1611.08303 (2016). A comparison/future-work reference for watershed-based instance segmentation; Rusticker does not implement this method.
 10. Jizhizi Li, Jing Zhang, and Dacheng Tao, [“Deep Image Matting: A Comprehensive Survey”](https://arxiv.org/abs/2304.04672), arXiv:2304.04672 (2023). Surveys image-matting methods; Rusticker's local binary-mask average is not one of those learned matting methods.
+11. [ONNX Runtime Web: Deploy](https://onnxruntime.ai/docs/tutorials/web/deploy.html). Documents serving the browser runtime and its WebAssembly assets; it does not establish Rusticker-specific performance or model compatibility.

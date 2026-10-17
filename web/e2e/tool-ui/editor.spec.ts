@@ -1,5 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { savedLocale } from '../web-scaffold/fixtures';
+import {
+	assertEntries,
+	inspectImages,
+	readArchive,
+	stickerCenters
+} from '../whatsapp-export/helpers';
 
 test.use({ locale: 'pt-BR', storageState: savedLocale('pt-BR') });
 
@@ -20,6 +26,72 @@ async function syntheticPng(page: Page): Promise<Buffer> {
 		return canvas.toDataURL('image/png');
 	});
 	return Buffer.from(dataUrl.split(',')[1], 'base64');
+}
+
+/** A source crop whose framed RGBA retains the core's reviewed lobe mask. */
+async function splitSheetPng(page: Page): Promise<Buffer> {
+	const dataUrl = await page.evaluate(() => {
+		const canvas = document.createElement('canvas');
+		canvas.width = 600;
+		canvas.height = 600;
+		const context = canvas.getContext('2d')!;
+		const image = context.createImageData(canvas.width, canvas.height);
+		for (let offset = 0; offset < image.data.length; offset += 4) {
+			image.data.set([10, 180, 70, 255], offset);
+		}
+		const paint = (x: number, y: number, alpha = 255) => {
+			image.data.set([230, 30, 30, alpha], (y * canvas.width + x) * 4);
+		};
+		for (const centerX of [204, 276]) {
+			for (let y = 0; y < 480; y++) {
+				for (let x = 0; x < 480; x++) {
+					if ((x - centerX) ** 2 + (y - 240) ** 2 <= 90 ** 2) paint(x, y);
+				}
+			}
+		}
+		for (let y = 239; y < 242; y++) {
+			for (let x = 204; x <= 276; x++) paint(x, y);
+		}
+		// Low-alpha supports preserve the detected crop dimensions and frame mapping.
+		for (const [x, y, width, height] of [
+			[0, 239, 205, 3],
+			[276, 239, 204, 3],
+			[203, 0, 3, 241],
+			[203, 240, 3, 240]
+		]) {
+			for (let row = y; row < y + height; row++) {
+				for (let column = x; column < x + width; column++) paint(column, row, 1);
+			}
+		}
+		for (const [x, y] of [
+			[500, 20],
+			[500, 120],
+			[500, 220],
+			[500, 320],
+			[500, 420]
+		]) {
+			for (let row = y; row < y + 80; row++) {
+				for (let column = x; column < x + 80; column++) paint(column, row);
+			}
+		}
+		for (let y = 50; y < 70; y++) {
+			for (let x = 430; x < 450; x++) paint(x, y);
+		}
+		context.putImageData(image, 0, 0);
+		return canvas.toDataURL('image/png');
+	});
+	return Buffer.from(dataUrl.split(',')[1], 'base64');
+}
+
+async function loadSplitSheet(page: Page): Promise<void> {
+	await page.goto('');
+	await page.locator('input[type=file]').setInputFiles({
+		name: 'split-sheet.png',
+		mimeType: 'image/png',
+		buffer: await splitSheetPng(page)
+	});
+	await expect(page.locator('[data-sticker-card]')).toHaveCount(6);
+	await expect(page.locator('[data-detection-box]')).toHaveCount(6);
 }
 
 async function load(page: Page): Promise<void> {
@@ -111,9 +183,157 @@ test('zoomed source inspection and crop adjustment work at mobile width', async 
 	await expect.poll(async () => Number(await box.getAttribute('data-x'))).toBeGreaterThan(41);
 	const finalX = await box.getAttribute('data-x');
 	await dialog.getByRole('button', { name: 'Aplicar recorte' }).click();
+	await expect(dialog).not.toBeVisible();
 	await expect(page.locator('[data-detection-box]').first()).toHaveAttribute('x', finalX!);
 	const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
 	expect(overflow).toBe(false);
+});
+
+test('manual source candidates stay synchronized through bounds edits, undo, and export', async ({
+	page
+}) => {
+	await load(page);
+	const inspector = page.locator('[data-source-inspector]');
+	const overlay = inspector.locator('svg');
+	await page.getByRole('button', { name: 'Adicionar candidata a figurinha' }).click();
+	await overlay.scrollIntoViewIfNeeded();
+	const area = await overlay.boundingBox();
+	expect(area).not.toBeNull();
+	await page.mouse.move(area!.x + area!.width * 0.7, area!.y + area!.height * 0.05);
+	await page.mouse.down();
+	await page.mouse.move(area!.x + area!.width * 0.9, area!.y + area!.height * 0.35);
+	await expect(overlay.locator('[data-draft-box]')).toBeVisible();
+	await page.mouse.up();
+	const cards = page.locator('[data-sticker-card]');
+	await expect(cards).toHaveCount(7);
+	const candidateBox = overlay.locator('[data-candidate-box="6"]');
+	const beforeX = Number(await candidateBox.locator('[data-detection-box]').getAttribute('x'));
+	await candidateBox.focus();
+	await page.keyboard.press('ArrowRight');
+	await expect
+		.poll(async () => Number(await candidateBox.locator('[data-detection-box]').getAttribute('x')))
+		.toBeGreaterThan(beforeX);
+	await cards.last().getByRole('button', { name: 'Remover figurinha 7' }).click();
+	await page.getByRole('button', { name: 'Remover', exact: true }).click();
+	await expect(cards).toHaveCount(6);
+	await page
+		.getByRole('button', { name: 'Desfazer a última edição do espaço de trabalho' })
+		.click();
+	await expect(cards).toHaveCount(7);
+	await expect(overlay.locator('[data-detection-box]')).toHaveCount(7);
+	const download = page.waitForEvent('download');
+	await page.getByRole('button', { name: 'Baixar pacote (.zip)' }).click();
+	expect((await download).suggestedFilename()).toBe('rusticker-pack-1.zip');
+});
+
+test('source workspace adds and edits candidates, reviews real splits, undoes and exports', async ({
+	page
+}) => {
+	await loadSplitSheet(page);
+	const inspector = page.locator('[data-source-inspector]');
+	const overlay = inspector.locator('svg');
+	const splitIndex = await overlay.locator('[data-candidate-box]').evaluateAll((groups) =>
+		groups.findIndex((group) => {
+			const box = group.querySelector('[data-detection-box]');
+			return Number(box?.getAttribute('width')) === 480;
+		})
+	);
+	expect(splitIndex).toBeGreaterThanOrEqual(0);
+	await page.getByRole('button', { name: /Avan/ }).click();
+	await page.getByRole('button', { name: /Adicionar candidata/ }).click();
+	const sourceArea = await overlay.boundingBox();
+	expect(sourceArea).not.toBeNull();
+	const point = (x: number, y: number) => ({
+		x: sourceArea!.x + (x / 600) * sourceArea!.width,
+		y: sourceArea!.y + (y / 600) * sourceArea!.height
+	});
+	const start = point(425, 45);
+	const end = point(455, 75);
+	await page.mouse.move(start.x, start.y);
+	await page.mouse.down();
+	await page.mouse.move(end.x, end.y);
+	await expect(overlay.locator('[data-draft-box]')).toBeVisible();
+	await page.mouse.up();
+	const cards = page.locator('[data-sticker-card]');
+	await expect(cards).toHaveCount(7);
+	const addedBox = overlay.locator('[data-candidate-box="6"]');
+	const beforeX = Number(await addedBox.locator('[data-detection-box]').getAttribute('x'));
+	await addedBox.focus();
+	await page.keyboard.press('ArrowRight');
+	await expect
+		.poll(async () => Number(await addedBox.locator('[data-detection-box]').getAttribute('x')))
+		.toBeGreaterThan(beforeX);
+
+	const splitCard = cards.nth(splitIndex);
+	const originalId = await splitCard.getAttribute('data-sticker-card');
+	await splitCard.getByRole('button', { name: /Sugerir/ }).click();
+	await expect(splitCard.locator('[data-split-preview] canvas')).toHaveCount(2);
+	await expect(page.locator('[data-split-proposal-box]')).toHaveCount(2);
+	await splitCard.getByRole('button', { name: /Descartar/ }).click();
+	await expect(splitCard.locator('[data-split-preview]')).toHaveCount(0);
+	await expect(cards).toHaveCount(7);
+	await expect(page.locator('[data-split-proposal-box]')).toHaveCount(0);
+
+	await splitCard.getByRole('button', { name: /Sugerir/ }).click();
+	await expect(splitCard.locator('[data-split-preview] canvas')).toHaveCount(2);
+	const reviewedBoxes = await page
+		.locator('[data-split-proposal-box]')
+		.evaluateAll((boxes) =>
+			boxes.map((box) => ['x', 'y', 'width', 'height'].map((name) => box.getAttribute(name)))
+		);
+	await splitCard.getByRole('button', { name: /Aceitar/ }).click();
+	await expect(cards).toHaveCount(8);
+	await expect(page.locator('[data-split-proposal-box]')).toHaveCount(0);
+	const acceptedBoxes = await Promise.all(
+		[splitIndex, splitIndex + 1].map((index) =>
+			overlay
+				.locator(`[data-candidate-box="${index}"] [data-detection-box]`)
+				.evaluate((box) => ['x', 'y', 'width', 'height'].map((name) => box.getAttribute(name)))
+		)
+	);
+	expect(acceptedBoxes).toEqual(reviewedBoxes);
+	await cards
+		.nth(splitIndex)
+		.getByRole('button', { name: /Desfazer separ/ })
+		.click();
+	await expect(cards).toHaveCount(7);
+	await expect(cards.nth(splitIndex)).toHaveAttribute('data-sticker-card', originalId!);
+
+	await cards
+		.nth(splitIndex)
+		.getByRole('button', { name: /Sugerir/ })
+		.click();
+	await expect(cards.nth(splitIndex).locator('[data-split-preview] canvas')).toHaveCount(2);
+	await cards
+		.nth(splitIndex)
+		.getByRole('button', { name: /Aceitar/ })
+		.click();
+	await expect(cards).toHaveCount(8);
+	const expectedIds = await cards.evaluateAll((items) =>
+		items.map((item) => item.getAttribute('data-sticker-card'))
+	);
+	await cards.last().locator('[data-remove-action]').click();
+	await page.getByRole('button', { name: 'Remover', exact: true }).click();
+	await expect(cards).toHaveCount(7);
+	await page.getByRole('button', { name: /Desfazer a última edição/ }).click();
+	await expect(cards).toHaveCount(8);
+	expect(
+		await cards.evaluateAll((items) => items.map((item) => item.getAttribute('data-sticker-card')))
+	).toEqual(expectedIds);
+
+	const previews = await stickerCenters(page);
+	const pending = page.waitForEvent('download');
+	await page.getByRole('button', { name: 'Baixar pacote (.zip)' }).click();
+	const { zip } = await readArchive(await pending);
+	assertEntries(zip, 8);
+	const exported = await inspectImages(page, zip);
+	for (const index of [splitIndex, splitIndex + 1]) {
+		expect(
+			exported.find(
+				(image) => image.name === `png/sticker_${String(index + 1).padStart(2, '0')}.png`
+			)!.center
+		).toEqual(previews[index]);
+	}
 });
 
 test('click chooser, keyboard eyedropper and debounced tolerance use the real worker locally', async ({
