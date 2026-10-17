@@ -76,6 +76,22 @@ it('keeps boxes aligned while zooming and pans the focused image with arrow keys
 	expect(area).toHaveAttribute('data-zoom', '1');
 });
 
+it('pans with a pointer when the environment does not support pointer capture', async () => {
+	render(Preview, { ...props, onPick: vi.fn() });
+	const area = screen.getByRole('region', { name: m.tool_inspector_area() });
+	Object.defineProperties(area, {
+		clientWidth: { value: 200 },
+		clientHeight: { value: 100 },
+		scrollWidth: { value: 400 },
+		scrollHeight: { value: 200 }
+	});
+	area.scrollLeft = 0;
+	await fireEvent.pointerDown(area, { button: 0, pointerId: 1, clientX: 150, clientY: 50 });
+	await fireEvent.pointerMove(area, { pointerId: 1, clientX: 100, clientY: 50 });
+	await fireEvent.pointerUp(area, { pointerId: 1 });
+	expect(area.scrollLeft).toBe(50);
+});
+
 it('draws a new source box and commits integer bounds', async () => {
 	const onAddBounds = vi.fn();
 	const { container } = render(Preview, { ...props, onPick: vi.fn(), onAddBounds });
@@ -98,6 +114,7 @@ it('draws a new source box and commits integer bounds', async () => {
 		'true'
 	);
 	await fireEvent.pointerDown(overlay, { button: 0, pointerId: 1, clientX: 25, clientY: 25 });
+	expect(overlay.setPointerCapture).toHaveBeenCalledWith(1);
 	expect(container.querySelector('[data-draft-box]')).toBeInTheDocument();
 	await fireEvent.pointerMove(overlay, { pointerId: 1, clientX: 75, clientY: 75 });
 	await fireEvent.pointerUp(overlay, { pointerId: 1, clientX: 75, clientY: 75 });

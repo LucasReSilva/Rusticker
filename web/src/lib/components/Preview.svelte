@@ -91,6 +91,10 @@
 		if (event.key === 'ArrowUp') viewport.scrollTop -= step;
 		if (event.key === 'ArrowDown') viewport.scrollTop += step;
 	}
+	function capturePointer(element: Element, pointerId: number) {
+		const target = element as Element & { setPointerCapture?: (pointerId: number) => void };
+		target.setPointerCapture?.(pointerId);
+	}
 	function keyboardPan(node: HTMLDivElement) {
 		function start(event: PointerEvent) {
 			if (
@@ -102,7 +106,7 @@
 			)
 				return;
 			panDrag = { x: event.clientX, y: event.clientY, left: node.scrollLeft, top: node.scrollTop };
-			node.setPointerCapture(event.pointerId);
+			capturePointer(node, event.pointerId);
 		}
 		function move(event: PointerEvent) {
 			if (!panDrag) return;
@@ -179,7 +183,7 @@
 		event.stopPropagation();
 		drawStart = sourcePoint(event);
 		draftBox = { x: drawStart.x, y: drawStart.y, width: 0, height: 0 };
-		overlay.setPointerCapture(event.pointerId);
+		capturePointer(overlay, event.pointerId);
 	}
 	function startBoxDrag(index: number, event: PointerEvent, resize: boolean) {
 		if (busy || drawMode || event.button !== 0) return;
@@ -189,7 +193,7 @@
 		event.stopPropagation();
 		boxDrag = { index, start: sourcePoint(event), original: { ...original }, resize };
 		dragBoxDraft = { index, bounds: { ...original } };
-		overlay.setPointerCapture(event.pointerId);
+		capturePointer(overlay, event.pointerId);
 	}
 	function moveWorkspacePointer(event: PointerEvent) {
 		if (drawStart) {
