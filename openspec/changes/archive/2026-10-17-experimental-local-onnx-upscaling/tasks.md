@@ -14,4 +14,4 @@
 
 - [x] 3.1 Ensure app-owned ONNX CPU/WASM assets are included in the offline cache while user-selected model and image bytes are excluded; verify the service-worker offline upscaler E2E test and base-path deployment test.
 - [x] 3.2 Run the upscaler unit tests, web checks, design lint, production build, and relevant E2E tests; verify `bun run test`, `bun run check`, `bun run lint:design`, and `bun run build` pass from `web/`.
-- [ ] 3.3 Update `AGENTS.md`/architecture or user documentation only where needed to explain model compatibility, CPU/WASM backend, local model selection, known latency/memory, and advisory quality limitations; verify documentation links and English repository text.
+- [x] 3.3 Update `AGENTS.md`/architecture documentation to explain model compatibility, CPU/WASM backend, local model selection, known latency/memory, and advisory quality limitations; verify documentation links and English repository text.

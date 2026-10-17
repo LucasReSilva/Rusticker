@@ -129,6 +129,12 @@ then set `Done` and remove only the exact completed lock ref. Do not attach or
 upload user images, sticker pixels, generated private archives, credentials, or
 other user data to GitHub.
 
+After an issue is completed and its implementation is merged, recheck claim
+ownership and post a final comment on the issue summarizing the delivered
+behavior. Base the summary on the applicable OpenSpec artifacts and the code
+that was merged; mention material validation results and known limitations.
+Post this completion summary before releasing the exact claim ref.
+
 A claim may be reclaimed only when the issue remains open, has no active pull
 request, and GitHub's server-timestamped push-event history for the lock and
 feature refs plus pull-request activity shows no progress for more than 12
