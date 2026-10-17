@@ -1,0 +1,15 @@
+[package]
+name = "issue-120-onnx-evaluation"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+name = "onnx_eval_lib"
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[workspace]
+
+[dependencies]
+tract-onnx = { version = "=0.23.8", default-features = false, features = ["getrandom-js"] }

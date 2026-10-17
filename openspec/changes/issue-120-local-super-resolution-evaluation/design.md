@@ -2,7 +2,7 @@
 
 ### Candidate path
 
-The primary candidate is Qualcomm's pre-exported Real-ESRGAN-x4plus ONNX model, available as a fixed-revision public artifact (`f75f074d9e6b1adfb6da9e2afce7308a986ec88d`). Qualcomm's model card reports BSD-3-Clause, input resolution 128×128, 16.7M parameters, 63.9 MB float weights, and 16.7 MB w8a8 weights; the linked ONNX export reports ONNX Runtime 1.27.1 as its validated runtime. The source architecture and weights originate in the Real-ESRGAN project. The float export already exceeds this evaluation's 20 MiB compressed model budget by a wide margin; the quantized export remains a candidate but its graph bytes, hash, quantization operators, and redistribution notices have not been verified locally. Qualcomm's published timing and memory figures are for Qualcomm accelerators and do not predict browser CPU/WASM performance.
+The primary candidate is Qualcomm's pre-exported Real-ESRGAN-x4plus ONNX model, pinned at public revision `f75f074d9e6b1adfb6da9e2afce7308a986ec88d`. The model card states BSD-3-Clause, input resolution 128 x 128, 16.7M parameters, 63.9 MB float weights, and 16.7 MB w8a8 weights; the linked float ONNX export lists ONNX Runtime 1.27.1 as its validated runtime. The source architecture and weights originate in the Real-ESRGAN project. The pinned file's LFS metadata reports 67,123,162 bytes and SHA-256 `4e1ae0e47f80d9f4aa2a317c24fde2cb3e49a5381eed6e1d509b4001a4b97ad2`; the independently downloaded bytes matched both values. Its 63.98 MiB float artifact fails the 20 MiB model gate. The model card's 16.7 MB w8a8 entry is not present as an ONNX file at this pinned revision and has not been tested. Qualcomm's published timing and memory figures are for Qualcomm accelerators and do not predict browser CPU/WASM performance.
 
 An additional research lead is Real-ESRGAN x4plus anime 6B, which the upstream project identifies for anime illustrations. A third-party browser ONNX conversion claims an opset 17 graph and 17.11 MB FP32 size, but it is not the first candidate because it is not an upstream export and its conversion has not been independently reproduced.
 
@@ -32,23 +32,18 @@ If and only if the Rust/WASM graph fails compatibility, measure the same exact g
 
 ### Current decision
 
-**Conditional no-go for production integration; evaluation is blocked before runtime testing.** Qualcomm's public model card identifies a licensed float and quantized ONNX export at a fixed artifact revision. The float export exceeds the predeclared model budget; the smaller quantized export needs byte-level and graph inspection. This environment could not acquire the graph: `curl.exe -I https://huggingface.co/qualcomm/Real-ESRGAN-x4plus/resolve/f75f074d9e6b1adfb6da9e2afce7308a986ec88d/Real-ESRGAN-x4plus.onnx` failed before HTTP transfer with Schannel `SEC_E_NO_CREDENTIALS`. Therefore no graph checksum/operator inventory or Rust/WASM inference was attempted, and no technical incompatibility is inferred. Synthetic quality comparisons, alpha/seam checks, and desktop/low-resource browser measurements are also unrun. Resume with the pinned quantized artifact through an approved acquisition route; record all missing measurements before a production decision.
+**No-go for production integration; runtime compatibility probe passed, product gates did not.** The pinned FP32 graph exceeds the model-size budget. `tract` 0.23.8 parsed, optimized, and ran its exact bytes natively and in a `wasm32-unknown-unknown` build invoked under Node's WebAssembly runtime. The graph is opset 17 with one `[1,3,128,128]` input, 1,094 standard-domain nodes, and no custom domains: Conv (351), LeakyRelu (279), Concat (276), Add (93), Mul (92), Resize (2), and Clip (1). Both runs returned a `[1,3,512,512]` F32 output for a zero tensor. Native inference took 11,334 ms after load/optimization; the WASM call took 87,621 ms including graph load and optimization. The measured generated WASM was 86,571,967 bytes raw, 65,740,805 bytes gzip level 9, and 64,663,045 bytes Brotli quality 5, with the model embedded. These are compatibility probes, not image-quality results or comparable cold/warm performance measurements. Node is a WASM host, not the app's browser worker. The temporary artifact was downloaded with a TLS-validating Node HTTPS client after the Git-for-Windows curl client failed with Schannel `SEC_E_NO_CREDENTIALS`; the hash matched the model repository's LFS metadata. Synthetic fixture comparisons, alpha/seam checks, browser worker execution, warm/cold browser timing, and low-resource device memory/latency remain unmeasured. Do not add a production dependency. Revisit only with a smaller licensed export and the missing visual/browser measurements.
 
 ### Reproduction record
 
-At this stage the recorded checks are source inspection only. Qualcomm's model card is pinned to artifact revision `f75f074d9e6b1adfb6da9e2afce7308a986ec88d`; the required binary hash must be calculated after acquisition. The following commands define the next executable checks once the graph is available locally:
+The checked-in evaluation harness records the acquisition, hash verification, native run, wasm32 build, and Node WASM invocation. See `tools/issue-120-onnx-evaluation/README.md` for commands. On the evaluation host, Cargo needed a temporary uncommitted resolver stub for the disabled optional `tract-transformers` dependency because crates.io was unreachable and the local index lacked its metadata; that stub was removed and was not used to execute the graph. The current harness uses a zero tensor only; quality and device measurements require additional generated fixture and browser harness work.
 
-```text
-sha256sum model.onnx
-python tools/list_onnx_operators.py model.onnx
-cargo run --release -p onnx-evaluation -- --model model.onnx --fixtures generated-fixtures/
-```
-
-These are evaluation placeholders, not commands validated by this repository. A future report must replace them with checked-in, runnable harness commands and capture runtime/toolchain/device versions.
+Model acquisition, operator inventory, and `tract` execution commands have been validated in the checked-in evaluation harness. Fixture generation, interpolation comparison, browser-worker invocation, warm inference, and target-device memory sampling remain future harness tasks.
 
 ### Sources
 
 - Qualcomm Real-ESRGAN-x4plus model card, fixed revision, downloadable ONNX variants, license, model dimensions, sizes, and Qualcomm-device measurements: https://huggingface.co/qualcomm/Real-ESRGAN-x4plus/tree/f75f074d9e6b1adfb6da9e2afce7308a986ec88d
+- Qualcomm model repository file metadata, including the pinned ONNX LFS SHA-256 and byte length: https://huggingface.co/api/models/qualcomm/Real-ESRGAN-x4plus/tree/f75f074d9e6b1adfb6da9e2afce7308a986ec88d?recursive=true&expand=true
 - Real-ESRGAN upstream repository, source architecture, anime model, and repository license: https://github.com/xinntao/Real-ESRGAN
 - SkillSafe AI Real-ESRGAN anime 6B browser ONNX model card (third-party lead only; not independently verified): https://huggingface.co/skillsafe-ai/realesrgan-x4plus-anime-6b
 - ONNX Runtime Web execution providers and WASM operator support: https://onnxruntime.ai/docs/tutorials/web/
