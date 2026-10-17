@@ -81,6 +81,7 @@ labels, and bounding boxes remain unchanged. Partially transparent source RGB,
 transparent-background edges, and ambiguous or textured colors pass through
 unchanged. This is a targeted decontamination heuristic, not general foreground
 matting.
+
 1. **Background classification** (`color.rs`, `mask.rs`). Fully transparent
    pixels are excluded from the foreground mask. At tolerance zero, visible
    pixels match only when their RGB exactly equals the selected color. At
@@ -254,6 +255,14 @@ the [Web Workers API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Worke
 [transferable objects](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects),
 and [Comlink](https://github.com/GoogleChromeLabs/comlink).
 
+The editor also offers a separate static-file download for workflows that need
+PNG, WEBP, or JPEG images in a ZIP or TAR.GZ container. JPEG requires an
+explicit background color and composites transparent pixels before Canvas
+encoding. ZIP uses JSZip; TAR.GZ uses a local USTAR writer and the browser's
+Compression Streams API. Unsupported encoders or compression fail before a
+download, and this path does not change the WhatsApp pack defaults or the
+Telegram PNG/WEBP ZIP handoff.
+
 The worker's WASM file and other application resources are static site assets.
 The service worker can cache application files for offline use; this does not
 mean the application uploads user images.
@@ -307,7 +316,7 @@ These sources explain the named model, API, or comparison technique. They do
 not independently validate project-specific thresholds or outcomes; those
 are established by the code, tests, and OpenSpec contracts.
 
-1. Alvy Ray Smith, [“Color Gamut Transform Pairs”](https://doi.org/10.1145/965139.807361), *ACM SIGGRAPH Computer Graphics*, 1978. Defines RGB/HSV transform pairs; cited for color-space context only.
+1. Alvy Ray Smith, [“Color Gamut Transform Pairs”](https://doi.org/10.1145/965139.807361), _ACM SIGGRAPH Computer Graphics_, 1978. Defines RGB/HSV transform pairs; cited for color-space context only.
 2. [`imageproc 0.25.1`: `morphology::open`](https://docs.rs/imageproc/0.25.1/imageproc/morphology/fn.open.html). Documents erosion followed by dilation; Rusticker supplies the 3 × 3 square via `Norm::LInf` and radius 1.
 3. [`imageproc 0.25.1`: `region_labelling::connected_components`](https://docs.rs/imageproc/0.25.1/imageproc/region_labelling/fn.connected_components.html). Documents connected-component labeling; Rusticker selects `Connectivity::Eight`.
 4. [`image 0.25.10`: `FilterType::Lanczos3`](https://docs.rs/image/0.25.10/image/imageops/enum.FilterType.html). Identifies the Lanczos window-3 sampling filter used by the framing code; premultiplication is implemented by Rusticker.

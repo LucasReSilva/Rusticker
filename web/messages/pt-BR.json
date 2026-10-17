@@ -333,5 +333,18 @@
 	"telegram_export_instructions": "Este ZIP contém apenas arquivos de imagem; não é um conjunto de figurinhas do Telegram. Extraia os arquivos e adicione-os no editor de figurinhas do Telegram ou use @Stickers para criar um conjunto.",
 	"telegram_export_success": "{count} arquivos estáticos preparados para o Telegram.",
 	"telegram_export_webp_unsupported": "Este navegador não consegue criar arquivos WEBP transparentes. Escolha PNG ou tente outro navegador.",
-	"telegram_export_failed": "Não foi possível preparar os arquivos do Telegram. Tente de novo."
+	"telegram_export_failed": "Não foi possível preparar os arquivos do Telegram. Tente de novo.",
+	"static_export_heading": "Arquivos estáticos adicionais de figurinhas",
+	"static_export_image_format_label": "Formato das imagens estáticas",
+	"static_export_png": "PNG",
+	"static_export_webp": "WEBP",
+	"static_export_jpeg": "JPEG",
+	"static_export_archive_format_label": "Formato do arquivo compactado",
+	"static_export_zip": "ZIP",
+	"static_export_tar_gz": "TAR.GZ",
+	"static_export_background_label": "Cor de fundo do JPEG",
+	"static_export_button": "Baixar arquivos estáticos de figurinhas",
+	"static_export_success": "{count} arquivos estáticos de figurinhas preparados.",
+	"static_export_jpeg_background_required": "Escolha uma cor de fundo antes de exportar arquivos JPEG.",
+	"static_export_failed": "Não foi possível preparar os arquivos estáticos. Tente novamente."
 }

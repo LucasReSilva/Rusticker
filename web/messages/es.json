@@ -333,5 +333,18 @@
 	"telegram_export_instructions": "Este ZIP solo contiene archivos de imagen; no es un conjunto de stickers de Telegram. Extrae los archivos y añádelos en el editor de stickers de Telegram o usa @Stickers para crear un conjunto.",
 	"telegram_export_success": "Se prepararon {count} archivos estáticos para Telegram.",
 	"telegram_export_webp_unsupported": "Este navegador no puede crear archivos WEBP transparentes. Elige PNG o prueba otro navegador.",
-	"telegram_export_failed": "No se pudieron preparar los archivos de Telegram. Inténtalo de nuevo."
+	"telegram_export_failed": "No se pudieron preparar los archivos de Telegram. Inténtalo de nuevo.",
+	"static_export_heading": "Archivos estáticos adicionales de stickers",
+	"static_export_image_format_label": "Formato de imagen estática",
+	"static_export_png": "PNG",
+	"static_export_webp": "WEBP",
+	"static_export_jpeg": "JPEG",
+	"static_export_archive_format_label": "Formato del archivo comprimido",
+	"static_export_zip": "ZIP",
+	"static_export_tar_gz": "TAR.GZ",
+	"static_export_background_label": "Color de fondo de JPEG",
+	"static_export_button": "Descargar archivos estáticos de stickers",
+	"static_export_success": "Se prepararon {count} archivos estáticos de stickers.",
+	"static_export_jpeg_background_required": "Elige un color de fondo antes de exportar archivos JPEG.",
+	"static_export_failed": "No se pudieron preparar los archivos estáticos. Inténtalo de nuevo."
 }
