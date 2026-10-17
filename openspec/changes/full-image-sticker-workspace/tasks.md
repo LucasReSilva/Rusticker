@@ -15,7 +15,9 @@
 
 ## 3. Integration and validation
 
-- [ ] 3.1 Add an end-to-end browser flow that adds a missed candidate, adjusts it, reviews and accepts a split, removes a candidate, undoes edits, and verifies preview and exported sticker data stay synchronized.
-- [ ] 3.2 Run focused unit/component tests, `bun run check`, `bun run lint`, `bun run lint:design`, `bun run i18n:check`, `bun run test`, `bun run test:e2e`, and strict OpenSpec validation.
+- [x] 3.1 Add an end-to-end browser flow that adds a missed candidate, adjusts it, reviews and accepts a split, removes a candidate, undoes edits, and verifies preview and exported sticker data stay synchronized.
+- [x] 3.2 Run focused unit/component tests, `bun run check`, `bun run lint`, `bun run lint:design`, `bun run i18n:check`, `bun run test`, `bun run test:e2e`, and strict OpenSpec validation.
 
-The production browser test covers manual add, keyboard movement, removal, undo, source-box synchronization, and export. Split review and acceptance are covered at the editor-state boundary with the exact 512×512 lobe mask accepted by the Rust core. The synthetic source-image split flow did not produce a core proposal after source detection and framing, so task 3.1 remains open pending an end-to-end fixture that preserves the accepted core mask.
+The production browser test uploads a synthetic source sheet with a two-lobe candidate and low-alpha support pixels that preserve its 480×480 source crop through detection and framing. The real worker and Rust/WASM split proposer return two candidates from that source-backed crop. The test reviews and discards a proposal, requests and accepts it, checks source-box and preview synchronization, undoes and repeats the split, removes and restores the manually added candidate, then verifies the exported pack contains all eight expected stickers and that the two split exports match their previews. The support pixels are fixture-only and do not change the visible artwork.
+
+Validation completed: `bun run check`, `bun run lint`, design lint, i18n check, full browser E2E (98 passed, 1 skipped), focused source-workspace E2E, and strict OpenSpec validation passed. The default full Vitest run had one pre-existing 5-second timeout under parallel load; the full suite rerun with a 15-second per-test timeout passed (505 passed, 2 skipped), and the timed-out test also passed alone. Rust/WASM source was unchanged.
