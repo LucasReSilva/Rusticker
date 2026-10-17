@@ -22,12 +22,21 @@ const candidates = {
     bytes: 17_939_975,
     sha256: "9a029dae374b2cd4c3eb2dbbed857e22e6d785687c767aa12828e7356b9fb378",
   },
+  browserSnipAnime6b: {
+    revision: "8e7094416ad91ec7477e968d348cd78742e20dc6",
+    repository: "ningtoba/Browsersnip-Upscale",
+    file: "public/models/realesrgan-x4plus-anime.onnx",
+    bytes: 18_371_783,
+    sha256: "153c74993748fba7ce112ab749d329effb15892a14c1992b76082c92bc4d11ef",
+    url: "https://raw.githubusercontent.com/ningtoba/Browsersnip-Upscale/8e7094416ad91ec7477e968d348cd78742e20dc6/public/models/realesrgan-x4plus-anime.onnx",
+  },
 };
 const name = process.argv[2] ?? "x4plus";
 const candidate = candidates[name];
 if (!candidate) throw new Error(`Unknown candidate: ${name}`);
 const outputPath = path.join(os.tmpdir(), `rusticker-issue120-${name}.onnx`);
-const url = `https://huggingface.co/${candidate.repository}/resolve/${candidate.revision}/${candidate.file}`;
+const url = candidate.url
+  ?? `https://huggingface.co/${candidate.repository}/resolve/${candidate.revision}/${candidate.file}`;
 
 async function main() {
   const response = await fetch(url);

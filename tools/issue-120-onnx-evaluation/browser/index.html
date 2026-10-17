@@ -1,0 +1,19 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Issue 120 browser WASM evaluation</title>
+<pre id="result">pending</pre>
+<script type="module">
+  const result = document.querySelector('#result');
+  const worker = new Worker('./worker.js', { type: 'module' });
+  worker.onmessage = ({ data }) => {
+    result.textContent = JSON.stringify(data);
+    document.title = data.status;
+    worker.terminate();
+  };
+  worker.onerror = (event) => {
+    result.textContent = JSON.stringify({ status: 'error', message: event.message });
+    document.title = 'error';
+    worker.terminate();
+  };
+  worker.postMessage({ wasm: './onnx_eval_lib.wasm' });
+</script>
