@@ -297,7 +297,7 @@
 </script>
 
 <section aria-busy={busy} class="flex min-w-0 flex-col gap-3">
-	<div class="flex items-center justify-between gap-2">
+	<div class="flex flex-wrap items-center justify-between gap-2">
 		<h2 class="font-display text-xl font-semibold">{m.tool_preview_heading()}</h2>
 		<div class="flex flex-wrap items-center gap-1">
 			<Button
