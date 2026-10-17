@@ -51,7 +51,25 @@ async function horizontalOverflowDiagnostics(page: Page): Promise<string> {
 						scrollWidth: element.scrollWidth,
 						clientWidth: element.clientWidth,
 						overflowX: getComputedStyle(element).overflowX,
-						position: getComputedStyle(element).position
+						position: getComputedStyle(element).position,
+						parents: Array.from({ length: 4 }, (_, index) => {
+							let parent = element.parentElement;
+							for (let depth = 0; depth < index && parent; depth++) {
+								parent = parent.parentElement;
+							}
+							if (!parent) return null;
+							const parentRect = parent.getBoundingClientRect();
+							return {
+								tag: parent.tagName.toLowerCase(),
+								className: typeof parent.className === 'string' ? parent.className : '',
+								left: Math.round(parentRect.left * 100) / 100,
+								right: Math.round(parentRect.right * 100) / 100,
+								width: Math.round(parentRect.width * 100) / 100,
+								scrollWidth: parent.scrollWidth,
+								clientWidth: parent.clientWidth,
+								overflowX: getComputedStyle(parent).overflowX
+							};
+						})
 					};
 				})
 				.filter((element) => element.right > viewport + 1)
