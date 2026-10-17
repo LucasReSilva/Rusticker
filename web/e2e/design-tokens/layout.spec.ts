@@ -10,3 +10,37 @@ for (const route of ['', 'en/', 'es/']) {
 		);
 	});
 }
+
+const publicPages = [
+	'',
+	'como-usar',
+	'sobre',
+	'historico',
+	'en/',
+	'en/how-to-use',
+	'en/about',
+	'en/history',
+	'es/',
+	'es/como-usar',
+	'es/acerca-de',
+	'es/historial'
+];
+
+for (const route of publicPages) {
+	test(`public page content fits 375px in both themes: ${route || 'pt-BR tool'}`, async ({
+		page
+	}) => {
+		await page.setViewportSize({ width: 375, height: 812 });
+		await page.goto(route);
+		for (const theme of ['light', 'dark']) {
+			await page.evaluate((value) => {
+				document.documentElement.classList.toggle('light', value === 'light');
+				document.documentElement.classList.toggle('dark', value === 'dark');
+			}, theme);
+			expect(
+				await page.evaluate(() => document.documentElement.scrollWidth),
+				`${route || 'pt-BR tool'} should not overflow in ${theme} theme`
+			).toBeLessThanOrEqual(375);
+		}
+	});
+}

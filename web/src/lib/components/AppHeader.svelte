@@ -15,14 +15,16 @@
 	const routeIds: Record<string, PageId> = {
 		'/how-to-use': 'howToUse',
 		'/about': 'about',
-		'/history': 'history'
+		'/history': 'history',
+		'/upscaler': 'upscaler'
 	};
 	const active = $derived(page.route.id ? routeIds[page.route.id] : undefined);
 
 	const links = $derived<Array<{ id: PageId; label: string }>>([
 		{ id: 'howToUse', label: m.nav_how_to_use({}, opts) },
 		{ id: 'about', label: m.nav_about({}, opts) },
-		{ id: 'history', label: m.nav_history({}, opts) }
+		{ id: 'history', label: m.nav_history({}, opts) },
+		{ id: 'upscaler', label: m.nav_upscaler({}, opts) }
 	]);
 
 	/** Moves focus to the main landmark (a plain fragment link would only scroll). */
@@ -62,7 +64,7 @@
 						<a
 							href={localizedPath(link.id, locale.current)}
 							aria-current={active === link.id ? 'page' : undefined}
-							class="rounded-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none aria-[current=page]:font-medium aria-[current=page]:text-foreground"
+							class="rounded-sm text-muted-foreground underline-offset-4 hover:text-primary hover:underline focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none aria-[current=page]:font-semibold aria-[current=page]:text-primary aria-[current=page]:underline"
 						>
 							{link.label}
 						</a>

@@ -20,7 +20,7 @@ test('a fresh detection worker initializes and detects from the offline cache', 
 	test.skip(workerFile === undefined, 'The standalone PWA build has no detection worker yet');
 	const assetsDir = `${workersDir}/assets`;
 	const wasmFiles = existsSync(assetsDir)
-		? readdirSync(assetsDir).filter((name) => name.endsWith('.wasm'))
+		? readdirSync(assetsDir).filter((name) => /^rusticker_core_bg-[\w-]+\.wasm$/.test(name))
 		: [];
 	expect(wasmFiles, 'the integrated build contains the detection wasm').toHaveLength(1);
 

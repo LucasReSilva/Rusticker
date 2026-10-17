@@ -5,6 +5,7 @@ export type { StickerSizeInfo } from '$lib/tool/size';
 export interface Encoder {
 	webp(pixels: ImageData, quality: number): Promise<Blob>;
 	png(pixels: ImageData): Promise<Blob>;
+	jpeg(pixels: ImageData, background: string): Promise<Blob>;
 	trayIcon(pixels: ImageData): Promise<Blob>;
 }
 

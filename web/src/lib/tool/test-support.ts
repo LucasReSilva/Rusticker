@@ -4,6 +4,18 @@ import type { Sticker } from '$lib/detection';
 /** DOM facilities used by Bits UI and static sticker canvases in component tests. */
 export function installDomMocks(): void {
 	vi.stubGlobal(
+		'PointerEvent',
+		class extends MouseEvent {
+			pointerId: number;
+			pointerType: string;
+			constructor(type: string, init: PointerEventInit = {}) {
+				super(type, init);
+				this.pointerId = init.pointerId ?? 0;
+				this.pointerType = init.pointerType ?? 'mouse';
+			}
+		}
+	);
+	vi.stubGlobal(
 		'ResizeObserver',
 		class {
 			observe() {}
