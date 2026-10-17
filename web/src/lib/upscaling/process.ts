@@ -1,6 +1,7 @@
 import type { ImageDimensions } from './image';
 
-export type UpscaleStage = 'decoding' | 'resizing' | 'encoding';
+export type UpscaleStage = 'decoding' | 'loading-model' | 'inference' | 'resizing' | 'encoding';
+export type UpscaleMode = 'conventional' | 'onnx';
 export type UpscaleError =
 	| 'UnsupportedEnvironment'
 	| 'DecodeFailed'
@@ -8,7 +9,12 @@ export type UpscaleError =
 	| 'ImageTooLarge'
 	| 'DimensionMismatch'
 	| 'WorkerFailed'
-	| 'Cancelled';
+	| 'Cancelled'
+	| 'ModelInvalid'
+	| 'InferenceFailed'
+	| 'MemoryLimit';
+// Model errors remain code-only and are translated by the web layer.
+export type UpscaleModelError = 'ModelInvalid' | 'InferenceFailed' | 'MemoryLimit';
 
 export function previewInWorker(
 	file: File,
@@ -57,7 +63,10 @@ export function upscaleInWorker(
 	expected: ImageDimensions,
 	scale: number,
 	onProgress: (stage: UpscaleStage) => void,
-	onDimensions: (source: ImageDimensions, output: ImageDimensions) => void
+	onDimensions: (source: ImageDimensions, output: ImageDimensions) => void,
+	mode: UpscaleMode = 'conventional',
+	model?: File,
+	onTileProgress: (completed: number, total: number) => void = () => {}
 ): { result: Promise<Blob>; cancel: () => void } {
 	const worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
 	let settled = false;
@@ -66,7 +75,10 @@ export function upscaleInWorker(
 		rejectResult = reject;
 		worker.onmessage = ({ data }) => {
 			if (data.type === 'progress') onProgress(data.stage as UpscaleStage);
-			else if (data.type === 'dimensions') {
+			else if (data.type === 'tile-progress') {
+				onTileProgress(data.completed as number, data.total as number);
+				onProgress('inference');
+			} else if (data.type === 'dimensions') {
 				onDimensions(data.source as ImageDimensions, data.output as ImageDimensions);
 				onProgress('resizing');
 			} else if (data.type === 'done') {
@@ -85,7 +97,7 @@ export function upscaleInWorker(
 			console.error('Upscaler processing worker failed', event.message);
 			reject('WorkerFailed' satisfies UpscaleError);
 		};
-		worker.postMessage({ type: 'upscale', file, expected, scale });
+		worker.postMessage({ type: 'upscale', file, expected, scale, mode, model });
 	});
 	return {
 		result,

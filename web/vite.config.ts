@@ -63,7 +63,7 @@ const pwaSeoPlugins = [
 				'**/robots.txt'
 			],
 			// The default (2 MiB) would silently skip a large .wasm.
-			maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+			maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
 			manifestTransforms: [precacheTransform(`${import.meta.dirname}/.svelte-kit/output`)],
 			navigateFallback: `${pwaBase}/${FALLBACK_PAGE}`,
 			navigateFallbackAllowlist: [new RegExp(`^${escapedBase}/`)],
