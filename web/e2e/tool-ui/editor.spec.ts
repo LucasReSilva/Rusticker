@@ -111,9 +111,47 @@ test('zoomed source inspection and crop adjustment work at mobile width', async 
 	await expect.poll(async () => Number(await box.getAttribute('data-x'))).toBeGreaterThan(41);
 	const finalX = await box.getAttribute('data-x');
 	await dialog.getByRole('button', { name: 'Aplicar recorte' }).click();
+	await expect(dialog).not.toBeVisible();
 	await expect(page.locator('[data-detection-box]').first()).toHaveAttribute('x', finalX!);
 	const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
 	expect(overflow).toBe(false);
+});
+
+test('manual source candidates stay synchronized through bounds edits, undo, and export', async ({
+	page
+}) => {
+	await load(page);
+	const inspector = page.locator('[data-source-inspector]');
+	const overlay = inspector.locator('svg');
+	await page.getByRole('button', { name: 'Adicionar candidata a figurinha' }).click();
+	await overlay.scrollIntoViewIfNeeded();
+	const area = await overlay.boundingBox();
+	expect(area).not.toBeNull();
+	await page.mouse.move(area!.x + area!.width * 0.7, area!.y + area!.height * 0.05);
+	await page.mouse.down();
+	await page.mouse.move(area!.x + area!.width * 0.9, area!.y + area!.height * 0.35);
+	await expect(overlay.locator('[data-draft-box]')).toBeVisible();
+	await page.mouse.up();
+	const cards = page.locator('[data-sticker-card]');
+	await expect(cards).toHaveCount(7);
+	const candidateBox = overlay.locator('[data-candidate-box="6"]');
+	const beforeX = Number(await candidateBox.locator('[data-detection-box]').getAttribute('x'));
+	await candidateBox.focus();
+	await page.keyboard.press('ArrowRight');
+	await expect
+		.poll(async () => Number(await candidateBox.locator('[data-detection-box]').getAttribute('x')))
+		.toBeGreaterThan(beforeX);
+	await cards.last().getByRole('button', { name: 'Remover figurinha 7' }).click();
+	await page.getByRole('button', { name: 'Remover', exact: true }).click();
+	await expect(cards).toHaveCount(6);
+	await page
+		.getByRole('button', { name: 'Desfazer a última edição do espaço de trabalho' })
+		.click();
+	await expect(cards).toHaveCount(7);
+	await expect(overlay.locator('[data-detection-box]')).toHaveCount(7);
+	const download = page.waitForEvent('download');
+	await page.getByRole('button', { name: 'Baixar pacote (.zip)' }).click();
+	expect((await download).suggestedFilename()).toBe('rusticker-pack-1.zip');
 });
 
 test('click chooser, keyboard eyedropper and debounced tolerance use the real worker locally', async ({

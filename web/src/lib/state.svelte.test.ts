@@ -10,6 +10,28 @@ import { createMockDetector, cancelledError, type Detector, type Sticker } from 
 const pixels = { width: 30, height: 30, data: new Uint8ClampedArray(30 * 30 * 4) } as ImageData;
 const decoded = { imageData: pixels, width: 30, height: 30 };
 const file = () => new File([], 'sheet.png', { type: 'image/png' });
+
+function overlappingLobes(): ImageData {
+	const size = 512;
+	const data = new Uint8ClampedArray(size * size * 4);
+	const paint = (x: number, y: number) => {
+		const offset = (y * size + x) * 4;
+		data[offset] = 255;
+		data[offset + 3] = 255;
+	};
+	for (const centerX of [220, 292]) {
+		for (let y = 0; y < size; y++) {
+			for (let x = 0; x < size; x++) {
+				if ((x - centerX) ** 2 + (y - 256) ** 2 <= 90 ** 2) paint(x, y);
+			}
+		}
+	}
+	for (let y = 255; y < 258; y++) {
+		for (let x = 220; x <= 292; x++) paint(x, y);
+	}
+	return new ImageData(data, size, size);
+}
+
 let editor: EditorState;
 let detector: Detector;
 let decode: Mock<() => Promise<typeof decoded>>;
@@ -111,6 +133,61 @@ it('keeps split candidates at the source position and restores that position on 
 	expect(editor.stickers.map((sticker) => sticker.id)).toEqual([source.id, first.id, last.id]);
 });
 
+it('sends the exact reviewed 512px lobe mask to split detection before accepting candidates', async () => {
+	await editor.loadFile(file());
+	const [first, source, last] = editor.stickers;
+	const sourcePixels = overlappingLobes();
+	editor.updateStickerPixels(source.id, sourcePixels);
+	const candidates: Sticker[] = [
+		{
+			...source,
+			id: 'split-left',
+			index: 0,
+			bbox: { x: 32, y: 136, width: 216, height: 240 }
+		},
+		{
+			...source,
+			id: 'split-right',
+			index: 1,
+			bbox: { x: 264, y: 136, width: 216, height: 240 }
+		}
+	];
+	vi.spyOn(detector, 'proposeSplit').mockResolvedValue(candidates);
+
+	await editor.requestSplit(source.id);
+
+	expect(detector.proposeSplit).toHaveBeenCalledExactlyOnceWith(sourcePixels);
+	expect(editor.stickers).toHaveLength(3);
+	expect(editor.splitProposalBoxes).toHaveLength(2);
+	editor.acceptSplit();
+	expect(editor.stickers.map((sticker) => sticker.id)).toEqual([
+		first.id,
+		'split-left',
+		'split-right',
+		last.id
+	]);
+	expect(editor.undoableStickerIds.size).toBe(2);
+});
+
+it('leaves the source unchanged when a split proposal contains out-of-source bounds', async () => {
+	await editor.loadFile(file());
+	const before = [...editor.stickers];
+	const source = before[0];
+	const invalid: Sticker = {
+		...source,
+		id: 'invalid-split',
+		bbox: { x: -1, y: 0, width: 512, height: 512 }
+	};
+	const valid: Sticker = { ...source, id: 'valid-split' };
+	vi.spyOn(detector, 'proposeSplit').mockResolvedValue([invalid, valid]);
+
+	await editor.requestSplit(source.id);
+	editor.acceptSplit();
+
+	expect(editor.stickers).toEqual(before);
+	expect(editor.undoableStickerIds.size).toBe(0);
+});
+
 it('applies valid source bounds atomically and ignores invalid bounds', async () => {
 	await editor.loadFile(file());
 	const original = editor.stickers[0];
@@ -124,6 +201,53 @@ it('applies valid source bounds atomically and ignores invalid bounds', async ()
 	expect(updated.pixels.width).toBe(512);
 	editor.updateStickerBounds(original.id, { ...bounds, x: 30 });
 	expect(editor.stickers[0]).toBe(updated);
+});
+
+it('adds candidates from copied source rectangles and undoes the complete workspace change', async () => {
+	await editor.loadFile(file());
+	const original = [...editor.stickers];
+	await editor.addStickerFromBounds({ x: 10, y: 10, width: 10, height: 10 });
+	const additions = editor.stickers.slice(original.length);
+	expect(additions).toHaveLength(3);
+	expect(additions[0].bbox.x).toBeGreaterThanOrEqual(10);
+	expect(additions[0].bbox.y).toBeGreaterThanOrEqual(10);
+	expect(detector.detect).toHaveBeenLastCalledWith(
+		expect.objectContaining({ width: 10, height: 10 }),
+		expect.objectContaining({ tolerance: 50 })
+	);
+	expect(editor.canUndoWorkspaceEdit).toBe(true);
+	editor.undoWorkspaceEdit();
+	expect(editor.stickers).toEqual(original);
+});
+
+it('regenerates edited candidates from source pixels, rejects invalid boxes, and undoes removal', async () => {
+	editor.dispose();
+	detector = createMockDetector({ count: 1 });
+	vi.spyOn(detector, 'detect');
+	vi.spyOn(detector, 'dispose');
+	editor = createEditorState({ detector, decode });
+	await editor.loadFile(file());
+	const original = editor.stickers[0];
+	await editor.updateStickerBoundsFromSource(original.id, { x: 10, y: 10, width: 10, height: 10 });
+	const updated = editor.stickers[0];
+	expect(updated.id).toBe(original.id);
+	expect(updated.pixels).not.toBe(original.pixels);
+	expect(updated.bbox.x).toBeGreaterThanOrEqual(10);
+	await editor.updateStickerBoundsFromSource(original.id, { x: 30, y: 0, width: 1, height: 1 });
+	expect(editor.stickers[0]).toBe(updated);
+	editor.removeSticker(original.id);
+	expect(editor.stickers).toHaveLength(0);
+	editor.undoWorkspaceEdit();
+	expect(editor.stickers).toEqual([updated]);
+}, 15_000);
+
+it('leaves all candidates unchanged when a manual crop produces no valid result', async () => {
+	await editor.loadFile(file());
+	const original = editor.stickers;
+	vi.mocked(detector.detect).mockResolvedValueOnce([]);
+	await editor.addStickerFromBounds({ x: 1, y: 1, width: 10, height: 10 });
+	expect(editor.stickers).toEqual(original);
+	expect(editor.canUndoWorkspaceEdit).toBe(false);
 });
 
 it('keeps custom order when adjusting a moved sticker', async () => {
@@ -409,6 +533,21 @@ it('keeps adjusted sticker pixels and bounds in the active batch export data', a
 	expect(editor.batchStickers[0].bbox).toEqual(bounds);
 	expect(editor.batchStickers[0].pixels).not.toBe(original.pixels);
 });
+
+it('syncs manually added, removed, and restored candidates into batch export data', async () => {
+	editor.addBatchFiles([file()]);
+	await vi.waitFor(() => expect(editor.batchEntries[0]?.status).toBe('done'));
+	await editor.addStickerFromBounds({ x: 10, y: 10, width: 10, height: 10 });
+	editor.syncActiveBatch();
+	expect(editor.batchStickers).toHaveLength(6);
+	const addedId = editor.stickers.at(-1)!.id;
+	editor.removeSticker(addedId);
+	editor.syncActiveBatch();
+	expect(editor.batchStickers).toHaveLength(5);
+	editor.undoWorkspaceEdit();
+	editor.syncActiveBatch();
+	expect(editor.batchStickers).toHaveLength(6);
+}, 15_000);
 
 it('keeps brushed sticker pixels in the active batch export data', async () => {
 	editor.addBatchFiles([file()]);

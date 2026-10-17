@@ -11,6 +11,11 @@ import {
 import { decodeImage, type DecodedImage } from '$lib/tool/decode';
 import { applyStickerOrder, moveStickerById } from '$lib/tool/sticker-order';
 import { adjustStickerBounds } from '$lib/tool/bounds';
+import {
+	extractSourceRectangle,
+	sourceBounds,
+	validSourceBounds
+} from '$lib/tool/source-candidate';
 
 export type EditorStatus = 'idle' | 'decoding' | 'detecting' | 'ready' | 'error';
 export type EditorErrorCode =
@@ -64,6 +69,15 @@ interface Dependencies {
 	debounceMs?: number;
 }
 
+interface WorkspaceSnapshot {
+	detected: Sticker[];
+	removedIds: string[];
+	stickerOrder: string[];
+	trayIconId: string | null;
+	splitUndo: Array<{ original: Sticker; replacements: Sticker[]; brushResetPixels?: ImageData }>;
+	brushResetPixels: Array<[string, ImageData]>;
+}
+
 export class EditorState {
 	source = $state.raw<SourceImage | null>(null);
 	detected = $state.raw<Sticker[]>([]);
@@ -85,6 +99,7 @@ export class EditorState {
 	activeBatchId = $state<string | null>(null);
 	batchRunning = $state(false);
 	private pendingDebounce = $state(false);
+	private workspaceBusy = $state(false);
 	private stickerOrder = $state.raw<string[]>([]);
 	readonly stickers = $derived(
 		applyStickerOrder(
@@ -108,7 +123,10 @@ export class EditorState {
 		)
 	);
 	readonly isProcessing = $derived(
-		this.pendingDebounce || this.status === 'decoding' || this.status === 'detecting'
+		this.pendingDebounce ||
+			this.workspaceBusy ||
+			this.status === 'decoding' ||
+			this.status === 'detecting'
 	);
 	private sequence = 0;
 	private timer: ReturnType<typeof setTimeout> | undefined;
@@ -119,6 +137,7 @@ export class EditorState {
 	private readonly detector: Detector;
 	private readonly decode: (blob: Blob) => Promise<DecodedImage>;
 	private readonly debounceMs: number;
+	private workspaceUndo = $state.raw<WorkspaceSnapshot[]>([]);
 	private readonly brushResetPixelsById = new SvelteMap<string, ImageData>();
 
 	constructor({ detector, decode = decodeImage, debounceMs = 300 }: Dependencies) {
@@ -134,6 +153,134 @@ export class EditorState {
 	private reportError(code: EditorErrorCode): void {
 		this.lastError = code;
 		this.errorSequence++;
+	}
+
+	private saveWorkspaceUndo(): void {
+		this.workspaceUndo = [
+			...this.workspaceUndo,
+			{
+				detected: [...this.detected],
+				removedIds: [...this.removedIds],
+				stickerOrder: [...this.stickerOrder],
+				trayIconId: this.trayIconId,
+				splitUndo: [...this.splitUndo],
+				brushResetPixels: [...this.brushResetPixelsById.entries()]
+			}
+		].slice(-20);
+	}
+
+	undoWorkspaceEdit(): void {
+		if (this.isProcessing) return;
+		const snapshot = this.workspaceUndo.pop();
+		if (!snapshot) return;
+		this.detected = snapshot.detected;
+		this.removedIds.clear();
+		for (const id of snapshot.removedIds) this.removedIds.add(id);
+		this.stickerOrder = snapshot.stickerOrder;
+		this.trayIconId = snapshot.trayIconId;
+		this.splitUndo = snapshot.splitUndo;
+		this.brushResetPixelsById.clear();
+		for (const [id, pixels] of snapshot.brushResetPixels) this.brushResetPixelsById.set(id, pixels);
+		this.splitPreview = null;
+		this.noSplitProposalId = null;
+		this.syncActiveBatch();
+	}
+
+	get canUndoWorkspaceEdit(): boolean {
+		return this.workspaceUndo.length > 0;
+	}
+
+	get splitProposalBoxes(): Sticker['bbox'][] {
+		const proposal = this.splitPreview;
+		return proposal
+			? proposal.candidates.map((candidate) => mapSplitBox(candidate.bbox, proposal.source.bbox))
+			: [];
+	}
+
+	async addStickerFromBounds(bounds: Sticker['bbox']): Promise<void> {
+		const source = this.source;
+		if (
+			!source ||
+			this.disposed ||
+			this.isProcessing ||
+			!validSourceBounds(bounds, source.width, source.height)
+		)
+			return;
+		const crop = extractSourceRectangle(source.imageData, bounds);
+		if (!crop) return;
+		this.workspaceBusy = true;
+		try {
+			const candidates = await this.detector.detect(crop, {
+				tolerance: this.tolerance,
+				background: { ...this.background }
+			});
+			if (this.disposed || this.source !== source || !candidates.length) return;
+			const additions = candidates.map((candidate) => {
+				const bbox = sourceBounds(candidate.bbox, bounds, source.width, source.height);
+				return bbox ? { ...candidate, bbox, index: this.detected.length } : null;
+			});
+			const otherBatchCount = this.batchEntries
+				.filter((entry) => entry.id !== this.activeBatchId && entry.status === 'done')
+				.reduce((total, entry) => total + entry.stickers.length, 0);
+			if (
+				additions.some((candidate) => !candidate) ||
+				otherBatchCount + this.stickers.length + additions.length > MAX_BATCH_STICKERS
+			)
+				return;
+			this.saveWorkspaceUndo();
+			const accepted = additions as Sticker[];
+			this.detected = [...this.detected, ...accepted].map((sticker, index) => ({
+				...sticker,
+				index
+			}));
+			this.stickerOrder = [...this.stickerOrder, ...accepted.map((sticker) => sticker.id)];
+			this.trayIconId ??= accepted[0]?.id ?? null;
+			this.syncActiveBatch();
+		} catch {
+			// A rejected or empty manual candidate leaves the current workspace unchanged.
+		} finally {
+			this.workspaceBusy = false;
+		}
+	}
+
+	async updateStickerBoundsFromSource(id: string, bounds: Sticker['bbox']): Promise<void> {
+		const source = this.source;
+		const current = this.stickers.find((sticker) => sticker.id === id);
+		if (!source || !current || this.disposed || this.isProcessing) return;
+		if (!validSourceBounds(bounds, source.width, source.height)) return;
+		const crop = extractSourceRectangle(source.imageData, bounds);
+		if (!crop) return;
+		this.workspaceBusy = true;
+		try {
+			const candidates = await this.detector.detect(crop, {
+				tolerance: this.tolerance,
+				background: { ...this.background }
+			});
+			if (
+				this.disposed ||
+				this.source !== source ||
+				this.stickers.find((sticker) => sticker.id === id)?.pixels !== current.pixels ||
+				candidates.length !== 1
+			)
+				return;
+			const bbox = sourceBounds(candidates[0].bbox, bounds, source.width, source.height);
+			if (!bbox) return;
+			this.saveWorkspaceUndo();
+			const updated = { ...candidates[0], id, index: current.index, bbox };
+			this.detected = this.detected.map((sticker) => (sticker.id === id ? updated : sticker));
+			this.brushResetPixelsById.delete(id);
+			this.splitUndo = this.splitUndo.map((group) => ({
+				...group,
+				replacements: group.replacements.map((sticker) => (sticker.id === id ? updated : sticker))
+			}));
+			this.splitPreview = null;
+			this.noSplitProposalId = null;
+			this.syncActiveBatch();
+		} catch {
+			// A rejected or empty source crop leaves the previous candidate unchanged.
+		} finally {
+			this.workspaceBusy = false;
+		}
 	}
 
 	private updateBatchEntry(id: string, patch: Partial<BatchEntry>): void {
@@ -289,8 +436,10 @@ export class EditorState {
 		this.splitBusyId = null;
 		this.noSplitProposalId = null;
 		this.splitUndo = [];
+		this.workspaceUndo = [];
 		this.brushResetPixelsById.clear();
 		this.status = 'idle';
+		this.workspaceBusy = false;
 	}
 
 	private clearDebounce(): void {
@@ -331,6 +480,7 @@ export class EditorState {
 		this.splitBusyId = null;
 		this.noSplitProposalId = null;
 		this.splitUndo = [];
+		this.workspaceUndo = [];
 		this.removedIds.clear();
 		this.trayIconId = null;
 		await this.runDetection();
@@ -374,6 +524,7 @@ export class EditorState {
 			this.splitBusyId = null;
 			this.noSplitProposalId = null;
 			this.splitUndo = [];
+			this.workspaceUndo = [];
 			this.removedIds.clear();
 			this.trayIconId = result[0]?.id ?? null;
 			this.status = 'ready';
@@ -387,6 +538,7 @@ export class EditorState {
 			this.splitBusyId = null;
 			this.noSplitProposalId = null;
 			this.splitUndo = [];
+			this.workspaceUndo = [];
 			this.removedIds.clear();
 			this.trayIconId = null;
 			this.status = 'error';
@@ -396,6 +548,7 @@ export class EditorState {
 
 	removeSticker(id: string): void {
 		if (!this.stickers.some((sticker) => sticker.id === id)) return;
+		this.saveWorkspaceUndo();
 		this.brushResetPixelsById.delete(id);
 		if (this.splitPreview?.source.id === id) this.splitPreview = null;
 		if (this.noSplitProposalId === id) this.noSplitProposalId = null;
@@ -500,14 +653,34 @@ export class EditorState {
 
 	acceptSplit(): void {
 		const proposal = this.splitPreview;
-		if (!proposal || !this.stickers.some((sticker) => sticker.id === proposal.source.id)) return;
+		if (
+			!proposal ||
+			proposal.candidates.length < 2 ||
+			!this.stickers.some((sticker) => sticker.id === proposal.source.id)
+		)
+			return;
 		const sourceIndex = this.detected.findIndex((sticker) => sticker.id === proposal.source.id);
-		if (sourceIndex < 0) return;
+		if (
+			sourceIndex < 0 ||
+			proposal.candidates.some((candidate) => !validSourceBounds(candidate.bbox, 512, 512))
+		)
+			return;
 		const replacements = proposal.candidates.map((candidate, index) => ({
 			...candidate,
 			index: sourceIndex + index,
 			bbox: mapSplitBox(candidate.bbox, proposal.source.bbox)
 		}));
+		if (
+			replacements.some(
+				(sticker) =>
+					!validSourceBounds(sticker.bbox, this.source?.width ?? 0, this.source?.height ?? 0) ||
+					sticker.pixels.width !== 512 ||
+					sticker.pixels.height !== 512 ||
+					sticker.pixels.data.length !== 512 * 512 * 4
+			)
+		)
+			return;
+		this.saveWorkspaceUndo();
 		const ordered = this.stickers.map((sticker) => sticker.id);
 		const orderIndex = ordered.indexOf(proposal.source.id);
 		if (orderIndex >= 0) {
