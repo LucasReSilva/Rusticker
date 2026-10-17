@@ -13,6 +13,7 @@
 	import { m } from '$lib/paraglide/messages';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import StickerBoundsEditor from './StickerBoundsEditor.svelte';
+	import StickerBrushEditor from './StickerBrushEditor.svelte';
 	let {
 		sticker,
 		position,
@@ -33,10 +34,15 @@
 		undoable,
 		allowSplitRequest = true,
 		allowBoundsAdjustment = false,
+		allowBrushEdit = false,
+		sourceImage,
+		brushResetPixels,
+		sourceUrl = '',
 		sourceWidth = 0,
 		sourceHeight = 0,
 		onSplitRequest,
 		onBoundsApply = () => {},
+		onBrushApply = () => {},
 		onSplitAccept,
 		onSplitDiscard,
 		onSplitUndo
@@ -60,10 +66,15 @@
 		undoable: boolean;
 		allowSplitRequest?: boolean;
 		allowBoundsAdjustment?: boolean;
+		allowBrushEdit?: boolean;
+		sourceImage?: ImageData;
+		brushResetPixels?: ImageData;
+		sourceUrl?: string;
 		sourceWidth?: number;
 		sourceHeight?: number;
 		onSplitRequest: () => void;
 		onBoundsApply?: (sticker: Sticker) => void;
+		onBrushApply?: (sticker: Sticker) => void;
 		onSplitAccept: () => void;
 		onSplitDiscard: () => void;
 		onSplitUndo: () => void;
@@ -72,6 +83,7 @@
 	const size = $derived(sizeOf?.(sticker.id));
 	const formattedPosition = $derived(formatNumber(position));
 	let boundsOpen = $state(false);
+	let brushOpen = $state(false);
 	$effect(() => {
 		canvas.getContext('2d')?.putImageData(sticker.pixels, 0, 0);
 	});
@@ -91,11 +103,12 @@
 	<!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role -->
 	<canvas
 		bind:this={canvas}
+		data-sticker-preview
 		width={sticker.pixels.width}
 		height={sticker.pixels.height}
 		role="img"
 		aria-label={m.tool_sticker_alt({ position: formattedPosition })}
-		class="aspect-square h-auto w-full rounded-md bg-checkerboard"
+		class="aspect-square h-auto w-full rounded-md bg-checkerboard duration-300 motion-safe:animate-in motion-safe:fade-in-0"
 	></canvas>
 	<div class="flex min-h-6 flex-wrap items-center gap-1">
 		{#if isTrayIcon}<Badge variant="secondary" class="whitespace-normal"
@@ -157,6 +170,7 @@
 					<Dialog.Description class="sr-only">{m.tool_bounds_help()}</Dialog.Description>
 					<StickerBoundsEditor
 						{sticker}
+						{sourceUrl}
 						{sourceWidth}
 						{sourceHeight}
 						onCancel={() => (boundsOpen = false)}
@@ -166,6 +180,34 @@
 						}}
 					/>
 				</Dialog.Content>
+			</Dialog.Root>
+		{/if}
+		{#if allowBrushEdit && sourceImage}
+			<Dialog.Root bind:open={brushOpen}>
+				<Button
+					variant="outline"
+					size="sm"
+					tabindex={active ? 0 : -1}
+					onclick={() => (brushOpen = true)}
+				>
+					{m.tool_brush_title()}
+				</Button>
+				{#if brushOpen}
+					<Dialog.Content class="max-h-[calc(100dvh_-_2rem)] overflow-y-auto sm:max-w-2xl">
+						<Dialog.Title class="sr-only">{m.tool_brush_title()}</Dialog.Title>
+						<Dialog.Description class="sr-only">{m.tool_brush_help()}</Dialog.Description>
+						<StickerBrushEditor
+							{sticker}
+							source={sourceImage}
+							resetPixels={brushResetPixels ?? sticker.pixels}
+							onCancel={() => (brushOpen = false)}
+							onApply={(pixels) => {
+								onBrushApply({ ...sticker, pixels });
+								brushOpen = false;
+							}}
+						/>
+					</Dialog.Content>
+				{/if}
 			</Dialog.Root>
 		{/if}
 		{#if allowSplitRequest}<Button

@@ -32,6 +32,15 @@
 	function open() {
 		if (!disabled) input.click();
 	}
+	export function openPicker(): boolean {
+		if (disabled || !input || typeof input.showPicker !== 'function') return false;
+		try {
+			input.showPicker();
+			return true;
+		} catch {
+			return false;
+		}
+	}
 	async function trySample() {
 		if (disabled || loadingSample) return;
 		loadingSample = true;

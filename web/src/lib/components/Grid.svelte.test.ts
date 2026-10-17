@@ -296,4 +296,51 @@ it('opens the localized crop editor and sends the applied sticker to the editor 
 	});
 	expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
+
+it('only exposes the brush in advanced mode and applies edited sticker pixels', async () => {
+	const sticker = {
+		...stickers(1)[0],
+		bbox: { x: 0, y: 0, width: 512, height: 512 },
+		pixels: { data: new Uint8ClampedArray(512 * 512 * 4), width: 512, height: 512 } as ImageData
+	};
+	const source = {
+		data: new Uint8ClampedArray(512 * 512 * 4).fill(255),
+		width: 512,
+		height: 512
+	} as ImageData;
+	const onBrushApply = vi.fn();
+	const props = {
+		stickers: [sticker],
+		trayIconId: null,
+		busy: false,
+		pending: false,
+		onRemove: vi.fn(),
+		onSetTrayIcon: vi.fn(),
+		sourceImage: source,
+		onBrushApply
+	};
+	const { rerender } = render(Grid, props);
+	expect(screen.queryByRole('button', { name: m.tool_brush_title() })).not.toBeInTheDocument();
+	await rerender({ ...props, allowBrushEdit: true });
+	await fireEvent.click(screen.getByRole('button', { name: m.tool_brush_title() }));
+	const canvas = document.querySelector('[data-brush-area] canvas') as HTMLCanvasElement;
+	vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({
+		x: 0,
+		y: 0,
+		width: 512,
+		height: 512,
+		top: 0,
+		left: 0,
+		right: 512,
+		bottom: 512,
+		toJSON: () => ({})
+	});
+	canvas.setPointerCapture = vi.fn();
+	await fireEvent.pointerDown(canvas, { pointerId: 1, button: 0, clientX: 256, clientY: 256 });
+	await fireEvent.pointerUp(canvas, { pointerId: 1, button: 0, clientX: 256, clientY: 256 });
+	await fireEvent.click(await screen.findByRole('button', { name: m.tool_brush_apply() }));
+	expect(onBrushApply).toHaveBeenCalledOnce();
+	expect(onBrushApply.mock.calls[0][0].pixels).not.toBe(sticker.pixels);
+	expect(onBrushApply.mock.calls[0][0].pixels.data[(256 * 512 + 256) * 4 + 3]).toBe(0);
+});
 import '@testing-library/jest-dom/vitest';

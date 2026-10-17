@@ -9,6 +9,13 @@ import { baseLocale, pageIds, pages, routeLocales } from '../src/lib/i18n/routes
 
 const MANIFEST_TEXTS = { name: 'pwa_name', short_name: 'pwa_short_name' } as const;
 
+/** Whether a served path points to a private SvelteKit route or page. */
+export function isDevOnlyPath(path: string): boolean {
+	const segments = path.split('/').filter(Boolean);
+	if (segments[0] === '_app') return false;
+	return segments.some((segment) => segment.startsWith('_'));
+}
+
 /** The file a base-relative page path is served from (GitHub Pages rules). */
 function fileForPath(path: string): string {
 	return path.endsWith('/') ? `${path.slice(1)}index.html` : `${path.slice(1)}.html`;
@@ -40,7 +47,7 @@ export function seoCheck(webDir: string, base: string, siteUrl: string): string[
 	const has = (file: string) => existsSync(join(buildDir, file));
 	const absolute = (path: string) => `${siteUrl}${path}`;
 	const isDevPath = (url: string) =>
-		/\/_/.test(url.replace(/^https?:\/\/[^/]+/, '').slice(base.length));
+		isDevOnlyPath(url.replace(/^https?:\/\/[^/]+/, '').slice(base.length));
 
 	// 1-2. Every page document, with canonical, alternates and its manifest.
 	for (const id of pageIds) {
