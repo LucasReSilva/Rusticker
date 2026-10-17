@@ -4,6 +4,46 @@ import { savedLocale } from '../web-scaffold/fixtures';
 
 test.use({ locale: 'pt-BR', storageState: savedLocale('pt-BR') });
 
+test('applies an advanced brush erase to the sticker preview and downloaded pack', async ({
+	page,
+	context
+}) => {
+	await page.goto('en/');
+	await uploadSheet(page, 3);
+	await page.getByRole('button', { name: 'Advanced', exact: true }).click();
+	await page
+		.locator('[data-sticker-card]')
+		.first()
+		.getByRole('button', { name: 'Refine sticker edges' })
+		.click();
+	const dialog = page.getByRole('dialog');
+	const canvas = dialog.locator('[data-brush-area] canvas');
+	const area = await canvas.boundingBox();
+	expect(area).not.toBeNull();
+	await page.mouse.move(area!.x + area!.width / 2, area!.y + area!.height / 2);
+	await page.mouse.down();
+	await page.mouse.up();
+	await dialog.getByRole('button', { name: 'Apply edits' }).click();
+	const preview = page.locator('[data-sticker-card] [data-sticker-preview]').first();
+	await expect
+		.poll(() =>
+			preview.evaluate(
+				(element) =>
+					(element as HTMLCanvasElement).getContext('2d')!.getImageData(256, 256, 1, 1).data[3]
+			)
+		)
+		.toBe(0);
+
+	await context.setOffline(true);
+	const pending = page.waitForEvent('download');
+	await page.getByRole('button', { name: 'Download pack (.zip)', exact: true }).click();
+	const { zip } = await readArchive(await pending);
+	assertEntries(zip, 3);
+	const images = await inspectImages(page, zip);
+	expect(images.find((image) => image.name === 'sticker_01.webp')!.center[3]).toBe(0);
+	expect(images.find((image) => image.name === 'png/sticker_01.png')!.center[3]).toBe(0);
+});
+
 test('downloads a complete transparent 17-sticker pack offline without requests', async ({
 	page,
 	context

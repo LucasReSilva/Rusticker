@@ -151,11 +151,15 @@
 					undoableStickerIds={editor.undoableStickerIds}
 					allowSplitRequest={processingMode === 'advanced'}
 					allowBoundsAdjustment={processingMode === 'advanced'}
+					allowBrushEdit={processingMode === 'advanced'}
+					sourceImage={editor.source.imageData}
+					brushResetPixelsFor={(id) => editor.brushResetPixels(id)}
 					sourceUrl={editor.source.url}
 					sourceWidth={editor.source.width}
 					sourceHeight={editor.source.height}
 					onSplitRequest={(id) => void editor.requestSplit(id)}
 					onBoundsApply={(sticker) => editor.updateStickerBounds(sticker.id, sticker.bbox)}
+					onBrushApply={(sticker) => editor.updateStickerPixels(sticker.id, sticker.pixels)}
 					onSplitAccept={() => editor.acceptSplit()}
 					onSplitDiscard={() => editor.discardSplit()}
 					onSplitUndo={(id) => editor.undoSplit(id)}
