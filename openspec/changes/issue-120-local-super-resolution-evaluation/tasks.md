@@ -6,6 +6,7 @@
 - [x] Record the exact ONNX graph revision, verify its SHA-256 and size against public LFS metadata, and inventory its operators/domain/opset.
 - [x] Run the exact graph with `tract` 0.23.8 natively and in a `wasm32-unknown-unknown` build invoked under Node's WebAssembly runtime.
 - [x] Screen Qualcomm's published W8A8 ONNX archive against the model-size gate and identify its artifact-specific license notice.
+- [x] Screen the pinned anime 6B ONNX file against the model-size gate, verify its downloaded hash, and probe native/WASM `tract` execution with a generated fixture.
 - [ ] Verify the upstream export/quantization recipe and complete redistribution notices for a candidate that passes the model budget.
 - [ ] Run the exact graph in the app's browser worker; evaluate ONNX Runtime Web WASM only if a measured `tract` blocker appears in the browser.
 - [ ] Generate deterministic fixtures; compare resize and candidate quality, alpha, and seams.
