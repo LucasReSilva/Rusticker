@@ -301,6 +301,11 @@ state changes; any future Lottie use must lazy-load its player, bundle WASM and
 JSON assets locally, honor reduced motion, and retain an accessible text state.
 No Lottie runtime is included in the application.
 
+The [animated-media feasibility evaluation](docs/animated-media-evaluation.md)
+records the tested browser-local image and video codec paths, target sticker
+profiles, and unresolved device and encoding gates. It is a research report;
+the app continues to import and export static sticker images only.
+
 The SvelteKit app is built as a static site for GitHub Pages. The service worker
 supports offline use after application assets have been cached. The relevant
 behavior contract is [`offline-install`](openspec/specs/offline-install/spec.md).
