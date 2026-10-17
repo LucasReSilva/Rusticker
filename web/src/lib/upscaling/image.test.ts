@@ -14,7 +14,7 @@ function png(width: number, height: number, animation = false) {
 }
 
 function jpeg(width: number, height: number) {
-	const bytes = new Uint8Array(13);
+	const bytes = new Uint8Array(15);
 	bytes.set([
 		0xff,
 		0xd8,
@@ -26,7 +26,11 @@ function jpeg(width: number, height: number) {
 		height >> 8,
 		height & 0xff,
 		width >> 8,
-		width & 0xff
+		width & 0xff,
+		1,
+		1,
+		0x11,
+		0
 	]);
 	return new File([bytes], 'image.jpg', { type: 'image/jpeg' });
 }
@@ -35,7 +39,9 @@ function webp(width: number, height: number, animated = false) {
 	const bytes = new Uint8Array(30);
 	bytes.set(new TextEncoder().encode('RIFF'), 0);
 	bytes.set(new TextEncoder().encode('WEBPVP8X'), 8);
-	new DataView(bytes.buffer).setUint32(16, 10, true);
+	const view = new DataView(bytes.buffer);
+	view.setUint32(4, 22, true);
+	view.setUint32(16, 10, true);
 	bytes[20] = animated ? 0x02 : 0;
 	bytes[24] = (width - 1) & 0xff;
 	bytes[25] = ((width - 1) >> 8) & 0xff;
@@ -66,6 +72,42 @@ describe('image metadata validation', () => {
 		});
 		await expect(inspectImageFile(webp(20, 20, true))).rejects.toMatchObject({
 			code: 'AnimatedImage'
+		});
+	});
+
+	it('rejects PNGs without a complete image-data chunk', async () => {
+		const valid = new Uint8Array(await png(20, 20).arrayBuffer());
+		const withoutIdat = new File([valid.slice(0, 33)], 'missing-idat.png');
+		const truncatedIdat = valid.slice();
+		new DataView(truncatedIdat.buffer).setUint32(33, 100);
+
+		await expect(inspectImageFile(withoutIdat)).rejects.toMatchObject({ code: 'MalformedImage' });
+		await expect(
+			inspectImageFile(new File([truncatedIdat], 'truncated-idat.png'))
+		).rejects.toMatchObject({ code: 'MalformedImage' });
+	});
+
+	it('rejects JPEG SOF segments with short or inconsistent lengths', async () => {
+		const valid = new Uint8Array(await jpeg(20, 20).arrayBuffer());
+		const shortSegment = valid.slice();
+		new DataView(shortSegment.buffer).setUint16(4, 6);
+		const truncatedSegment = valid.slice(0, 13);
+
+		await expect(inspectImageFile(new File([shortSegment], 'short-sof.jpg'))).rejects.toMatchObject(
+			{
+				code: 'MalformedImage'
+			}
+		);
+		await expect(
+			inspectImageFile(new File([truncatedSegment], 'truncated-sof.jpg'))
+		).rejects.toMatchObject({ code: 'MalformedImage' });
+	});
+
+	it('rejects WebP chunks outside the declared RIFF size', async () => {
+		const bytes = new Uint8Array(await webp(20, 20).arrayBuffer());
+		new DataView(bytes.buffer).setUint32(4, 12, true);
+		await expect(inspectImageFile(new File([bytes], 'short-riff.webp'))).rejects.toMatchObject({
+			code: 'MalformedImage'
 		});
 	});
 

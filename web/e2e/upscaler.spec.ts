@@ -79,6 +79,7 @@ test('rejects image dimensions outside the supported bounds before preview decod
 	bytes.set(new TextEncoder().encode('IHDR'), 12);
 	view.setUint32(16, 8193);
 	view.setUint32(20, 1);
+	bytes.set(new TextEncoder().encode('IDAT'), 37);
 	await page.locator('input[type=file]').setInputFiles({
 		name: 'too-wide.png',
 		mimeType: 'image/png',

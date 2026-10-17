@@ -31,27 +31,37 @@ function readU24(bytes: Uint8Array, offset: number): number {
 	return bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16);
 }
 
-function pngDimensions(bytes: Uint8Array): ImageDimensions {
+function pngDimensions(bytes: Uint8Array, fileSize: number): ImageDimensions {
 	const signature = [137, 80, 78, 71, 13, 10, 26, 10];
 	if (!signature.every((value, index) => bytes[index] === value)) fail('UnsupportedFormat');
-	if (bytes.length < 33 || String.fromCharCode(...bytes.slice(12, 16)) !== 'IHDR')
+	if (
+		bytes.length < 33 ||
+		new DataView(bytes.buffer, bytes.byteOffset + 8, 4).getUint32(0) !== 13 ||
+		String.fromCharCode(...bytes.slice(12, 16)) !== 'IHDR'
+	)
 		fail('MalformedImage');
 	let offset = 8;
+	let hasImageData = false;
 	while (offset + 12 <= bytes.length) {
 		const length = new DataView(bytes.buffer, bytes.byteOffset + offset, 4).getUint32(0);
 		const type = String.fromCharCode(...bytes.slice(offset + 4, offset + 8));
 		if (type === 'acTL') fail('AnimatedImage');
-		if (type === 'IDAT') break;
+		if (length > fileSize - offset - 12) fail('MalformedImage');
+		if (type === 'IDAT') {
+			hasImageData = true;
+			break;
+		}
 		if (length > bytes.length - offset - 12) fail('MalformedImage');
 		offset += length + 12;
 	}
+	if (!hasImageData) fail('MalformedImage');
 	return dimensions(
 		new DataView(bytes.buffer, bytes.byteOffset + 16, 8).getUint32(0),
 		new DataView(bytes.buffer, bytes.byteOffset + 20, 8).getUint32(0)
 	);
 }
 
-function jpegDimensions(bytes: Uint8Array): ImageDimensions {
+function jpegDimensions(bytes: Uint8Array, fileSize: number): ImageDimensions {
 	if (bytes[0] !== 0xff || bytes[1] !== 0xd8) fail('UnsupportedFormat');
 	const sof = new Set([
 		0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf
@@ -70,6 +80,7 @@ function jpegDimensions(bytes: Uint8Array): ImageDimensions {
 		if (offset + 2 > bytes.length) break;
 		const length = (bytes[offset] << 8) | bytes[offset + 1];
 		if (length < 2) fail('MalformedImage');
+		if (length > fileSize - offset) fail('MalformedImage');
 		if (marker === 0xe1 && offset + length <= bytes.length) {
 			const start = offset + 2;
 			if (
@@ -109,7 +120,9 @@ function jpegDimensions(bytes: Uint8Array): ImageDimensions {
 			}
 		}
 		if (sof.has(marker)) {
-			if (offset + 7 > bytes.length) fail('MalformedImage');
+			if (length < 8 || offset + length > bytes.length) fail('MalformedImage');
+			const components = bytes[offset + 7];
+			if (components === 0 || length !== 8 + components * 3) fail('MalformedImage');
 			const width = (bytes[offset + 5] << 8) | bytes[offset + 6];
 			const height = (bytes[offset + 3] << 8) | bytes[offset + 4];
 			return dimensions(orientation >= 5 ? height : width, orientation >= 5 ? width : height);
@@ -119,18 +132,22 @@ function jpegDimensions(bytes: Uint8Array): ImageDimensions {
 	fail('MalformedImage');
 }
 
-function webpDimensions(bytes: Uint8Array): ImageDimensions {
+function webpDimensions(bytes: Uint8Array, fileSize: number): ImageDimensions {
 	if (
 		String.fromCharCode(...bytes.slice(0, 4)) !== 'RIFF' ||
 		String.fromCharCode(...bytes.slice(8, 12)) !== 'WEBP'
 	)
 		fail('UnsupportedFormat');
+	const riffSize = new DataView(bytes.buffer, bytes.byteOffset + 4, 4).getUint32(0, true);
+	const riffEnd = riffSize + 8;
+	if (riffSize < 4 || riffEnd > fileSize) fail('MalformedImage');
 	let offset = 12;
-	while (offset + 8 <= bytes.length) {
+	while (offset + 8 <= bytes.length && offset + 8 <= riffEnd) {
 		const type = String.fromCharCode(...bytes.slice(offset, offset + 4));
 		const size = new DataView(bytes.buffer, bytes.byteOffset + offset + 4, 4).getUint32(0, true);
 		const data = offset + 8;
 		if (type === 'ANIM' || type === 'ANMF') fail('AnimatedImage');
+		if (size + (size & 1) > riffEnd - data) fail('MalformedImage');
 		if (type === 'VP8X') {
 			if (size < 10 || data + 10 > bytes.length) fail('MalformedImage');
 			if (bytes[data] & 0x02) fail('AnimatedImage');
@@ -155,7 +172,7 @@ function webpDimensions(bytes: Uint8Array): ImageDimensions {
 				1 + (((b4 & 0x0f) << 10) | (b3 << 2) | ((b2 & 0xc0) >> 6))
 			);
 		}
-		if (size > bytes.length - data) break;
+		if (size + (size & 1) > bytes.length - data) break;
 		offset = data + size + (size & 1);
 	}
 	fail('MalformedImage');
@@ -164,9 +181,9 @@ function webpDimensions(bytes: Uint8Array): ImageDimensions {
 export async function inspectImageFile(file: File): Promise<ImageDimensions> {
 	const bytes = new Uint8Array(await file.slice(0, MAX_HEADER_BYTES).arrayBuffer());
 	if (bytes.length < 12) fail('MalformedImage');
-	if (bytes[0] === 0x89) return pngDimensions(bytes);
-	if (bytes[0] === 0xff && bytes[1] === 0xd8) return jpegDimensions(bytes);
-	if (String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF') return webpDimensions(bytes);
+	if (bytes[0] === 0x89) return pngDimensions(bytes, file.size);
+	if (bytes[0] === 0xff && bytes[1] === 0xd8) return jpegDimensions(bytes, file.size);
+	if (String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF') return webpDimensions(bytes, file.size);
 	fail('UnsupportedFormat');
 }
 
