@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-10-17
+
+### Bug Fixes
+
+#### Web
+
+- Allow panning from empty source overlay
+- Guard pointer capture in unsupported environments
+- Wrap preview controls on narrow screens
+- Validate image chunk boundaries
+
+### Documentation
+
+#### Unscoped
+
+- Add agent completion summary directive
+
+### Features
+
+#### Ui
+
+- Refresh page hierarchy and sticker actions
+
+#### Web
+
+- Add additional static export formats
+- Add feature Storybook compositions
+- Add icon-action Storybook state
+- Export printable PDF sticker sheets
+- Edit sticker workspace from source image
+- Add local image upscaler
+- Add experimental local ONNX upscaler
+
+### Testing
+
+#### Ui
+
+- Scope banner landmark assertion
+
+#### Web
+
+- Diagnose mobile viewport overflow
+- Trace mobile overflow ancestors
+- Verify source split workspace flow
+- Cover local ONNX upscaler mode
+
 ## [0.4.0] - 2026-10-17
 
 ### Bug Fixes
