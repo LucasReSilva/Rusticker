@@ -274,6 +274,7 @@
 					{mode === 'onnx' ? m.upscaler_onnx_disclosure() : m.upscaler_method_note()}
 				</p>
 				{#if mode === 'onnx'}
+					<p class="text-sm text-muted-foreground">{m.upscaler_onnx_scale_note()}</p>
 					<div class="flex flex-wrap items-center gap-3">
 						<Button
 							variant="outline"
@@ -367,8 +368,6 @@
 								{m.upscaler_output_limit_error()}
 							</p>{/if}
 					</div>
-				{:else}
-					<p class="text-sm text-muted-foreground">{m.upscaler_onnx_scale_note()}</p>
 				{/if}
 
 				<div class="flex flex-wrap gap-2">
