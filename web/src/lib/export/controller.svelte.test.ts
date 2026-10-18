@@ -229,6 +229,22 @@ it('checks the input again after the gap before the next download', async () => 
 	expect(controller.phase).toBe('idle');
 });
 
+it('invalidates ready archives on reorder and keeps equivalent records cached', async () => {
+	const { controller, stickers, source } = await setup(3);
+	await controller.exportAll();
+	const ready = controller.archives;
+	source.set(
+		'stickers',
+		stickers.map((sticker) => ({ ...sticker }))
+	);
+	flushSync();
+	expect(controller.archives).toBe(ready);
+	source.set('stickers', [...stickers].reverse());
+	flushSync();
+	expect(controller.archives).toEqual([]);
+	expect(controller.phase).toBe('idle');
+});
+
 it('keeps an export invalidated when detection starts and finishes before encoding does', async () => {
 	const encoder = fakeEncoder();
 	const blocked = deferred<Blob>();

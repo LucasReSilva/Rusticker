@@ -1,5 +1,6 @@
 import type { Sticker } from '$lib/detection/types';
 import type { ExportResult } from './types';
+import { captureExportInput, matchesExportInput, type ExportInput } from './input';
 
 export interface ExportSession {
 	get(stickers: Sticker[], trayIconId: string | null): ExportResult | undefined;
@@ -9,30 +10,22 @@ export interface ExportSession {
 
 /** Ready archives belong to the editor session, independent of a localized view. */
 export function createExportSession(): ExportSession {
-	let saved: { id: string; pixels: ImageData }[] = [];
-	let tray: string | null = null;
+	let saved: ExportInput | undefined;
 	let result: ExportResult | undefined;
 	return {
 		get(stickers, trayIconId) {
-			if (
-				trayIconId !== tray ||
-				stickers.length !== saved.length ||
-				stickers.some(
-					(sticker, i) => sticker.id !== saved[i].id || sticker.pixels !== saved[i].pixels
-				)
-			) {
-				saved = [];
+			if (!saved || !matchesExportInput(saved, stickers, trayIconId)) {
+				saved = undefined;
 				result = undefined;
 			}
 			return result;
 		},
 		set(stickers, trayIconId, value) {
-			saved = stickers.map(({ id, pixels }) => ({ id, pixels }));
-			tray = trayIconId;
+			saved = captureExportInput(stickers, trayIconId);
 			result = value;
 		},
 		clear() {
-			saved = [];
+			saved = undefined;
 			result = undefined;
 		}
 	};

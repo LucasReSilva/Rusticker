@@ -337,6 +337,22 @@ The PDF sheet flow has its own contract in
 [`pdf-sticker-sheets`](openspec/changes/pdf-sticker-sheets/specs/pdf-sticker-sheets/spec.md)
 until the change is archived.
 
+### Export implementation boundaries
+
+Static and Telegram exports select an image encoding strategy before processing
+stickers. `web/src/lib/export/image-strategies.ts` supplies PNG and fixed-quality
+WEBP strategies, plus a JPEG strategy requiring an explicit background. Each
+strategy exposes its expected MIME type and an encoding function. The exporters
+retain their own filenames, progress reporting, and error codes. WhatsApp keeps
+its separate size-budget search and session encoding cache.
+
+`web/src/lib/export/input.ts` captures ordered sticker records and tray selection
+without copying pixel buffers. The controller and session share its identity
+comparison, so order, ID, pixel-reference, or tray changes invalidate ready
+archives consistently. Pixel edits replace image buffers; mutating pixel bytes
+in place is not detected by this identity comparison. Snapshots and archives
+remain in browser memory.
+
 ## Static app and tests
 
 The [Lottie feasibility evaluation](docs/lottie-evaluation.md) compares native

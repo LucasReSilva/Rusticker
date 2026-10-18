@@ -2,6 +2,7 @@ import type { Sticker } from '$lib/detection/types';
 import type { Encoder } from './types';
 import { buildPackZip, type ZipEntry } from './zip';
 import { buildTarGz } from './tar';
+import { createJpegImageStrategy, createTransparentImageStrategies } from './image-strategies';
 
 export type StaticImageFormat = 'png' | 'webp' | 'jpeg';
 export type ArchiveFormat = 'zip' | 'tar.gz';
@@ -26,12 +27,6 @@ export interface StaticExportResult {
 	archiveFormat: ArchiveFormat;
 }
 
-const mimeTypes: Record<StaticImageFormat, string> = {
-	png: 'image/png',
-	webp: 'image/webp',
-	jpeg: 'image/jpeg'
-};
-
 export const staticStickerFileName = (index: number, format: StaticImageFormat): string =>
 	`sticker_${String(index).padStart(2, '0')}.${format === 'jpeg' ? 'jpg' : format}`;
 
@@ -45,15 +40,14 @@ export async function exportStaticStickers(
 	if (!stickers.length) throw new StaticExportError('EmptySelection');
 	if (imageFormat === 'jpeg' && !background) throw new StaticExportError('JpegBackgroundRequired');
 	try {
+		const strategy =
+			imageFormat === 'jpeg'
+				? createJpegImageStrategy(encoder, background!)
+				: createTransparentImageStrategies(encoder)[imageFormat];
 		const entries: ZipEntry[] = [];
 		for (const [index, sticker] of stickers.entries()) {
-			const blob =
-				imageFormat === 'png'
-					? await encoder.png(sticker.pixels)
-					: imageFormat === 'webp'
-						? await encoder.webp(sticker.pixels, 0.9)
-						: await encoder.jpeg(sticker.pixels, background!);
-			if (blob.type !== mimeTypes[imageFormat]) throw new StaticExportError('FormatUnsupported');
+			const blob = await strategy.encode(sticker.pixels);
+			if (blob.type !== strategy.mimeType) throw new StaticExportError('FormatUnsupported');
 			entries.push({ name: staticStickerFileName(index + 1, imageFormat), blob });
 		}
 		const isZip = archiveFormat === 'zip';

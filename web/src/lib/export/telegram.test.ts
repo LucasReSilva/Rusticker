@@ -25,7 +25,34 @@ it.each(['png', 'webp'] as const)('creates an ordered static %s file archive', a
 		`telegram_sticker_03.${format}`
 	]);
 	expect(format === 'png' ? png : webp).toHaveBeenCalledTimes(3);
+	for (const [index, sticker] of stickers.entries()) {
+		if (format === 'png') expect(png).toHaveBeenNthCalledWith(index + 1, sticker.pixels);
+		else expect(webp).toHaveBeenNthCalledWith(index + 1, sticker.pixels, 0.9);
+	}
+	expect(progress.mock.calls.map(([value]) => value)).toEqual(
+		[0, 1, 2, 3, 4].map((done) => ({ done, total: 4 }))
+	);
 	expect(progress).toHaveBeenLastCalledWith({ done: 4, total: 4 });
+});
+
+it('retains the PNG failure code and cause without reporting completed encoding', async () => {
+	const stickers = await mockStickers(1);
+	const progress = vi.fn();
+	const encoder = {
+		png: vi.fn(async () => new Blob(['fallback'], { type: 'image/jpeg' })),
+		webp: vi.fn()
+	};
+	await expect(exportTelegramStickers(stickers, 'png', encoder, progress)).rejects.toMatchObject({
+		code: 'EncodeFailed',
+		cause: { message: 'PngEncodingUnavailable' }
+	});
+	expect(progress.mock.calls).toEqual([[{ done: 0, total: 2 }]]);
+	const cause = new Error('EncoderUnavailable');
+	encoder.png.mockRejectedValue(cause);
+	await expect(exportTelegramStickers(stickers, 'png', encoder)).rejects.toMatchObject({
+		code: 'EncodeFailed',
+		cause
+	});
 });
 
 it('rejects an empty selection', async () => {
