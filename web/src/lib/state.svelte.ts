@@ -16,6 +16,12 @@ import {
 	sourceBounds,
 	validSourceBounds
 } from '$lib/tool/source-candidate';
+import {
+	appendWorkspaceSnapshot,
+	createWorkspaceSnapshot,
+	popWorkspaceSnapshot,
+	type WorkspaceSnapshot
+} from '$lib/tool/workspace-history';
 
 export type EditorStatus = 'idle' | 'decoding' | 'detecting' | 'ready' | 'error';
 export type EditorErrorCode =
@@ -67,15 +73,6 @@ interface Dependencies {
 	detector: Detector;
 	decode?: (blob: Blob) => Promise<DecodedImage>;
 	debounceMs?: number;
-}
-
-interface WorkspaceSnapshot {
-	detected: Sticker[];
-	removedIds: string[];
-	stickerOrder: string[];
-	trayIconId: string | null;
-	splitUndo: Array<{ original: Sticker; replacements: Sticker[]; brushResetPixels?: ImageData }>;
-	brushResetPixels: Array<[string, ImageData]>;
 }
 
 export class EditorState {
@@ -156,22 +153,22 @@ export class EditorState {
 	}
 
 	private saveWorkspaceUndo(): void {
-		this.workspaceUndo = [
-			...this.workspaceUndo,
-			{
-				detected: [...this.detected],
-				removedIds: [...this.removedIds],
-				stickerOrder: [...this.stickerOrder],
-				trayIconId: this.trayIconId,
-				splitUndo: [...this.splitUndo],
-				brushResetPixels: [...this.brushResetPixelsById.entries()]
-			}
-		].slice(-20);
+		const snapshot = createWorkspaceSnapshot({
+			detected: this.detected,
+			removedIds: this.removedIds,
+			stickerOrder: this.stickerOrder,
+			trayIconId: this.trayIconId,
+			splitUndo: this.splitUndo,
+			brushResetPixels: this.brushResetPixelsById.entries()
+		});
+		this.workspaceUndo = appendWorkspaceSnapshot(this.workspaceUndo, snapshot);
 	}
 
 	undoWorkspaceEdit(): void {
 		if (this.isProcessing) return;
-		const snapshot = this.workspaceUndo.pop();
+		const popped = popWorkspaceSnapshot(this.workspaceUndo);
+		this.workspaceUndo = popped.history;
+		const snapshot = popped.snapshot;
 		if (!snapshot) return;
 		this.detected = snapshot.detected;
 		this.removedIds.clear();
