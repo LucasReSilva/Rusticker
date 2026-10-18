@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi, type Mock } from 'vitest';
+import { flushSync } from 'svelte';
 import {
 	createEditorState,
 	getEditor,
@@ -568,6 +569,62 @@ it('keeps brushed sticker pixels in the active batch export data', async () => {
 	expect(editor.batchStickers[0].pixels).toBe(pixels);
 	expect(editor.brushResetPixels(original.id)).toBe(resetPixels);
 });
+
+it('restores brush reset metadata when undoing workspace removal', async () => {
+	editor.dispose();
+	detector = createMockDetector({ count: 1 });
+	editor = createEditorState({ detector, decode });
+	await editor.loadFile(file());
+	const original = editor.stickers[0];
+	const resetPixels = original.pixels;
+	const editedPixels = new ImageData(
+		new Uint8ClampedArray(original.pixels.data),
+		original.pixels.width,
+		original.pixels.height
+	);
+	editedPixels.data[3] = 0;
+	editor.updateStickerPixels(original.id, editedPixels);
+	editor.removeSticker(original.id);
+
+	editor.undoWorkspaceEdit();
+
+	expect(editor.stickers[0].pixels).toBe(editedPixels);
+	expect(editor.brushResetPixels(original.id)).toBe(resetPixels);
+}, 15_000);
+
+it('reactively updates workspace undo availability after edits and source reset', async () => {
+	const availability: boolean[] = [];
+	const stop = $effect.root(() => {
+		$effect(() => {
+			availability.push(editor.canUndoWorkspaceEdit);
+		});
+	});
+	try {
+		flushSync();
+		await editor.loadFile(file());
+		flushSync();
+		expect(editor.canUndoWorkspaceEdit).toBe(false);
+
+		editor.removeSticker(editor.stickers[0].id);
+		flushSync();
+		expect(editor.canUndoWorkspaceEdit).toBe(true);
+
+		editor.undoWorkspaceEdit();
+		flushSync();
+		expect(editor.canUndoWorkspaceEdit).toBe(false);
+
+		editor.removeSticker(editor.stickers[0].id);
+		flushSync();
+		expect(editor.canUndoWorkspaceEdit).toBe(true);
+		await editor.loadFile(file());
+		flushSync();
+		expect(editor.canUndoWorkspaceEdit).toBe(false);
+		const transitions = availability.filter((value, index) => value !== availability[index - 1]);
+		expect(transitions).toEqual([false, true, false, true, false]);
+	} finally {
+		stop();
+	}
+}, 15_000);
 
 it('keeps successful results when another image fails and retries only the failed row', async () => {
 	vi.mocked(detector.detect).mockRejectedValueOnce(new Error('temporary failure'));
