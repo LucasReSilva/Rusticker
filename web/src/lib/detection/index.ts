@@ -51,24 +51,11 @@ export function createDetector(): Detector {
 		failed.worker.terminate();
 		if (engine === failed) engine = null;
 	};
-
-	const execute = async (job: Job): Promise<WorkerResult> => {
-		const current = (engine ??= spawnEngine());
-		// One defensive copy keeps the caller's ImageData intact (design D3).
-		const rgba = job.image.data.slice().buffer;
-		const request: WorkerRequest = {
-			rgba,
-			width: job.image.width,
-			height: job.image.height,
-			background: job.background,
-			tolerance: job.tolerance
-		};
+	const currentEngine = () => (engine ??= spawnEngine());
+	const invoke = async (current: Engine, operation: () => Promise<WorkerResult>) => {
 		let result: WorkerResult;
 		try {
-			result = await Promise.race([
-				current.api.detect(Comlink.transfer(request, [rgba])),
-				current.crashed
-			]);
+			result = await Promise.race([operation(), current.crashed]);
 		} catch (thrown) {
 			result = {
 				ok: false,
@@ -80,25 +67,25 @@ export function createDetector(): Detector {
 		if (!result.ok && result.code === 'WorkerFailed') recycle(current);
 		return result;
 	};
-	const propose = async (image: import('./types').DetectInput): Promise<WorkerResult> => {
-		const current = (engine ??= spawnEngine());
+
+	const execute = (job: Job): Promise<WorkerResult> => {
+		const current = currentEngine();
+		// One defensive copy keeps the caller's ImageData intact (design D3).
+		const rgba = job.image.data.slice().buffer;
+		const request: WorkerRequest = {
+			rgba,
+			width: job.image.width,
+			height: job.image.height,
+			background: job.background,
+			tolerance: job.tolerance
+		};
+		return invoke(current, () => current.api.detect(Comlink.transfer(request, [rgba])));
+	};
+	const propose = (image: import('./types').DetectInput): Promise<WorkerResult> => {
+		const current = currentEngine();
 		const rgba = image.data.slice().buffer;
 		const request: SplitRequest = { rgba };
-		let result: WorkerResult;
-		try {
-			result = await Promise.race([
-				current.api.split(Comlink.transfer(request, [rgba])),
-				current.crashed
-			]);
-		} catch (thrown) {
-			result = {
-				ok: false,
-				code: 'WorkerFailed',
-				detail: thrown instanceof Error ? `${thrown.name}: ${thrown.message}` : String(thrown)
-			};
-		}
-		if (!result.ok && result.code === 'WorkerFailed') recycle(current);
-		return result;
+		return invoke(current, () => current.api.split(Comlink.transfer(request, [rgba])));
 	};
 
 	return createRuntime(
