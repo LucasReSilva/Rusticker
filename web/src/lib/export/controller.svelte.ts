@@ -3,12 +3,9 @@ import type { Sticker } from '$lib/detection/types';
 import { exportPacks } from './export';
 import { splitIntoPacks } from './split';
 import { createExportSession, type ExportSession } from './session';
+import { captureExportInput, matchesExportInput, type ExportInput } from './input';
 import type { Encoder, ExportProgress, ExportResult, PackArchive, StickerSizes } from './types';
 
-interface Snapshot {
-	stickers: Sticker[];
-	trayIconId: string | null;
-}
 export interface ControllerDependencies {
 	getStickers: () => Sticker[];
 	getTrayIconId: () => string | null;
@@ -21,10 +18,7 @@ export interface ControllerDependencies {
 }
 
 export function createExportController(deps: ControllerDependencies) {
-	const snapshot = (): Snapshot => ({
-		stickers: deps.getStickers().map((sticker) => ({ ...sticker })),
-		trayIconId: deps.getTrayIconId()
-	});
+	const snapshot = () => captureExportInput(deps.getStickers(), deps.getTrayIconId());
 	const session = deps.session ?? createExportSession();
 	const initialInput = snapshot();
 	const initialResult = session.get(initialInput.stickers, initialInput.trayIconId);
@@ -32,28 +26,15 @@ export function createExportController(deps: ControllerDependencies) {
 	const initialTotal = initialResult ? initialResult.stickerCount + initialResult.packCount : 0;
 	let progress = $state<ExportProgress>({ done: initialTotal, total: initialTotal });
 	let archives = $state.raw<PackArchive[]>(initialResult?.archives ?? []);
-	let saved = $state.raw<Snapshot | undefined>(initialResult ? initialInput : undefined);
-	let active: Snapshot | undefined;
+	let saved = $state.raw<ExportInput | undefined>(initialResult ? initialInput : undefined);
+	let active: ExportInput | undefined;
 	let invalidated = false;
-	const matches = (value: Snapshot): boolean => {
-		const current = deps.getStickers();
-		return (
-			value.trayIconId === deps.getTrayIconId() &&
-			current.length === value.stickers.length &&
-			current.every(
-				(sticker, i) =>
-					sticker.id === value.stickers[i].id && sticker.pixels === value.stickers[i].pixels
-			)
-		);
-	};
+	const matches = (value: ExportInput) =>
+		matchesExportInput(value, deps.getStickers(), deps.getTrayIconId());
 	$effect(() => {
 		// Track list, order, ids, pixel identity, and the selected tray icon.
-		const current = snapshot();
+		snapshot();
 		const detecting = deps.isDetecting();
-		current.stickers.forEach((sticker) => {
-			void sticker.id;
-			void sticker.pixels;
-		});
 		untrack(() => {
 			if (active && (!matches(active) || detecting)) invalidated = true;
 			if (saved && !matches(saved)) {

@@ -1,6 +1,7 @@
 import type { Sticker } from '$lib/detection/types';
 import type { Encoder } from './types';
 import { buildPackZip } from './zip';
+import { createTransparentImageStrategies } from './image-strategies';
 
 export type TelegramImageFormat = 'png' | 'webp';
 export type TelegramExportErrorCode = 'EmptySelection' | 'WebpUnsupported' | 'EncodeFailed';
@@ -43,15 +44,14 @@ export async function exportTelegramStickers(
 	report();
 
 	try {
+		const strategy = createTransparentImageStrategies(encoder)[format];
 		const entries = [];
 		for (const [index, sticker] of stickers.entries()) {
-			const blob =
-				format === 'png'
-					? await encoder.png(sticker.pixels)
-					: await encoder.webp(sticker.pixels, 0.9);
-			if (format === 'webp' && blob.type !== 'image/webp')
-				throw new TelegramExportError('WebpUnsupported');
-			if (format === 'png' && blob.type !== 'image/png') throw new Error('PngEncodingUnavailable');
+			const blob = await strategy.encode(sticker.pixels);
+			if (blob.type !== strategy.mimeType) {
+				if (format === 'webp') throw new TelegramExportError('WebpUnsupported');
+				throw new Error('PngEncodingUnavailable');
+			}
 			entries.push({ name: telegramStickerFileName(index + 1, format), blob });
 			done++;
 			report();
