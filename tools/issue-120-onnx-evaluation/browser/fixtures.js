@@ -113,7 +113,8 @@ export function resizeLanczos(source, channels, sourceSize = INPUT_SIZE, targetS
   const temporary = new Float32Array(channels * targetSize * sourceSize);
   const output = new Float32Array(channels * targetSize * targetSize);
   const scale = sourceSize / targetSize;
-  const support = Math.max(3, 3 / scale);
+  const filterScale = Math.max(1, scale);
+  const support = 3 * filterScale;
   for (let channel = 0; channel < channels; channel += 1) {
     for (let y = 0; y < sourceSize; y += 1) {
       for (let x = 0; x < targetSize; x += 1) {
@@ -123,7 +124,7 @@ export function resizeLanczos(source, channels, sourceSize = INPUT_SIZE, targetS
         let sum = 0;
         let weightSum = 0;
         for (let ix = start; ix <= end; ix += 1) {
-          const weight = lanczos((center - ix) * Math.min(1, scale));
+          const weight = lanczos((center - ix) / filterScale);
           sum += source[channel * sourceSize * sourceSize + y * sourceSize + ix] * weight;
           weightSum += weight;
         }
@@ -138,7 +139,7 @@ export function resizeLanczos(source, channels, sourceSize = INPUT_SIZE, targetS
         let sum = 0;
         let weightSum = 0;
         for (let iy = start; iy <= end; iy += 1) {
-          const weight = lanczos((center - iy) * Math.min(1, scale));
+          const weight = lanczos((center - iy) / filterScale);
           sum += temporary[channel * targetSize * sourceSize + iy * targetSize + x] * weight;
           weightSum += weight;
         }
@@ -257,7 +258,7 @@ export const fixtureContract = {
   inputSize: INPUT_SIZE,
   outputSize: OUTPUT_SIZE,
   degradation: 'Exact 4x4 box-area average of deterministic 256x256 generated references.',
-  baseline: 'Separable Lanczos-3 resize from 64x64 to 256x256, channel-wise, clamped to [0,1].',
+  baseline: 'Separable Lanczos-3 resize from 64x64 to 256x256 with a three-source-pixel upsampling radius, channel-wise, clamped to [0,1].',
   alpha: 'Model receives RGB only; alpha is independently resized with Lanczos-3. Transparent RGB and alpha-edge metrics are reported separately.',
   tile: '2x2 40x40 input tiles with 16px overlap; discard 8px from internal edges and compare retained tile pixels to whole-image inference.',
 };
